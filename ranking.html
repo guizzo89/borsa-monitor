@@ -6,32 +6,17 @@
     <title>Classifica Performer - Borsa</title>
     <style>
         :root {
-            --bg-primary: #1a1a2e;
-            --bg-secondary: #16213e;
-            --bg-card: #0f3460;
-            --text-primary: #e0e0e0;
-            --text-secondary: #a0a0a0;
-            --accent: #e94560;
-            --accent-hover: #ff6b81;
-            --border: #2a2a4a;
-            --btn-bg: #2a2a4a;
-            --btn-hover: #3a3a5a;
-            --header-bg: #0f0f23;
-            --green: #1b7a3d;
-            --green-hover: #22994d;
+            --bg-primary: #1a1a2e; --bg-secondary: #16213e; --bg-card: #0f3460;
+            --text-primary: #e0e0e0; --text-secondary: #a0a0a0;
+            --accent: #e94560; --accent-hover: #ff6b81;
+            --border: #2a2a4a; --btn-bg: #2a2a4a; --btn-hover: #3a3a5a;
+            --header-bg: #0f0f23; --green: #1b7a3d; --green-hover: #22994d;
         }
         html.light {
-            --bg-primary: #f0f2f5;
-            --bg-secondary: #ffffff;
-            --bg-card: #ffffff;
-            --text-primary: #1a1a2e;
-            --text-secondary: #666666;
-            --accent: #e94560;
-            --accent-hover: #c73650;
-            --border: #d0d0d0;
-            --btn-bg: #e0e0e0;
-            --btn-hover: #d0d0d0;
-            --header-bg: #ffffff;
+            --bg-primary: #f0f2f5; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --text-primary: #1a1a2e; --text-secondary: #666666;
+            --accent: #e94560; --accent-hover: #c73650;
+            --border: #d0d0d0; --btn-bg: #e0e0e0; --btn-hover: #d0d0d0; --header-bg: #ffffff;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -52,15 +37,15 @@
         .btn {
             background: var(--btn-bg); color: var(--text-primary); border: 1px solid var(--border);
             padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;
-            font-weight: 500; transition: all 0.15s; white-space: nowrap; text-decoration: none;
-            display: inline-flex; align-items: center;
+            font-weight: 500; transition: all 0.15s; white-space: nowrap;
+            text-decoration: none; display: inline-flex; align-items: center;
         }
         .btn:hover { background: var(--btn-hover); border-color: var(--accent); }
         .theme-icons { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; }
         .theme-toggle {
             position: relative; width: 48px; height: 26px;
             background: var(--btn-bg); border-radius: 13px; cursor: pointer;
-            border: 1px solid var(--border); transition: background 0.3s;
+            border: 1px solid var(--border);
         }
         .theme-toggle::after {
             content: ''; position: absolute; top: 3px; left: 3px;
@@ -69,10 +54,8 @@
         }
         html.light .theme-toggle::after { transform: translateX(22px); }
 
-        /* Main layout */
-        .main-content {
-            flex: 1; padding: 20px 24px; max-width: 1100px; margin: 0 auto; width: 100%;
-        }
+        /* Main */
+        .main-content { flex: 1; padding: 20px 24px; max-width: 1100px; margin: 0 auto; width: 100%; }
 
         /* Filter panel */
         .filter-panel {
@@ -84,23 +67,55 @@
         .filter-label {
             font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);
             text-transform: uppercase; letter-spacing: 0.6px;
-            min-width: 75px; padding-top: 6px; flex-shrink: 0;
+            min-width: 90px; padding-top: 6px; flex-shrink: 0;
         }
-        .filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-        .cat-btn, .period-btn {
+        .filter-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+        /* Cat / period / limit buttons */
+        .cat-btn, .period-btn, .limit-btn {
             padding: 5px 13px; border-radius: 6px; border: 1px solid var(--border);
             background: var(--btn-bg); color: var(--text-primary);
             cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: all 0.15s;
+            white-space: nowrap;
         }
-        .cat-btn:hover, .period-btn:hover { border-color: var(--accent); background: var(--btn-hover); }
-        .cat-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .btn-selall {
+        .cat-btn:hover, .period-btn:hover, .limit-btn:hover { border-color: var(--accent); background: var(--btn-hover); }
+        .cat-btn.active, .period-btn.active, .limit-btn.active {
+            background: var(--accent); color: #fff; border-color: var(--accent);
+        }
+
+        /* Custom category wrapper (hover dropdown for edit/delete) */
+        .custom-cat-wrapper { position: relative; display: inline-flex; }
+        .custom-cat-actions {
+            display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 6px; padding: 4px; min-width: 150px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+            flex-direction: column; gap: 2px;
+        }
+        .custom-cat-wrapper:hover .custom-cat-actions,
+        .custom-cat-actions:hover { display: flex; }
+        .custom-cat-actions button {
+            background: none; border: none; color: var(--text-primary);
+            padding: 6px 10px; text-align: left; cursor: pointer;
+            font-size: 0.78rem; border-radius: 4px; white-space: nowrap;
+        }
+        .custom-cat-actions button:hover { background: var(--btn-hover); }
+        .custom-cat-actions button.danger { color: var(--accent); }
+        .custom-cat-actions button.danger:hover { background: rgba(233,69,96,0.15); }
+
+        /* Utility buttons */
+        .btn-selall, .btn-new-cat {
             padding: 4px 10px; border-radius: 5px; border: 1px dashed var(--border);
             background: transparent; color: var(--text-secondary);
             cursor: pointer; font-size: 0.72rem; transition: all 0.15s; white-space: nowrap;
         }
         .btn-selall:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-new-cat {
+            border-color: var(--accent); color: var(--accent); font-size: 0.78rem; padding: 4px 12px;
+        }
+        .btn-new-cat:hover { background: var(--accent); color: #fff; }
+
+        /* Load row */
         .load-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .btn-load {
             background: var(--green); color: #fff; border: 1px solid var(--green);
@@ -126,10 +141,7 @@
         .results-info { margin-left: auto; font-size: 0.78rem; color: var(--text-secondary); }
 
         /* Table */
-        .rank-table {
-            width: 100%; border-collapse: collapse;
-            border-radius: 10px; overflow: hidden; border: 1px solid var(--border);
-        }
+        .rank-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
         .rank-table thead th {
             background: var(--bg-card); padding: 10px 14px;
             font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
@@ -153,27 +165,21 @@
         .td-change { font-weight: 700; font-size: 0.88rem; white-space: nowrap; }
         .chg-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; width: 100%; min-width: 60px; }
         .chg-bar { height: 100%; border-radius: 2px; }
-        .pos { color: #2ecc71; }
-        .neg { color: #e74c3c; }
-        .bar-pos { background: #2ecc71; }
-        .bar-neg { background: #e74c3c; }
+        .pos { color: #2ecc71; } .neg { color: #e74c3c; }
+        .bar-pos { background: #2ecc71; } .bar-neg { background: #e74c3c; }
         .td-price { font-family: monospace; font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap; }
         .cat-pill {
             display: inline-block; font-size: 0.62rem; font-weight: 700;
             padding: 2px 7px; border-radius: 10px; color: #fff;
             text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
         }
-        .pill-nasdaq      { background: #2962ff; }
-        .pill-sp500       { background: #1565c0; }
-        .pill-italia      { background: #1e7a2e; }
-        .pill-cinesi      { background: #c62828; }
-        .pill-europee     { background: #0277bd; }
-        .pill-crypto      { background: #e65100; }
-        .pill-commodities { background: #5d4037; }
-        .pill-forex       { background: #00695c; }
+        .pill-nasdaq      { background: #2962ff; } .pill-sp500       { background: #1565c0; }
+        .pill-italia      { background: #1e7a2e; } .pill-cinesi      { background: #c62828; }
+        .pill-europee     { background: #0277bd; } .pill-crypto      { background: #e65100; }
+        .pill-commodities { background: #5d4037; } .pill-forex       { background: #00695c; }
         .pill-indici      { background: #37474f; }
 
-        /* Status states */
+        /* Status */
         .status-box {
             text-align: center; padding: 52px 20px; color: var(--text-secondary); font-size: 0.9rem;
             background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
@@ -186,503 +192,702 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ======= MODAL ======= */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 24px; width: min(500px, 94vw);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
+        .modal-field { margin-bottom: 14px; display: flex; flex-direction: column; gap: 5px; }
+        .modal-field label {
+            font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .modal-field input, .modal-field textarea {
+            background: var(--btn-bg); color: var(--text-primary);
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 8px 10px; font-size: 0.88rem; font-family: inherit;
+            transition: border-color 0.15s; resize: vertical;
+        }
+        .modal-field input:focus, .modal-field textarea:focus {
+            outline: none; border-color: var(--accent);
+        }
+        .modal-hint {
+            font-size: 0.75rem; color: var(--text-secondary);
+            background: var(--bg-card); border-radius: 6px;
+            padding: 8px 10px; margin-bottom: 16px; line-height: 1.5;
+        }
+        .modal-hint code { font-family: monospace; color: var(--accent); }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .modal-actions .btn-cancel {
+            background: var(--btn-bg); color: var(--text-primary); border: 1px solid var(--border);
+            padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 0.84rem; font-weight: 500;
+        }
+        .modal-actions .btn-cancel:hover { border-color: var(--accent); }
+        .modal-actions .btn-save {
+            background: var(--accent); color: #fff; border: 1px solid var(--accent);
+            padding: 7px 20px; border-radius: 6px; cursor: pointer; font-size: 0.84rem; font-weight: 600;
+        }
+        .modal-actions .btn-save:hover { background: var(--accent-hover); }
+
         /* Responsive */
         @media (max-width: 700px) {
             .main-content { padding: 12px; }
             header { padding: 8px 12px; }
             h1 { font-size: 1rem; }
             .th-price, .td-price, .th-cat, .td-cat { display: none; }
+            .filter-label { min-width: 70px; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-left">
-            <h1>Classifica <span>Performer</span></h1>
+<header>
+    <div class="header-left">
+        <h1>Classifica <span>Performer</span></h1>
+    </div>
+    <div class="header-controls">
+        <a href="index.html" class="btn">Dashboard</a>
+        <a href="calcolo.html" class="btn">Calcolatore</a>
+        <div class="theme-icons">
+            <span>&#9790;</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+            <span>&#9788;</span>
         </div>
-        <div class="header-controls">
-            <a href="index.html" class="btn">Dashboard</a>
-            <a href="calcolo.html" class="btn">Calcolatore</a>
-            <div class="theme-icons">
-                <span>&#9790;</span>
-                <div class="theme-toggle" onclick="toggleTheme()"></div>
-                <span>&#9788;</span>
-            </div>
-        </div>
-    </header>
+    </div>
+</header>
 
-    <div class="main-content">
-        <div class="filter-panel">
-            <div class="filter-row">
-                <span class="filter-label">Categorie</span>
-                <div class="filter-btns" id="catBtns">
-                    <button class="cat-btn active" data-cat="nasdaq">NASDAQ</button>
-                    <button class="cat-btn" data-cat="sp500">S&amp;P 500</button>
-                    <button class="cat-btn" data-cat="italia">Borsa Italiana</button>
-                    <button class="cat-btn" data-cat="cinesi">Titoli Cinesi</button>
-                    <button class="cat-btn" data-cat="europee">Europee</button>
-                    <button class="cat-btn" data-cat="crypto">Crypto</button>
-                    <button class="cat-btn" data-cat="commodities">Materie Prime</button>
-                    <button class="cat-btn" data-cat="forex">Forex</button>
-                    <button class="cat-btn" data-cat="indici">Indici</button>
-                </div>
-                <button class="btn-selall" id="btnSelAll" onclick="toggleSelectAll()">Tutte</button>
+<div class="main-content">
+    <div class="filter-panel">
+        <!-- CATEGORIE -->
+        <div class="filter-row">
+            <span class="filter-label">Categorie</span>
+            <div class="filter-btns" id="catBtns">
+                <!-- Categorie predefinite -->
+                <button class="cat-btn active" data-cat="nasdaq">NASDAQ</button>
+                <button class="cat-btn" data-cat="sp500">S&amp;P 500</button>
+                <button class="cat-btn" data-cat="italia">Borsa Italiana</button>
+                <button class="cat-btn" data-cat="cinesi">Titoli Cinesi</button>
+                <button class="cat-btn" data-cat="europee">Europee</button>
+                <button class="cat-btn" data-cat="crypto">Crypto</button>
+                <button class="cat-btn" data-cat="commodities">Materie Prime</button>
+                <button class="cat-btn" data-cat="forex">Forex</button>
+                <button class="cat-btn" data-cat="indici">Indici</button>
+                <!-- Le categorie custom vengono inserite qui dal JS -->
             </div>
-            <div class="filter-row">
-                <span class="filter-label">Periodo</span>
-                <div class="filter-btns">
-                    <button class="period-btn" data-period="2d"   data-interval="1d">1 Giorno</button>
-                    <button class="period-btn" data-period="5d"   data-interval="1d">1 Settimana</button>
-                    <button class="period-btn active" data-period="1mo"  data-interval="1d">1 Mese</button>
-                    <button class="period-btn" data-period="3mo"  data-interval="1d">3 Mesi</button>
-                    <button class="period-btn" data-period="6mo"  data-interval="1wk">6 Mesi</button>
-                    <button class="period-btn" data-period="1y"   data-interval="1wk">1 Anno</button>
-                    <button class="period-btn" data-period="ytd"  data-interval="1d">YTD</button>
-                </div>
-            </div>
-            <div class="load-row">
-                <button class="btn-load" id="loadBtn" onclick="loadRanking()">Carica Classifica</button>
-                <span class="progress-text" id="progressText"></span>
-            </div>
+            <button class="btn-selall" id="btnSelAll" onclick="toggleSelectAll()">Tutte</button>
+            <button class="btn-new-cat" onclick="openNewCatModal()">+ Nuova categoria</button>
         </div>
 
-        <div id="resultsHeader" class="results-header" style="display:none">
-            <span class="sort-label">Ordina:</span>
-            <button class="sort-btn active" id="btnDesc" onclick="sortResults('desc')">Migliori prima &#8593;</button>
-            <button class="sort-btn" id="btnAsc"  onclick="sortResults('asc')">Peggiori prima &#8595;</button>
-            <span class="results-info" id="resultsInfo"></span>
+        <!-- PERIODO -->
+        <div class="filter-row">
+            <span class="filter-label">Periodo</span>
+            <div class="filter-btns">
+                <button class="period-btn" data-period="2d"  data-interval="1d">1 Giorno</button>
+                <button class="period-btn" data-period="5d"  data-interval="1d">1 Settimana</button>
+                <button class="period-btn active" data-period="1mo" data-interval="1d">1 Mese</button>
+                <button class="period-btn" data-period="3mo" data-interval="1d">3 Mesi</button>
+                <button class="period-btn" data-period="6mo" data-interval="1wk">6 Mesi</button>
+                <button class="period-btn" data-period="1y"  data-interval="1wk">1 Anno</button>
+                <button class="period-btn" data-period="ytd" data-interval="1d">YTD</button>
+            </div>
         </div>
 
-        <div id="resultsArea">
-            <div class="status-box">
-                Seleziona le categorie e il periodo, poi clicca <strong>Carica Classifica</strong>
+        <!-- LIMITE ASSET PER CATEGORIA -->
+        <div class="filter-row">
+            <span class="filter-label">Asset per cat.</span>
+            <div class="filter-btns">
+                <button class="limit-btn" data-limit="5">5</button>
+                <button class="limit-btn" data-limit="10">10</button>
+                <button class="limit-btn" data-limit="15">15</button>
+                <button class="limit-btn" data-limit="20">20</button>
+                <button class="limit-btn active" data-limit="0">Tutti</button>
             </div>
+        </div>
+
+        <!-- CARICA -->
+        <div class="load-row">
+            <button class="btn-load" id="loadBtn" onclick="loadRanking()">Carica Classifica</button>
+            <span class="progress-text" id="progressText"></span>
         </div>
     </div>
 
-    <script>
-    // ==================== ASSET DEFINITIONS ====================
-    const ASSETS = {
-        nasdaq: {
-            label: 'NASDAQ', pillClass: 'pill-nasdaq',
-            items: [
-                {symbol:'AAPL',  name:'Apple'},
-                {symbol:'MSFT',  name:'Microsoft'},
-                {symbol:'NVDA',  name:'NVIDIA'},
-                {symbol:'AMZN',  name:'Amazon'},
-                {symbol:'META',  name:'Meta'},
-                {symbol:'GOOGL', name:'Alphabet'},
-                {symbol:'TSLA',  name:'Tesla'},
-                {symbol:'AVGO',  name:'Broadcom'},
-                {symbol:'NFLX',  name:'Netflix'},
-                {symbol:'AMD',   name:'AMD'},
-                {symbol:'ADBE',  name:'Adobe'},
-                {symbol:'QCOM',  name:'Qualcomm'},
-                {symbol:'COST',  name:'Costco'},
-                {symbol:'INTC',  name:'Intel'},
-                {symbol:'CSCO',  name:'Cisco'},
-                {symbol:'PYPL',  name:'PayPal'},
-                {symbol:'SBUX',  name:'Starbucks'},
-                {symbol:'ORCL',  name:'Oracle'},
-                {symbol:'INTU',  name:'Intuit'},
-                {symbol:'AMAT',  name:'Applied Materials'}
-            ]
-        },
-        sp500: {
-            label: 'S&P 500', pillClass: 'pill-sp500',
-            items: [
-                {symbol:'JPM',   name:'JPMorgan Chase'},
-                {symbol:'V',     name:'Visa'},
-                {symbol:'WMT',   name:'Walmart'},
-                {symbol:'MA',    name:'Mastercard'},
-                {symbol:'XOM',   name:'ExxonMobil'},
-                {symbol:'JNJ',   name:'Johnson & Johnson'},
-                {symbol:'PG',    name:'Procter & Gamble'},
-                {symbol:'UNH',   name:'UnitedHealth'},
-                {symbol:'HD',    name:'Home Depot'},
-                {symbol:'CVX',   name:'Chevron'},
-                {symbol:'MRK',   name:'Merck'},
-                {symbol:'BAC',   name:'Bank of America'},
-                {symbol:'KO',    name:'Coca-Cola'},
-                {symbol:'LLY',   name:'Eli Lilly'},
-                {symbol:'ABBV',  name:'AbbVie'},
-                {symbol:'PFE',   name:'Pfizer'},
-                {symbol:'DIS',   name:'Walt Disney'},
-                {symbol:'MCD',   name:"McDonald's"},
-                {symbol:'WFC',   name:'Wells Fargo'},
-                {symbol:'GS',    name:'Goldman Sachs'}
-            ]
-        },
-        italia: {
-            label: 'Borsa IT', pillClass: 'pill-italia',
-            items: [
-                {symbol:'ENI.MI',   name:'Eni'},
-                {symbol:'ENEL.MI',  name:'Enel'},
-                {symbol:'ISP.MI',   name:'Intesa Sanpaolo'},
-                {symbol:'UCG.MI',   name:'UniCredit'},
-                {symbol:'STM.MI',   name:'STMicroelectronics'},
-                {symbol:'G.MI',     name:'Generali'},
-                {symbol:'STLAM.MI', name:'Stellantis'},
-                {symbol:'TIT.MI',   name:'Telecom Italia'},
-                {symbol:'MB.MI',    name:'Mediobanca'},
-                {symbol:'FBK.MI',   name:'FinecoBank'},
-                {symbol:'LDO.MI',   name:'Leonardo'},
-                {symbol:'MONC.MI',  name:'Moncler'},
-                {symbol:'RACE.MI',  name:'Ferrari'},
-                {symbol:'BMED.MI',  name:'Banca Mediolanum'},
-                {symbol:'CNHI.MI',  name:'CNH Industrial'},
-                {symbol:'HER.MI',   name:'Hera'},
-                {symbol:'INW.MI',   name:'Inwit'},
-                {symbol:'AMP.MI',   name:'Amplifon'},
-                {symbol:'PRY.MI',   name:'Prysmian'},
-                {symbol:'CPR.MI',   name:'Azimut'}
-            ]
-        },
-        cinesi: {
-            label: 'Cinesi', pillClass: 'pill-cinesi',
-            items: [
-                {symbol:'BABA',  name:'Alibaba'},
-                {symbol:'JD',    name:'JD.com'},
-                {symbol:'BIDU',  name:'Baidu'},
-                {symbol:'PDD',   name:'PDD (Temu)'},
-                {symbol:'NIO',   name:'NIO'},
-                {symbol:'XPEV',  name:'XPeng'},
-                {symbol:'LI',    name:'Li Auto'},
-                {symbol:'TME',   name:'Tencent Music'},
-                {symbol:'NTES',  name:'NetEase'},
-                {symbol:'YUMC',  name:'Yum China'},
-                {symbol:'EDU',   name:'New Oriental'},
-                {symbol:'FUTU',  name:'Futu Holdings'},
-                {symbol:'IQ',    name:'iQIYI'},
-                {symbol:'MNSO',  name:'MINISO'},
-                {symbol:'ZH',    name:'Zhihu'}
-            ]
-        },
-        europee: {
-            label: 'Europee', pillClass: 'pill-europee',
-            items: [
-                {symbol:'ASML.AS',  name:'ASML'},
-                {symbol:'SAP.DE',   name:'SAP'},
-                {symbol:'NESN.SW',  name:'Nestlé'},
-                {symbol:'MC.PA',    name:'LVMH'},
-                {symbol:'OR.PA',    name:"L'Oréal"},
-                {symbol:'SIE.DE',   name:'Siemens'},
-                {symbol:'TTE.PA',   name:'TotalEnergies'},
-                {symbol:'NOVN.SW',  name:'Novartis'},
-                {symbol:'ALV.DE',   name:'Allianz'},
-                {symbol:'BNP.PA',   name:'BNP Paribas'},
-                {symbol:'AZN.L',    name:'AstraZeneca'},
-                {symbol:'AIR.PA',   name:'Airbus'},
-                {symbol:'VOW3.DE',  name:'Volkswagen'},
-                {symbol:'BMW.DE',   name:'BMW'},
-                {symbol:'ROG.SW',   name:'Roche'}
-            ]
-        },
-        crypto: {
-            label: 'Crypto', pillClass: 'pill-crypto',
-            items: [
-                {symbol:'BTC-USD',   name:'Bitcoin'},
-                {symbol:'ETH-USD',   name:'Ethereum'},
-                {symbol:'BNB-USD',   name:'BNB'},
-                {symbol:'SOL-USD',   name:'Solana'},
-                {symbol:'XRP-USD',   name:'XRP'},
-                {symbol:'ADA-USD',   name:'Cardano'},
-                {symbol:'DOGE-USD',  name:'Dogecoin'},
-                {symbol:'AVAX-USD',  name:'Avalanche'},
-                {symbol:'DOT-USD',   name:'Polkadot'},
-                {symbol:'LINK-USD',  name:'Chainlink'},
-                {symbol:'LTC-USD',   name:'Litecoin'},
-                {symbol:'BCH-USD',   name:'Bitcoin Cash'},
-                {symbol:'ATOM-USD',  name:'Cosmos'},
-                {symbol:'UNI-USD',   name:'Uniswap'},
-                {symbol:'MATIC-USD', name:'Polygon'}
-            ]
-        },
-        commodities: {
-            label: 'Materie Prime', pillClass: 'pill-commodities',
-            items: [
-                {symbol:'GC=F',  name:'Oro'},
-                {symbol:'SI=F',  name:'Argento'},
-                {symbol:'CL=F',  name:'Petrolio WTI'},
-                {symbol:'BZ=F',  name:'Petrolio Brent'},
-                {symbol:'NG=F',  name:'Gas Naturale'},
-                {symbol:'HG=F',  name:'Rame'},
-                {symbol:'ZW=F',  name:'Grano'},
-                {symbol:'ZC=F',  name:'Mais'},
-                {symbol:'PL=F',  name:'Platino'},
-                {symbol:'PA=F',  name:'Palladio'}
-            ]
-        },
-        forex: {
-            label: 'Forex', pillClass: 'pill-forex',
-            items: [
-                {symbol:'EURUSD=X', name:'EUR/USD'},
-                {symbol:'GBPUSD=X', name:'GBP/USD'},
-                {symbol:'USDJPY=X', name:'USD/JPY'},
-                {symbol:'USDCHF=X', name:'USD/CHF'},
-                {symbol:'AUDUSD=X', name:'AUD/USD'},
-                {symbol:'USDCAD=X', name:'USD/CAD'},
-                {symbol:'EURGBP=X', name:'EUR/GBP'},
-                {symbol:'EURJPY=X', name:'EUR/JPY'},
-                {symbol:'NZDUSD=X', name:'NZD/USD'},
-                {symbol:'GBPJPY=X', name:'GBP/JPY'}
-            ]
-        },
-        indici: {
-            label: 'Indici', pillClass: 'pill-indici',
-            items: [
-                {symbol:'^GSPC',    name:'S&P 500'},
-                {symbol:'^IXIC',    name:'NASDAQ Composite'},
-                {symbol:'^DJI',     name:'Dow Jones'},
-                {symbol:'^FTSE',    name:'FTSE 100'},
-                {symbol:'^GDAXI',   name:'DAX 40'},
-                {symbol:'^FCHI',    name:'CAC 40'},
-                {symbol:'^N225',    name:'Nikkei 225'},
-                {symbol:'^HSI',     name:'Hang Seng'},
-                {symbol:'^STOXX50E',name:'Euro Stoxx 50'},
-                {symbol:'^RUT',     name:'Russell 2000'},
-                {symbol:'000001.SS',name:'Shanghai Composite'},
-                {symbol:'^BSESN',   name:'BSE Sensex'}
-            ]
-        }
-    };
+    <!-- RISULTATI HEADER -->
+    <div id="resultsHeader" class="results-header" style="display:none">
+        <span class="sort-label">Ordina:</span>
+        <button class="sort-btn active" id="btnDesc" onclick="sortResults('desc')">Migliori prima &#8593;</button>
+        <button class="sort-btn" id="btnAsc" onclick="sortResults('asc')">Peggiori prima &#8595;</button>
+        <span class="results-info" id="resultsInfo"></span>
+    </div>
 
-    // ==================== STATE ====================
-    let isDark = true;
-    let rankingData = [];
-    let currentSort = 'desc';
+    <div id="resultsArea">
+        <div class="status-box">
+            Seleziona le categorie e il periodo, poi clicca <strong>Carica Classifica</strong>
+        </div>
+    </div>
+</div>
 
-    // ==================== THEME ====================
-    function toggleTheme() {
-        isDark = !isDark;
-        document.documentElement.classList.toggle('light', !isDark);
-        try {
-            const d = localStorage.getItem('dashboardBorsa');
-            if (d) { const p = JSON.parse(d); p.dark = isDark; localStorage.setItem('dashboardBorsa', JSON.stringify(p)); }
-        } catch(e) {}
+<!-- MODAL: Nuova / Modifica categoria -->
+<div class="modal-overlay" id="catModal">
+    <div class="modal">
+        <h2 id="catModalTitle">Nuova Categoria</h2>
+        <div class="modal-field">
+            <label>Nome categoria</label>
+            <input type="text" id="catModalName" placeholder="es. I Miei Preferiti" maxlength="24">
+        </div>
+        <div class="modal-field">
+            <label>Asset — uno per riga</label>
+            <textarea id="catModalSymbols" rows="10"
+                placeholder="AAPL Apple&#10;TSLA Tesla&#10;NVDA&#10;ENI.MI Eni&#10;BTC-USD Bitcoin&#10;EURUSD=X EUR/USD"></textarea>
+        </div>
+        <div class="modal-hint">
+            Formato: <code>SIMBOLO</code> oppure <code>SIMBOLO Nome</code><br>
+            Esempi: <code>AAPL</code> &nbsp;·&nbsp; <code>AAPL Apple</code> &nbsp;·&nbsp;
+            <code>ENI.MI Eni</code> &nbsp;·&nbsp; <code>BTC-USD Bitcoin</code> &nbsp;·&nbsp;
+            <code>EURUSD=X EUR/USD</code> &nbsp;·&nbsp; <code>^GSPC S&amp;P 500</code>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeCatModal()">Annulla</button>
+            <button class="btn-save" onclick="saveCatModal()">Salva</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== ASSET DEFINITIONS ====================
+const ASSETS = {
+    nasdaq: {
+        label: 'NASDAQ', pillClass: 'pill-nasdaq',
+        items: [
+            {symbol:'AAPL',name:'Apple'},{symbol:'MSFT',name:'Microsoft'},
+            {symbol:'NVDA',name:'NVIDIA'},{symbol:'AMZN',name:'Amazon'},
+            {symbol:'META',name:'Meta'},{symbol:'GOOGL',name:'Alphabet'},
+            {symbol:'TSLA',name:'Tesla'},{symbol:'AVGO',name:'Broadcom'},
+            {symbol:'NFLX',name:'Netflix'},{symbol:'AMD',name:'AMD'},
+            {symbol:'ADBE',name:'Adobe'},{symbol:'QCOM',name:'Qualcomm'},
+            {symbol:'COST',name:'Costco'},{symbol:'INTC',name:'Intel'},
+            {symbol:'CSCO',name:'Cisco'},{symbol:'PYPL',name:'PayPal'},
+            {symbol:'SBUX',name:'Starbucks'},{symbol:'ORCL',name:'Oracle'},
+            {symbol:'INTU',name:'Intuit'},{symbol:'AMAT',name:'Applied Materials'}
+        ]
+    },
+    sp500: {
+        label: 'S&P 500', pillClass: 'pill-sp500',
+        items: [
+            {symbol:'JPM',name:'JPMorgan Chase'},{symbol:'V',name:'Visa'},
+            {symbol:'WMT',name:'Walmart'},{symbol:'MA',name:'Mastercard'},
+            {symbol:'XOM',name:'ExxonMobil'},{symbol:'JNJ',name:'Johnson & Johnson'},
+            {symbol:'PG',name:'Procter & Gamble'},{symbol:'UNH',name:'UnitedHealth'},
+            {symbol:'HD',name:'Home Depot'},{symbol:'CVX',name:'Chevron'},
+            {symbol:'MRK',name:'Merck'},{symbol:'BAC',name:'Bank of America'},
+            {symbol:'KO',name:'Coca-Cola'},{symbol:'LLY',name:'Eli Lilly'},
+            {symbol:'ABBV',name:'AbbVie'},{symbol:'PFE',name:'Pfizer'},
+            {symbol:'DIS',name:'Walt Disney'},{symbol:'MCD',name:"McDonald's"},
+            {symbol:'WFC',name:'Wells Fargo'},{symbol:'GS',name:'Goldman Sachs'}
+        ]
+    },
+    italia: {
+        label: 'Borsa IT', pillClass: 'pill-italia',
+        items: [
+            {symbol:'ENI.MI',name:'Eni'},{symbol:'ENEL.MI',name:'Enel'},
+            {symbol:'ISP.MI',name:'Intesa Sanpaolo'},{symbol:'UCG.MI',name:'UniCredit'},
+            {symbol:'STM.MI',name:'STMicroelectronics'},{symbol:'G.MI',name:'Generali'},
+            {symbol:'STLAM.MI',name:'Stellantis'},{symbol:'TIT.MI',name:'Telecom Italia'},
+            {symbol:'MB.MI',name:'Mediobanca'},{symbol:'FBK.MI',name:'FinecoBank'},
+            {symbol:'LDO.MI',name:'Leonardo'},{symbol:'MONC.MI',name:'Moncler'},
+            {symbol:'RACE.MI',name:'Ferrari'},{symbol:'BMED.MI',name:'Banca Mediolanum'},
+            {symbol:'CNHI.MI',name:'CNH Industrial'},{symbol:'HER.MI',name:'Hera'},
+            {symbol:'INW.MI',name:'Inwit'},{symbol:'AMP.MI',name:'Amplifon'},
+            {symbol:'PRY.MI',name:'Prysmian'},{symbol:'CPR.MI',name:'Azimut'}
+        ]
+    },
+    cinesi: {
+        label: 'Cinesi', pillClass: 'pill-cinesi',
+        items: [
+            {symbol:'BABA',name:'Alibaba'},{symbol:'JD',name:'JD.com'},
+            {symbol:'BIDU',name:'Baidu'},{symbol:'PDD',name:'PDD (Temu)'},
+            {symbol:'NIO',name:'NIO'},{symbol:'XPEV',name:'XPeng'},
+            {symbol:'LI',name:'Li Auto'},{symbol:'TME',name:'Tencent Music'},
+            {symbol:'NTES',name:'NetEase'},{symbol:'YUMC',name:'Yum China'},
+            {symbol:'EDU',name:'New Oriental'},{symbol:'FUTU',name:'Futu Holdings'},
+            {symbol:'IQ',name:'iQIYI'},{symbol:'MNSO',name:'MINISO'},{symbol:'ZH',name:'Zhihu'}
+        ]
+    },
+    europee: {
+        label: 'Europee', pillClass: 'pill-europee',
+        items: [
+            {symbol:'ASML.AS',name:'ASML'},{symbol:'SAP.DE',name:'SAP'},
+            {symbol:'NESN.SW',name:'Nestlé'},{symbol:'MC.PA',name:'LVMH'},
+            {symbol:'OR.PA',name:"L'Oréal"},{symbol:'SIE.DE',name:'Siemens'},
+            {symbol:'TTE.PA',name:'TotalEnergies'},{symbol:'NOVN.SW',name:'Novartis'},
+            {symbol:'ALV.DE',name:'Allianz'},{symbol:'BNP.PA',name:'BNP Paribas'},
+            {symbol:'AZN.L',name:'AstraZeneca'},{symbol:'AIR.PA',name:'Airbus'},
+            {symbol:'VOW3.DE',name:'Volkswagen'},{symbol:'BMW.DE',name:'BMW'},
+            {symbol:'ROG.SW',name:'Roche'}
+        ]
+    },
+    crypto: {
+        label: 'Crypto', pillClass: 'pill-crypto',
+        items: [
+            {symbol:'BTC-USD',name:'Bitcoin'},{symbol:'ETH-USD',name:'Ethereum'},
+            {symbol:'BNB-USD',name:'BNB'},{symbol:'SOL-USD',name:'Solana'},
+            {symbol:'XRP-USD',name:'XRP'},{symbol:'ADA-USD',name:'Cardano'},
+            {symbol:'DOGE-USD',name:'Dogecoin'},{symbol:'AVAX-USD',name:'Avalanche'},
+            {symbol:'DOT-USD',name:'Polkadot'},{symbol:'LINK-USD',name:'Chainlink'},
+            {symbol:'LTC-USD',name:'Litecoin'},{symbol:'BCH-USD',name:'Bitcoin Cash'},
+            {symbol:'ATOM-USD',name:'Cosmos'},{symbol:'UNI-USD',name:'Uniswap'},
+            {symbol:'MATIC-USD',name:'Polygon'}
+        ]
+    },
+    commodities: {
+        label: 'Materie Prime', pillClass: 'pill-commodities',
+        items: [
+            {symbol:'GC=F',name:'Oro'},{symbol:'SI=F',name:'Argento'},
+            {symbol:'CL=F',name:'Petrolio WTI'},{symbol:'BZ=F',name:'Petrolio Brent'},
+            {symbol:'NG=F',name:'Gas Naturale'},{symbol:'HG=F',name:'Rame'},
+            {symbol:'ZW=F',name:'Grano'},{symbol:'ZC=F',name:'Mais'},
+            {symbol:'PL=F',name:'Platino'},{symbol:'PA=F',name:'Palladio'}
+        ]
+    },
+    forex: {
+        label: 'Forex', pillClass: 'pill-forex',
+        items: [
+            {symbol:'EURUSD=X',name:'EUR/USD'},{symbol:'GBPUSD=X',name:'GBP/USD'},
+            {symbol:'USDJPY=X',name:'USD/JPY'},{symbol:'USDCHF=X',name:'USD/CHF'},
+            {symbol:'AUDUSD=X',name:'AUD/USD'},{symbol:'USDCAD=X',name:'USD/CAD'},
+            {symbol:'EURGBP=X',name:'EUR/GBP'},{symbol:'EURJPY=X',name:'EUR/JPY'},
+            {symbol:'NZDUSD=X',name:'NZD/USD'},{symbol:'GBPJPY=X',name:'GBP/JPY'}
+        ]
+    },
+    indici: {
+        label: 'Indici', pillClass: 'pill-indici',
+        items: [
+            {symbol:'^GSPC',name:'S&P 500'},{symbol:'^IXIC',name:'NASDAQ Composite'},
+            {symbol:'^DJI',name:'Dow Jones'},{symbol:'^FTSE',name:'FTSE 100'},
+            {symbol:'^GDAXI',name:'DAX 40'},{symbol:'^FCHI',name:'CAC 40'},
+            {symbol:'^N225',name:'Nikkei 225'},{symbol:'^HSI',name:'Hang Seng'},
+            {symbol:'^STOXX50E',name:'Euro Stoxx 50'},{symbol:'^RUT',name:'Russell 2000'},
+            {symbol:'000001.SS',name:'Shanghai Composite'},{symbol:'^BSESN',name:'BSE Sensex'}
+        ]
     }
-    function loadTheme() {
-        try {
-            const d = localStorage.getItem('dashboardBorsa');
-            if (d) { const p = JSON.parse(d); if (p.dark !== undefined) isDark = p.dark; }
-        } catch(e) {}
-        document.documentElement.classList.toggle('light', !isDark);
-    }
+};
 
-    // ==================== FILTERS ====================
-    document.querySelectorAll('.cat-btn').forEach(btn => {
+// Palette colori per categorie custom
+const CUSTOM_COLORS = ['#6a1b9a','#2e7d32','#00838f','#ad1457','#bf360c','#1565c0','#37474f','#558b2f','#4a148c','#006064'];
+
+// ==================== STATE ====================
+let isDark = true;
+let rankingData = [];
+let currentSort = 'desc';
+let customCats = {};      // { key: { label, items: [{symbol, name}] } }
+let modalEditKey = null;  // null = nuova, string = modifica
+
+// ==================== THEME ====================
+function toggleTheme() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('light', !isDark);
+    try {
+        const d = localStorage.getItem('dashboardBorsa');
+        if (d) { const p = JSON.parse(d); p.dark = isDark; localStorage.setItem('dashboardBorsa', JSON.stringify(p)); }
+    } catch(e) {}
+}
+function loadTheme() {
+    try {
+        const d = localStorage.getItem('dashboardBorsa');
+        if (d) { const p = JSON.parse(d); if (p.dark !== undefined) isDark = p.dark; }
+    } catch(e) {}
+    document.documentElement.classList.toggle('light', !isDark);
+}
+
+// ==================== CUSTOM CATEGORIES ====================
+const CUSTOM_CATS_KEY = 'rankingCustomCats';
+
+function loadCustomCats() {
+    try {
+        const d = localStorage.getItem(CUSTOM_CATS_KEY);
+        if (d) customCats = JSON.parse(d);
+    } catch(e) { customCats = {}; }
+}
+
+function saveCustomCats() {
+    try { localStorage.setItem(CUSTOM_CATS_KEY, JSON.stringify(customCats)); } catch(e) {}
+}
+
+function getCustomColor(key) {
+    const keys = Object.keys(customCats);
+    const idx = keys.indexOf(key);
+    return CUSTOM_COLORS[idx >= 0 ? idx % CUSTOM_COLORS.length : 0];
+}
+
+function parseSymbolsText(text) {
+    const items = [];
+    const seen = new Set();
+    const lines = text.replace(/,\s*/g, '\n').split('\n');
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const parts = trimmed.split(/\s+/);
+        const symbol = parts[0].toUpperCase();
+        if (!symbol || seen.has(symbol)) continue;
+        seen.add(symbol);
+        const name = parts.slice(1).join(' ').trim() || symbol;
+        items.push({ symbol, name });
+    }
+    return items;
+}
+
+function renderCustomCatButtons() {
+    const container = document.getElementById('catBtns');
+    // Rimuovi i wrapper custom esistenti
+    container.querySelectorAll('.custom-cat-wrapper').forEach(el => el.remove());
+
+    let colorIdx = 0;
+    for (const key in customCats) {
+        const cat = customCats[key];
+        const color = CUSTOM_COLORS[colorIdx % CUSTOM_COLORS.length];
+        colorIdx++;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-cat-wrapper';
+
+        const btn = document.createElement('button');
+        btn.className = 'cat-btn';
+        btn.dataset.cat = key;
+        btn.style.cssText = 'border-left: 3px solid ' + color + ';';
+        btn.textContent = cat.label;
         btn.addEventListener('click', () => {
             btn.classList.toggle('active');
             updateSelAllBtn();
         });
+
+        const actions = document.createElement('div');
+        actions.className = 'custom-cat-actions';
+
+        const btnEdit = document.createElement('button');
+        btnEdit.textContent = '✎ Modifica';
+        btnEdit.addEventListener('click', (e) => { e.stopPropagation(); openEditCatModal(key); });
+
+        const btnDel = document.createElement('button');
+        btnDel.textContent = '✕ Elimina';
+        btnDel.className = 'danger';
+        btnDel.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteCustomCat(key, wrapper, btn);
+        });
+
+        actions.append(btnEdit, btnDel);
+        wrapper.append(btn, actions);
+        container.appendChild(wrapper);
+    }
+    updateSelAllBtn();
+}
+
+function deleteCustomCat(key, wrapper, btn) {
+    if (!confirm('Eliminare la categoria "' + customCats[key].label + '"?')) return;
+    delete customCats[key];
+    saveCustomCats();
+    wrapper.remove();
+    updateSelAllBtn();
+}
+
+// ==================== MODAL CATEGORIE ====================
+function openNewCatModal() {
+    modalEditKey = null;
+    document.getElementById('catModalTitle').textContent = 'Nuova Categoria';
+    document.getElementById('catModalName').value = '';
+    document.getElementById('catModalSymbols').value = '';
+    document.getElementById('catModal').classList.add('open');
+    document.getElementById('catModalName').focus();
+}
+
+function openEditCatModal(key) {
+    modalEditKey = key;
+    const cat = customCats[key];
+    document.getElementById('catModalTitle').textContent = 'Modifica Categoria';
+    document.getElementById('catModalName').value = cat.label;
+    document.getElementById('catModalSymbols').value = cat.items.map(i => i.symbol === i.name ? i.symbol : i.symbol + ' ' + i.name).join('\n');
+    document.getElementById('catModal').classList.add('open');
+    document.getElementById('catModalName').focus();
+}
+
+function closeCatModal() {
+    document.getElementById('catModal').classList.remove('open');
+    modalEditKey = null;
+}
+
+function saveCatModal() {
+    const name = document.getElementById('catModalName').value.trim();
+    const symbolsText = document.getElementById('catModalSymbols').value;
+    const items = parseSymbolsText(symbolsText);
+
+    if (!name) { document.getElementById('catModalName').focus(); alert('Inserisci il nome della categoria'); return; }
+    if (!items.length) { document.getElementById('catModalSymbols').focus(); alert('Inserisci almeno un simbolo'); return; }
+
+    if (modalEditKey) {
+        // Modifica esistente
+        customCats[modalEditKey].label = name;
+        customCats[modalEditKey].items = items;
+    } else {
+        // Nuova categoria
+        const key = 'cc_' + Date.now();
+        customCats[key] = { label: name, items };
+    }
+
+    saveCustomCats();
+    renderCustomCatButtons();
+    closeCatModal();
+}
+
+// Chiudi modal cliccando overlay
+document.getElementById('catModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCatModal();
+});
+document.getElementById('catModalName').addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeCatModal();
+});
+
+// ==================== FILTERS ====================
+document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     });
-    document.querySelectorAll('.period-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
+});
+document.querySelectorAll('.limit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     });
+});
+document.getElementById('catBtns').addEventListener('click', function(e) {
+    if (e.target.classList.contains('cat-btn')) updateSelAllBtn();
+});
 
-    function updateSelAllBtn() {
-        const all = document.querySelectorAll('.cat-btn');
-        const active = document.querySelectorAll('.cat-btn.active');
-        document.getElementById('btnSelAll').textContent = active.length === all.length ? 'Rimuovi tutte' : 'Tutte';
+function updateSelAllBtn() {
+    const all = document.querySelectorAll('#catBtns .cat-btn');
+    const active = document.querySelectorAll('#catBtns .cat-btn.active');
+    document.getElementById('btnSelAll').textContent = (active.length === all.length && all.length > 0) ? 'Rimuovi tutte' : 'Tutte';
+}
+
+function toggleSelectAll() {
+    const all = document.querySelectorAll('#catBtns .cat-btn');
+    const active = document.querySelectorAll('#catBtns .cat-btn.active');
+    const selectAll = active.length !== all.length;
+    all.forEach(btn => btn.classList.toggle('active', selectAll));
+    updateSelAllBtn();
+}
+
+// ==================== HELPERS ====================
+function getAllCats() {
+    const all = {};
+    for (const key in ASSETS) all[key] = ASSETS[key];
+    let colorIdx = 0;
+    for (const key in customCats) {
+        all[key] = {
+            label: customCats[key].label,
+            pillClass: '',
+            pillStyle: CUSTOM_COLORS[colorIdx % CUSTOM_COLORS.length],
+            items: customCats[key].items,
+            isCustom: true
+        };
+        colorIdx++;
     }
+    return all;
+}
 
-    function toggleSelectAll() {
-        const all = document.querySelectorAll('.cat-btn');
-        const active = document.querySelectorAll('.cat-btn.active');
-        const selectAll = active.length !== all.length;
-        all.forEach(btn => btn.classList.toggle('active', selectAll));
-        updateSelAllBtn();
-    }
+function escapeHtml(s) {
+    return String(s || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
-    // ==================== API ====================
-    function escapeHtml(s) {
-        return String(s || '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
+// ==================== API ====================
+async function fetchWithTimeout(url, options, ms) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms || 5000);
+    try { return await fetch(url, { ...options, signal: ctrl.signal }); }
+    finally { clearTimeout(t); }
+}
 
-    async function fetchWithTimeout(url, options, ms) {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), ms || 5000);
-        try {
-            return await fetch(url, { ...options, signal: ctrl.signal });
-        } finally { clearTimeout(t); }
-    }
+async function fetchJson(url, ms) {
+    const proxies = [
+        url,
+        'https://corsproxy.io/?' + encodeURIComponent(url),
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
+    ];
+    const attempts = proxies.map(async u => {
+        const res = await fetchWithTimeout(u, { headers: { Accept: 'application/json' } }, ms || 5000);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const txt = await res.text();
+        return JSON.parse(txt.replace(/^\uFEFF/, '').replace(/^\)\]\}',?\s*/, '').trim());
+    });
+    return Promise.any(attempts);
+}
 
-    async function fetchJson(url, ms) {
-        const proxies = [
-            url,
-            'https://corsproxy.io/?' + encodeURIComponent(url),
-            'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
-        ];
-        const attempts = proxies.map(async u => {
-            const res = await fetchWithTimeout(u, { headers: { Accept: 'application/json' } }, ms || 5000);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const txt = await res.text();
-            return JSON.parse(txt.replace(/^\uFEFF/, '').replace(/^\)\]\}',?\s*/, '').trim());
-        });
-        return Promise.any(attempts);
-    }
+async function fetchPerf(symbol, range, interval) {
+    const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' +
+        encodeURIComponent(symbol) + '?interval=' + interval + '&range=' + range;
+    try {
+        const data = await fetchJson(url, 7000);
+        const res = data && data.chart && data.chart.result && data.chart.result[0];
+        if (!res) return null;
+        const meta = res.meta || {};
+        const rawCloses = (res.indicators && res.indicators.quote && res.indicators.quote[0] && res.indicators.quote[0].close) || [];
+        const closes = rawCloses.filter(c => c != null && isFinite(c) && c > 0);
 
-    async function fetchPerf(symbol, range, interval) {
-        const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' +
-            encodeURIComponent(symbol) + '?interval=' + interval + '&range=' + range;
-        try {
-            const data = await fetchJson(url, 7000);
-            const res = data && data.chart && data.chart.result && data.chart.result[0];
-            if (!res) return null;
-            const meta = res.meta || {};
-            const rawCloses = (res.indicators && res.indicators.quote && res.indicators.quote[0] && res.indicators.quote[0].close) || [];
-            const closes = rawCloses.filter(c => c != null && isFinite(c) && c > 0);
-
-            // For 1-day period: use meta's change % for accuracy (handles open markets)
-            if (range === '2d' && meta.regularMarketChangePercent != null) {
-                return {
-                    changePct: meta.regularMarketChangePercent,
-                    currentPrice: meta.regularMarketPrice || null,
-                    currency: meta.currency || ''
-                };
-            }
-
-            // For all other periods: first close vs current market price
-            const curPrice = (meta.regularMarketPrice && isFinite(meta.regularMarketPrice) && meta.regularMarketPrice > 0)
-                ? meta.regularMarketPrice : null;
-
-            if (closes.length < 1) return null;
-            const startPrice = closes[0];
-            const endPrice = curPrice || closes[closes.length - 1];
-            if (!startPrice || !endPrice || startPrice <= 0) return null;
-
-            return {
-                changePct: ((endPrice - startPrice) / startPrice) * 100,
-                currentPrice: endPrice,
-                currency: meta.currency || ''
-            };
-        } catch(e) { return null; }
-    }
-
-    // ==================== LOAD ====================
-    async function loadRanking() {
-        const selectedCats = [...document.querySelectorAll('.cat-btn.active')].map(b => b.dataset.cat);
-        const periodBtn = document.querySelector('.period-btn.active');
-        if (!selectedCats.length) { alert('Seleziona almeno una categoria'); return; }
-
-        const range = periodBtn.dataset.period;
-        const interval = periodBtn.dataset.interval;
-
-        // Build asset list
-        const toFetch = [];
-        selectedCats.forEach(cat => {
-            ASSETS[cat].items.forEach(item => {
-                toFetch.push({
-                    symbol: item.symbol, name: item.name,
-                    cat, catLabel: ASSETS[cat].label, pillClass: ASSETS[cat].pillClass
-                });
-            });
-        });
-
-        const total = toFetch.length;
-        let done = 0;
-
-        const loadBtn = document.getElementById('loadBtn');
-        loadBtn.disabled = true;
-        loadBtn.textContent = 'Caricamento...';
-        document.getElementById('resultsHeader').style.display = 'none';
-        document.getElementById('progressText').textContent = '0 / ' + total;
-        document.getElementById('resultsArea').innerHTML =
-            '<div class="status-box"><div class="spinner"></div><div>Recupero dati per ' + total + ' asset in corso...</div></div>';
-
-        const promises = toFetch.map(async asset => {
-            const perf = await fetchPerf(asset.symbol, range, interval);
-            done++;
-            document.getElementById('progressText').textContent = done + ' / ' + total;
-            if (!perf) return null;
-            return Object.assign({}, asset, perf);
-        });
-
-        const results = (await Promise.all(promises)).filter(Boolean);
-
-        loadBtn.disabled = false;
-        loadBtn.textContent = 'Aggiorna';
-
-        if (!results.length) {
-            document.getElementById('resultsArea').innerHTML =
-                '<div class="status-box">Nessun dato disponibile. Controlla la connessione e riprova.</div>';
-            document.getElementById('progressText').textContent = '';
-            return;
+        if (range === '2d' && meta.regularMarketChangePercent != null) {
+            return { changePct: meta.regularMarketChangePercent, currentPrice: meta.regularMarketPrice || null, currency: meta.currency || '' };
         }
 
-        document.getElementById('progressText').textContent =
-            results.length + ' / ' + total + ' asset caricati';
+        const curPrice = (meta.regularMarketPrice && isFinite(meta.regularMarketPrice) && meta.regularMarketPrice > 0)
+            ? meta.regularMarketPrice : null;
+        if (closes.length < 1) return null;
+        const startPrice = closes[0];
+        const endPrice = curPrice || closes[closes.length - 1];
+        if (!startPrice || !endPrice || startPrice <= 0) return null;
 
-        rankingData = results;
-        currentSort = 'desc';
-        document.getElementById('resultsHeader').style.display = 'flex';
-        document.getElementById('btnDesc').classList.add('active');
-        document.getElementById('btnAsc').classList.remove('active');
-        renderRanking();
-    }
+        return { changePct: ((endPrice - startPrice) / startPrice) * 100, currentPrice: endPrice, currency: meta.currency || '' };
+    } catch(e) { return null; }
+}
 
-    function sortResults(dir) {
-        currentSort = dir;
-        document.getElementById('btnDesc').classList.toggle('active', dir === 'desc');
-        document.getElementById('btnAsc').classList.toggle('active', dir === 'asc');
-        renderRanking();
-    }
+// ==================== LOAD ====================
+async function loadRanking() {
+    const selectedCatKeys = [...document.querySelectorAll('#catBtns .cat-btn.active')].map(b => b.dataset.cat);
+    const periodBtn = document.querySelector('.period-btn.active');
+    const limitBtn  = document.querySelector('.limit-btn.active');
+    if (!selectedCatKeys.length) { alert('Seleziona almeno una categoria'); return; }
 
-    // ==================== RENDER ====================
-    function formatPrice(price, currency) {
-        if (price == null || !isFinite(price)) return '—';
-        const abs = Math.abs(price);
-        const dec = abs < 0.0001 ? 6 : abs < 0.01 ? 5 : abs < 1 ? 4 : 2;
-        const s = price.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-        return currency ? s + ' ' + currency : s;
-    }
+    const range    = periodBtn.dataset.period;
+    const interval = periodBtn.dataset.interval;
+    const limit    = parseInt(limitBtn.dataset.limit) || 0;
 
-    function renderRanking() {
-        const sorted = [...rankingData].sort((a, b) =>
-            currentSort === 'desc' ? b.changePct - a.changePct : a.changePct - b.changePct
-        );
-        const maxAbs = Math.max(...sorted.map(r => Math.abs(r.changePct)), 0.001);
+    const allCats = getAllCats();
+    const toFetch = [];
+    const seenSymbols = new Set();
 
-        document.getElementById('resultsInfo').textContent = sorted.length + ' asset';
+    selectedCatKeys.forEach(cat => {
+        const catDef = allCats[cat];
+        if (!catDef) return;
+        const items = limit > 0 ? catDef.items.slice(0, limit) : catDef.items;
+        items.forEach(item => {
+            if (seenSymbols.has(item.symbol)) return; // evita duplicati tra categorie
+            seenSymbols.add(item.symbol);
+            toFetch.push({
+                symbol: item.symbol, name: item.name,
+                cat, catLabel: catDef.label,
+                pillClass: catDef.pillClass || '',
+                pillStyle: catDef.pillStyle || null
+            });
+        });
+    });
 
-        const rows = sorted.map((item, idx) => {
-            const rank = idx + 1;
-            const isPos = item.changePct >= 0;
-            const pct = (isPos ? '+' : '') + item.changePct.toFixed(2) + '%';
-            const barW = Math.min(100, Math.round((Math.abs(item.changePct) / maxAbs) * 100));
-            const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const total = toFetch.length;
+    let done = 0;
 
-            return '<tr>' +
-                '<td class="td-rank ' + rankClass + '">' + rank + '</td>' +
-                '<td class="td-name">' + escapeHtml(item.name) + '</td>' +
-                '<td class="td-symbol">' + escapeHtml(item.symbol) + '</td>' +
-                '<td class="td-change ' + (isPos ? 'pos' : 'neg') + '">' +
-                    pct +
-                    '<div class="chg-bar-wrap"><div class="chg-bar ' + (isPos ? 'bar-pos' : 'bar-neg') + '" style="width:' + barW + '%"></div></div>' +
-                '</td>' +
-                '<td class="td-price td-cat-hide-price">' + formatPrice(item.currentPrice, item.currency) + '</td>' +
-                '<td class="td-cat-hide-cat"><span class="cat-pill ' + item.pillClass + '">' + escapeHtml(item.catLabel) + '</span></td>' +
-                '</tr>';
-        }).join('');
+    const loadBtn = document.getElementById('loadBtn');
+    loadBtn.disabled = true;
+    loadBtn.textContent = 'Caricamento...';
+    document.getElementById('resultsHeader').style.display = 'none';
+    document.getElementById('progressText').textContent = '0 / ' + total;
+    document.getElementById('resultsArea').innerHTML =
+        '<div class="status-box"><div class="spinner"></div><div>Recupero dati per ' + total + ' asset...</div></div>';
 
+    const promises = toFetch.map(async asset => {
+        const perf = await fetchPerf(asset.symbol, range, interval);
+        done++;
+        document.getElementById('progressText').textContent = done + ' / ' + total;
+        if (!perf) return null;
+        return Object.assign({}, asset, perf);
+    });
+
+    const results = (await Promise.all(promises)).filter(Boolean);
+
+    loadBtn.disabled = false;
+    loadBtn.textContent = 'Aggiorna';
+
+    if (!results.length) {
         document.getElementById('resultsArea').innerHTML =
-            '<table class="rank-table">' +
-            '<thead><tr>' +
-            '<th>#</th><th>Nome</th><th>Simbolo</th><th>Variazione</th>' +
-            '<th class="th-price">Prezzo Attuale</th>' +
-            '<th class="th-cat">Categoria</th>' +
-            '</tr></thead>' +
-            '<tbody>' + rows + '</tbody>' +
-            '</table>';
+            '<div class="status-box">Nessun dato disponibile. Controlla la connessione e riprova.</div>';
+        document.getElementById('progressText').textContent = '';
+        return;
     }
 
-    // ==================== INIT ====================
-    loadTheme();
-    </script>
+    document.getElementById('progressText').textContent =
+        results.length + ' / ' + total + ' asset caricati';
+
+    rankingData = results;
+    currentSort = 'desc';
+    document.getElementById('resultsHeader').style.display = 'flex';
+    document.getElementById('btnDesc').classList.add('active');
+    document.getElementById('btnAsc').classList.remove('active');
+    renderRanking();
+}
+
+function sortResults(dir) {
+    currentSort = dir;
+    document.getElementById('btnDesc').classList.toggle('active', dir === 'desc');
+    document.getElementById('btnAsc').classList.toggle('active', dir === 'asc');
+    renderRanking();
+}
+
+// ==================== RENDER ====================
+function formatPrice(price, currency) {
+    if (price == null || !isFinite(price)) return '—';
+    const abs = Math.abs(price);
+    const dec = abs < 0.0001 ? 6 : abs < 0.01 ? 5 : abs < 1 ? 4 : 2;
+    const s = price.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    return currency ? s + ' ' + currency : s;
+}
+
+function renderRanking() {
+    const sorted = [...rankingData].sort((a, b) =>
+        currentSort === 'desc' ? b.changePct - a.changePct : a.changePct - b.changePct
+    );
+    const maxAbs = Math.max(...sorted.map(r => Math.abs(r.changePct)), 0.001);
+    document.getElementById('resultsInfo').textContent = sorted.length + ' asset';
+
+    const rows = sorted.map((item, idx) => {
+        const rank = idx + 1;
+        const isPos = item.changePct >= 0;
+        const pct = (isPos ? '+' : '') + item.changePct.toFixed(2) + '%';
+        const barW = Math.min(100, Math.round((Math.abs(item.changePct) / maxAbs) * 100));
+        const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+        const pill = item.pillStyle
+            ? '<span class="cat-pill" style="background:' + escapeHtml(item.pillStyle) + '">' + escapeHtml(item.catLabel) + '</span>'
+            : '<span class="cat-pill ' + escapeHtml(item.pillClass) + '">' + escapeHtml(item.catLabel) + '</span>';
+
+        return '<tr>' +
+            '<td class="td-rank ' + rankClass + '">' + rank + '</td>' +
+            '<td class="td-name">' + escapeHtml(item.name) + '</td>' +
+            '<td class="td-symbol">' + escapeHtml(item.symbol) + '</td>' +
+            '<td class="td-change ' + (isPos ? 'pos' : 'neg') + '">' +
+                pct +
+                '<div class="chg-bar-wrap"><div class="chg-bar ' + (isPos ? 'bar-pos' : 'bar-neg') + '" style="width:' + barW + '%"></div></div>' +
+            '</td>' +
+            '<td class="td-price th-price">' + formatPrice(item.currentPrice, item.currency) + '</td>' +
+            '<td class="th-cat">' + pill + '</td>' +
+            '</tr>';
+    }).join('');
+
+    document.getElementById('resultsArea').innerHTML =
+        '<table class="rank-table">' +
+        '<thead><tr>' +
+        '<th>#</th><th>Nome</th><th>Simbolo</th><th>Variazione</th>' +
+        '<th class="th-price">Prezzo</th><th class="th-cat">Categoria</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>';
+}
+
+// ==================== INIT ====================
+loadTheme();
+loadCustomCats();
+renderCustomCatButtons();
+</script>
 </body>
 </html>
