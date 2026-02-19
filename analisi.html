@@ -366,9 +366,29 @@
         .asset-tag-remove:hover { color: var(--accent); }
         .tags-empty { font-size: 0.74rem; color: var(--text-secondary); font-style: italic; align-self: center; }
 
+        /* ---- WARNING BADGES ---- */
+        .warn-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+        .warn-badge {
+            font-size: 0.58rem; font-weight: 700; padding: 1px 5px;
+            border-radius: 3px; white-space: nowrap; cursor: default;
+            letter-spacing: 0.3px; text-transform: uppercase;
+        }
+        .wb-red    { background: rgba(231,76,60,0.15);  color: #e74c3c; border: 1px solid rgba(231,76,60,0.35); }
+        .wb-green  { background: rgba(46,204,113,0.15); color: #27ae60; border: 1px solid rgba(46,204,113,0.35); }
+        .wb-yellow { background: rgba(241,196,15,0.12); color: #b7950b; border: 1px solid rgba(241,196,15,0.4); }
+        html.light .wb-yellow { color: #9a7d0a; }
+        .wb-orange { background: rgba(230,126,34,0.15); color: #ca6f1e; border: 1px solid rgba(230,126,34,0.35); }
+        .wb-blue   { background: rgba(52,152,219,0.15); color: #2e86c1; border: 1px solid rgba(52,152,219,0.35); }
+
+        /* ---- MACD CELL ---- */
+        .td-macd { text-align: center; min-width: 44px; font-size: 0.9rem; font-weight: 700; }
+        .macd-bull { color: #2ecc71; }
+        .macd-bear { color: #e74c3c; }
+        .macd-neut { color: var(--text-secondary); }
+
         /* ---- RESPONSIVE ---- */
         @media (max-width: 860px) {
-            .th-roe, .td-roe, .th-growth, .td-growth { display: none; }
+            .th-roe, .td-roe, .th-growth, .td-growth, .th-macd, .td-macd { display: none; }
         }
         @media (max-width: 680px) {
             .main-content { padding: 10px; }
@@ -451,25 +471,27 @@
         <div class="legend-grid">
             <div class="legend-section">
                 <strong>Punteggio Tecnico (0–10)</strong>
-                Calcolato da:<br>
-                · <b>RSI(14)</b> — ipervenduto &lt;30 = opportunità, ipercomprato &gt;70 = rischio<br>
-                · <b>Media Mobile EMA20/EMA50</b> — direzione del trend<br>
-                · <b>Momentum 1 mese</b> — forza recente del movimento<br>
+                Pesi: RSI 30% · EMA Trend 25% · MACD 25% · Bollinger %B 20%<br>
+                · <b>RSI(14)</b> — &lt;30 ipervenduto (positivo), &gt;70 ipercomprato (negativo)<br>
+                · <b>EMA20/EMA50</b> — direzione e forza del trend<br>
+                · <b>MACD(12,26,9)</b> — momentum: <span class="macd-bull">▲</span> rialzista, <span class="macd-bear">▼</span> ribassista<br>
+                · <b>Bollinger %B</b> — posizione nelle bande (0=minimo banda, 1=massimo banda)<br>
                 Peso nel totale: <b>40%</b> (azioni), <b>100%</b> (crypto/forex/futures/indici)
             </div>
             <div class="legend-section">
                 <strong>Punteggio Fondamentale (0–10) — solo azioni</strong>
-                · <b>P/E</b> — prezzo/utili: basso = più conveniente<br>
-                · <b>ROE</b> — redditività del capitale: alto = meglio<br>
-                · <b>Crescita ricavi</b> — crescita YoY<br>
-                · <b>P/B</b> — prezzo/valore contabile<br>
-                · <b>Debito/Equity</b> — basso = più solido<br>
+                Pesi: PEG/PE 25% · ROE 20% · Crescita 15% · Margine 15% · P/B 10% · Debito 10%<br>
+                · <b>PEG</b> — P/E ÷ crescita utili%: &lt;1 = possibile sottovalutazione, &gt;2 = caro<br>
+                · <b>P/E</b> — usato quando PEG non disponibile<br>
+                · <b>ROE</b> — redditività del capitale proprio<br>
+                · <b>Margine Netto</b> — profitto netto su ricavi totali<br>
+                · <b>Crescita ricavi/utili</b> — variazione anno su anno<br>
                 Peso nel totale: <b>60%</b> (azioni)
             </div>
             <div class="legend-section">
                 <strong>Punteggio Complessivo (0–100)</strong>
                 Azioni: Tecnico 40% + Fondamentale 60%<br>
-                Altri: solo Tecnico × 10<br><br>
+                Altri asset: solo Tecnico × 10<br><br>
                 <b style="color:#2ecc71">&#9679; ACQUISTA</b> ≥ 65 &nbsp;·&nbsp;
                 <b style="color:#f1c40f">&#9679; NEUTRO</b> 45–64 &nbsp;·&nbsp;
                 <b style="color:#e74c3c">&#9679; ATTENZIONE</b> &lt; 45<br><br>
@@ -480,12 +502,16 @@
                 <span class="rsi-overbought">&#9679;</span> &gt;70
             </div>
             <div class="legend-section">
-                <strong>Trend (medie mobili)</strong>
+                <strong>Trend &amp; Badge avviso</strong>
                 <span class="trend-val trend-up">↑</span> MA20 &gt; MA50, prezzo &gt; MA20<br>
-                <span class="trend-val trend-up-weak">↗</span> MA20 &gt; MA50, prezzo &lt; MA20 (dip)<br>
-                <span class="trend-val trend-neutral">→</span> MA20 ≈ MA50, laterale<br>
-                <span class="trend-val trend-down-weak">↘</span> MA20 &lt; MA50, prezzo &gt; MA20<br>
-                <span class="trend-val trend-down">↓</span> MA20 &lt; MA50, prezzo &lt; MA20
+                <span class="trend-val trend-up-weak">↗</span> Dip in uptrend (possibile acquisto)<br>
+                <span class="trend-val trend-neutral">→</span> Laterale / inversione incerta<br>
+                <span class="trend-val trend-down">↓</span> Trend ribassista<br><br>
+                <span class="warn-badge wb-green">RSI basso</span> RSI &lt;25 — possibile ipervenduto<br>
+                <span class="warn-badge wb-red">RSI alto</span> RSI &gt;75 — possibile ipercomprato<br>
+                <span class="warn-badge wb-yellow">↑ Max 52w</span> Vicino al massimo annuale<br>
+                <span class="warn-badge wb-orange">β alto</span> Beta &gt;1.8 — alta volatilità<br>
+                <span class="warn-badge wb-blue">Div X%</span> Rendimento dividendo &gt;2.5%
             </div>
         </div>
     </div>
@@ -1026,7 +1052,10 @@ async function fetchPriceHistory(symbol) {
         const closes = raw.filter(c => c != null && isFinite(c) && c > 0);
         const currentPrice = res.meta?.regularMarketPrice || (closes.length ? closes[closes.length - 1] : null);
         if (closes.length < 15) return null;
-        return { closes, currentPrice };
+        const meta = res.meta || {};
+        const high52w = (meta.fiftyTwoWeekHigh && isFinite(meta.fiftyTwoWeekHigh)) ? meta.fiftyTwoWeekHigh : null;
+        const low52w  = (meta.fiftyTwoWeekLow  && isFinite(meta.fiftyTwoWeekLow))  ? meta.fiftyTwoWeekLow  : null;
+        return { closes, currentPrice, high52w, low52w };
     } catch(e) { return null; }
 }
 
@@ -1046,8 +1075,11 @@ async function fetchFundamentals(symbol) {
         const rev = raw(fd.revenueGrowth);     // decimal
         const eg  = raw(fd.earningsGrowth);    // decimal
         const de  = raw(fd.debtToEquity);      // percentage notation e.g. 198 = D/E 1.98
+        const beta          = raw(sd.beta);
+        const divYield      = raw(sd.dividendYield);
+        const profitMargins = raw(fd.profitMargins);
         if (pe === null && pb === null && roe === null && rev === null) return null;
-        return { pe, pb, roe, revenueGrowth: rev, earningsGrowth: eg, debtToEquity: de };
+        return { pe, pb, roe, revenueGrowth: rev, earningsGrowth: eg, debtToEquity: de, beta, dividendYield: divYield, profitMargins };
     } catch(e) { return null; }
 }
 
@@ -1076,6 +1108,63 @@ function calcEMA(closes, period) {
     let ema = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
     for (let i = period; i < closes.length; i++) ema = closes[i] * k + ema * (1 - k);
     return ema;
+}
+
+// Returns an array of EMA values; index 0 = EMA at position (period-1) in closes
+function calcEMAVector(closes, period) {
+    if (closes.length < period) return [];
+    const k = 2 / (period + 1);
+    let ema = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
+    const result = [ema];
+    for (let i = period; i < closes.length; i++) {
+        ema = closes[i] * k + ema * (1 - k);
+        result.push(ema);
+    }
+    return result;
+}
+
+function calcMACD(closes) {
+    const ema12 = calcEMAVector(closes, 12);
+    const ema26 = calcEMAVector(closes, 26);
+    if (!ema12.length || !ema26.length) return null;
+    // ema12[k] aligns to closes[11+k], ema26[j] aligns to closes[25+j]
+    // MACD at closes[25+j] = ema12[j+14] - ema26[j]
+    const offset = 14; // 26 - 12
+    if (ema12.length <= offset) return null;
+    const macdArr = [];
+    for (let j = 0; j < ema26.length; j++) macdArr.push(ema12[j + offset] - ema26[j]);
+    if (macdArr.length < 9) return null;
+    const k9 = 2 / 10;
+    let sig = macdArr.slice(0, 9).reduce((a, b) => a + b, 0) / 9;
+    const sigArr = [sig];
+    for (let i = 9; i < macdArr.length; i++) {
+        sig = macdArr[i] * k9 + sig * (1 - k9);
+        sigArr.push(sig);
+    }
+    const lastMacd = macdArr[macdArr.length - 1];
+    const prevMacd = macdArr.length >= 2 ? macdArr[macdArr.length - 2] : null;
+    const lastSig  = sigArr[sigArr.length - 1];
+    const prevSig  = sigArr.length  >= 2 ? sigArr[sigArr.length - 2]  : null;
+    const histogram     = lastMacd - lastSig;
+    const prevHistogram = (prevMacd !== null && prevSig !== null) ? prevMacd - prevSig : null;
+    const bullishCross  = prevMacd !== null && prevSig !== null && prevMacd < prevSig && lastMacd >= lastSig;
+    const bearishCross  = prevMacd !== null && prevSig !== null && prevMacd > prevSig && lastMacd <= lastSig;
+    return { macdLine: lastMacd, signal: lastSig, histogram, prevHistogram, bullishCross, bearishCross };
+}
+
+function calcBollinger(closes, period, mult) {
+    period = period || 20; mult = mult || 2;
+    if (closes.length < period) return null;
+    const slice = closes.slice(-period);
+    const mean  = slice.reduce((a, b) => a + b, 0) / period;
+    const variance = slice.reduce((a, c) => a + (c - mean) * (c - mean), 0) / period;
+    const std = Math.sqrt(variance);
+    if (std === 0) return null;
+    const upper = mean + mult * std;
+    const lower = mean - mult * std;
+    const price = closes[closes.length - 1];
+    const percentB = (price - lower) / (upper - lower);
+    return { percentB, upper, lower, midBand: mean };
 }
 
 // =====================================================================
@@ -1184,6 +1273,51 @@ function scoreDebt(de_raw) {
     return 1.5;
 }
 
+function scoreMACD(macd) {
+    if (!macd) return 5;
+    let s = 5;
+    if      (macd.histogram > 0) s += 1.5;
+    else if (macd.histogram < 0) s -= 1.5;
+    if (macd.prevHistogram !== null) {
+        const growing = macd.histogram > macd.prevHistogram;
+        if (macd.histogram > 0 &&  growing) s += 0.8;
+        if (macd.histogram < 0 && !growing) s -= 0.8;
+    }
+    if (macd.bullishCross) s += 1.2;
+    if (macd.bearishCross) s -= 1.2;
+    return Math.max(0, Math.min(10, s));
+}
+function scoreBollinger(percentB) {
+    if (percentB === null || percentB === undefined || !isFinite(percentB)) return 5;
+    if (percentB <  0)    return 8.5;
+    if (percentB < 0.15)  return 7.5;
+    if (percentB < 0.30)  return 6.5;
+    if (percentB < 0.50)  return 5.5;
+    if (percentB < 0.70)  return 5;
+    if (percentB < 0.85)  return 4;
+    if (percentB < 1.00)  return 3;
+    return 2.5; // above upper band
+}
+function scorePEG(peg) {
+    if (peg === null || peg === undefined || peg <= 0 || !isFinite(peg)) return null;
+    if (peg < 0.5) return 9.5;
+    if (peg < 1.0) return 8.5;
+    if (peg < 1.5) return 7;
+    if (peg < 2.0) return 5.5;
+    if (peg < 3.0) return 3.5;
+    return 2;
+}
+function scoreProfitMargin(margin) {
+    if (margin === null || margin === undefined || !isFinite(margin)) return null;
+    const p = margin * 100;
+    if (p > 30) return 9.5;
+    if (p > 20) return 8;
+    if (p > 10) return 7;
+    if (p >  5) return 5.5;
+    if (p >  0) return 4;
+    return 2;
+}
+
 function weightedAvg(pairs) {
     const valid = pairs.filter(([v]) => v !== null);
     if (!valid.length) return null;
@@ -1195,32 +1329,47 @@ function calcTechScore(closes, currentPrice) {
     const rsi  = calcRSI(closes);
     const ma20 = calcEMA(closes, 20);
     const ma50 = calcEMA(closes, 50);
-    let mom1m = null, mom3m = null;
+    const macd = calcMACD(closes);
+    const boll = calcBollinger(closes);
+    let mom1m = null;
     if (closes.length >= 22) {
         const end = closes[closes.length - 1];
         const s1m = closes[closes.length - 22];
-        const s3m = closes.length >= 65 ? closes[closes.length - 65] : closes[0];
         if (s1m > 0) mom1m = ((end - s1m) / s1m) * 100;
-        if (s3m > 0) mom3m = ((end - s3m) / s3m) * 100;
     }
-    const sRSI = scoreRSI(rsi);
-    const sMA  = scoreMA(currentPrice, ma20, ma50);
-    const sMom = scoreMomentum(mom1m, mom3m);
-    const score = weightedAvg([[sRSI, 0.5], [sMA, 0.35], [sMom, 0.15]]) ?? 5;
-    return { score, rsi, ma20, ma50, currentPrice, mom1m };
+    const sRSI  = scoreRSI(rsi);
+    const sMA   = scoreMA(currentPrice, ma20, ma50);
+    const sMACD = scoreMACD(macd);
+    const sBoll = scoreBollinger(boll ? boll.percentB : null);
+    // Weights: RSI 30% · EMA Trend 25% · MACD 25% · Bollinger %B 20%
+    const score = weightedAvg([
+        [sRSI,  0.30],
+        [sMA,   0.25],
+        [sMACD, 0.25],
+        [sBoll, 0.20]
+    ]) ?? 5;
+    return { score, rsi, ma20, ma50, currentPrice, mom1m, macd, boll };
 }
 
 function calcFundScore(fund) {
     if (!fund) return null;
     const growth = fund.revenueGrowth ?? fund.earningsGrowth;
+    // PEG = PE / earningsGrowth%. Valid only when both are positive.
+    let peg = null;
+    if (fund.pe !== null && fund.pe > 0 && fund.earningsGrowth !== null && fund.earningsGrowth > 0) {
+        peg = fund.pe / (fund.earningsGrowth * 100);
+    }
+    // Use PEG when available (more complete than PE alone), otherwise fall back to PE
+    const sValuation = peg !== null ? scorePEG(peg) : scorePE(fund.pe);
     const score = weightedAvg([
-        [scorePE(fund.pe),       0.30],
-        [scoreROE(fund.roe),     0.25],
-        [scoreGrowth(growth),    0.20],
-        [scorePB(fund.pb),       0.15],
-        [scoreDebt(fund.debtToEquity), 0.10]
+        [sValuation,                            0.25],
+        [scoreROE(fund.roe),                    0.20],
+        [scoreGrowth(growth),                   0.15],
+        [scoreProfitMargin(fund.profitMargins),  0.15],
+        [scorePB(fund.pb),                      0.10],
+        [scoreDebt(fund.debtToEquity),          0.10]
     ]);
-    return score !== null ? { score, data: fund } : null;
+    return score !== null ? { score, data: fund, peg } : null;
 }
 
 function calcOverall(techScore, fundResult, equity) {
@@ -1287,7 +1436,14 @@ async function runAnalysis() {
             const tech = calcTechScore(priceData.closes, priceData.currentPrice);
             const fund = calcFundScore(fundData);
             const overall = calcOverall(tech.score, fund, equity);
-            return { ...asset, equity, tech, fund, overall, currentPrice: priceData.currentPrice };
+            return {
+                ...asset, equity, tech, fund, overall,
+                currentPrice:  priceData.currentPrice,
+                high52w:       priceData.high52w,
+                low52w:        priceData.low52w,
+                beta:          fundData?.beta          ?? null,
+                dividendYield: fundData?.dividendYield ?? null
+            };
         } catch(e) {
             done++;
             document.getElementById('progressText').textContent = done + ' / ' + total;
@@ -1319,6 +1475,36 @@ function setSort(key) {
     currentSort = key;
     document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === key));
     renderAnalysis();
+}
+
+// =====================================================================
+// WARNING BADGES
+// =====================================================================
+function getWarnings(item) {
+    const warns = [];
+    const rsi   = item.tech?.rsi;
+    const price  = item.currentPrice;
+    const high52w = item.high52w;
+    const low52w  = item.low52w;
+    const beta    = item.beta;
+    const div     = item.dividendYield;
+    if (rsi != null) {
+        if      (rsi < 25) warns.push({ cls:'wb-green',  text:'RSI basso',  title:'RSI ' + rsi.toFixed(1) + ' — possibile ipervenduto. Non garantisce un rimbalzo.' });
+        else if (rsi > 75) warns.push({ cls:'wb-red',    text:'RSI alto',   title:'RSI ' + rsi.toFixed(1) + ' — possibile ipercomprato. Possibile correzione.' });
+    }
+    if (price != null && high52w != null && high52w > 0 && price / high52w >= 0.97) {
+        warns.push({ cls:'wb-yellow', text:'↑ Max 52w', title:'Prezzo al ' + (price/high52w*100).toFixed(0) + '% del massimo annuale. Possibile resistenza.' });
+    }
+    if (price != null && low52w != null && low52w > 0 && price / low52w <= 1.05) {
+        warns.push({ cls:'wb-yellow', text:'↓ Min 52w', title:'Prezzo vicino al minimo annuale. Possibile supporto, ma anche rischio di proseguimento.' });
+    }
+    if (beta != null && beta > 1.8) {
+        warns.push({ cls:'wb-orange', text:'β ' + beta.toFixed(1), title:'Beta ' + beta.toFixed(2) + ' — molto più volatile del mercato. Rischio elevato.' });
+    }
+    if (div != null && div > 0.025) {
+        warns.push({ cls:'wb-blue', text:'Div ' + (div * 100).toFixed(1) + '%', title:'Rendimento da dividendo annuo: ' + (div * 100).toFixed(1) + '%. Verifica la sostenibilità.' });
+    }
+    return warns;
 }
 
 // =====================================================================
@@ -1360,6 +1546,16 @@ function renderAnalysis() {
         const rsiCls = rsi === null ? 'rsi-neutral' : rsi < 30 ? 'rsi-oversold' : rsi < 40 ? 'rsi-low' : rsi < 60 ? 'rsi-neutral' : rsi < 70 ? 'rsi-high' : 'rsi-overbought';
         const rsiTxt = rsi !== null ? rsi.toFixed(1) : '—';
 
+        // MACD cell
+        let macdHtml = '<span class="val-na">—</span>';
+        if (item.tech.macd) {
+            const m = item.tech.macd;
+            const macdCls   = m.histogram > 0 ? 'macd-bull' : m.histogram < 0 ? 'macd-bear' : 'macd-neut';
+            const macdArrow = m.histogram > 0 ? '▲' : m.histogram < 0 ? '▼' : '→';
+            const crossNote = m.bullishCross ? ' | cross rialzista ↑' : m.bearishCross ? ' | cross ribassista ↓' : '';
+            macdHtml = '<span class="' + macdCls + '" title="MACD: ' + m.macdLine.toFixed(3) + ' | Segnale: ' + m.signal.toFixed(3) + crossNote + '">' + macdArrow + '</span>';
+        }
+
         // Trend
         const trend = getTrend(item.tech.currentPrice, item.tech.ma20, item.tech.ma50);
         const trendHtml = trend
@@ -1369,24 +1565,37 @@ function renderAnalysis() {
         // Tech sub-score
         const tScore = item.tech.score.toFixed(1);
 
-        // Fund sub-score + P/E + ROE + growth
+        // Fund sub-score + P/E (+ PEG sub) + ROE (+ Margin sub) + growth
         let fundSubTxt = '';
-        let peHtml = '<span class="val-na">—</span>';
+        let peHtml  = '<span class="val-na">—</span>';
         let roeHtml = '<span class="val-na">—</span>';
         let growHtml = '<span class="val-na">—</span>';
         if (item.fund) {
             const fScore = item.fund.score.toFixed(1);
             fundSubTxt = ' F:' + fScore;
             const d = item.fund.data;
+            // P/E with PEG sub-label
             if (d.pe !== null && d.pe > 0) {
                 const peCls = d.pe < 15 ? 'val-good' : d.pe < 30 ? 'val-ok' : d.pe < 50 ? 'val-warn' : 'val-bad';
                 peHtml = '<span class="' + peCls + '">' + d.pe.toFixed(1) + '</span>';
+                if (item.fund.peg !== null) {
+                    const peg = item.fund.peg;
+                    const pegCls = peg < 1 ? 'val-good' : peg < 2 ? 'val-ok' : 'val-warn';
+                    peHtml += '<div style="font-size:0.63rem;margin-top:1px;line-height:1.2"><span style="color:var(--text-secondary)">PEG </span><span class="' + pegCls + '">' + peg.toFixed(2) + '</span></div>';
+                }
             }
+            // ROE with Profit Margin sub-label
             if (d.roe !== null) {
-                const roePct = (d.roe * 100);
+                const roePct = d.roe * 100;
                 const roeCls = roePct > 20 ? 'val-good' : roePct > 10 ? 'val-ok' : roePct > 0 ? 'val-warn' : 'val-bad';
                 roeHtml = '<span class="' + roeCls + '">' + roePct.toFixed(1) + '%</span>';
+                if (d.profitMargins != null) {
+                    const mgPct = d.profitMargins * 100;
+                    const mgCls = mgPct > 15 ? 'val-good' : mgPct > 5 ? 'val-ok' : mgPct > 0 ? 'val-warn' : 'val-bad';
+                    roeHtml += '<div style="font-size:0.63rem;margin-top:1px;line-height:1.2"><span style="color:var(--text-secondary)">Mg </span><span class="' + mgCls + '">' + mgPct.toFixed(1) + '%</span></div>';
+                }
             }
+            // Growth
             const g = d.revenueGrowth ?? d.earningsGrowth;
             if (g !== null) {
                 const gPct = g * 100;
@@ -1397,11 +1606,22 @@ function renderAnalysis() {
             fundSubTxt = ' <span class="only-tech">solo tec.</span>';
         }
 
+        // Beta in score-sub (equities only)
+        const betaTxt = (item.equity && item.beta != null) ? ' β:' + item.beta.toFixed(1) : '';
+
         // Score cell content
         const scoreHtml =
             '<div class="score-bar-wrap"><div class="score-bar ' + barCls + '" style="width:' + sc.toFixed(0) + '%"></div></div>' +
             '<div class="score-row"><span class="score-main">' + sc.toFixed(0) + '</span>' +
-            '<span class="score-sub">T:' + tScore + fundSubTxt + '</span></div>';
+            '<span class="score-sub">T:' + tScore + fundSubTxt + betaTxt + '</span></div>';
+
+        // Warning badges
+        const warnings = getWarnings(item);
+        const warningsHtml = warnings.length
+            ? '<div class="warn-badges">' + warnings.map(w =>
+                '<span class="warn-badge ' + w.cls + '" title="' + escapeHtml(w.title) + '">' + escapeHtml(w.text) + '</span>'
+              ).join('') + '</div>'
+            : '';
 
         // Category pill
         const pill = item.pillStyle
@@ -1420,9 +1640,10 @@ function renderAnalysis() {
             '<td class="td-rank ' + rankClass + '">' + rank + '</td>' +
             '<td class="td-name">' + nameCell + '</td>' +
             '<td class="td-symbol th-sym">' + escapeHtml(item.symbol) + '</td>' +
-            '<td><span class="signal ' + sigCls + '">' + sigTxt + '</span></td>' +
+            '<td><span class="signal ' + sigCls + '">' + sigTxt + '</span>' + warningsHtml + '</td>' +
             '<td class="td-score">' + scoreHtml + '</td>' +
             '<td class="td-rsi"><span class="rsi-val ' + rsiCls + '" title="RSI 14 periodi">' + rsiTxt + '</span></td>' +
+            '<td class="td-macd th-macd">' + macdHtml + '</td>' +
             '<td class="td-trend th-trend">' + trendHtml + '</td>' +
             '<td class="td-pe th-pe">' + peHtml + '</td>' +
             '<td class="td-roe th-roe">' + roeHtml + '</td>' +
@@ -1440,6 +1661,7 @@ function renderAnalysis() {
         '<th>Segnale</th>' +
         '<th>Punteggio</th>' +
         '<th>RSI</th>' +
+        '<th class="th-macd">MACD</th>' +
         '<th class="th-trend">Trend</th>' +
         '<th class="th-pe">P/E</th>' +
         '<th class="th-roe">ROE</th>' +
