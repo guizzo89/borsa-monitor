@@ -408,6 +408,7 @@
         <a href="index.html" class="btn">Dashboard</a>
         <a href="ranking.html" class="btn">Classifica</a>
         <a href="calcolo.html" class="btn">Calcolatore</a>
+        <button class="btn" onclick="exportShareLink()" title="Copia link per sincronizzare le impostazioni su un altro dispositivo">Condividi</button>
         <div class="theme-icons">
             <span>&#9790;</span>
             <div class="theme-toggle" onclick="toggleTheme()"></div>
@@ -1672,9 +1673,60 @@ function renderAnalysis() {
 }
 
 // =====================================================================
+// SHARE LINK
+// =====================================================================
+function _encodeShare(obj) {
+    const bytes = new TextEncoder().encode(JSON.stringify(obj));
+    return btoa(Array.from(bytes, b => String.fromCharCode(b)).join(''));
+}
+function _decodeShare(str) {
+    const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+}
+function showShareToast(msg) {
+    let t = document.getElementById('_shareToast');
+    if (!t) {
+        t = document.createElement('div'); t.id = '_shareToast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#2ecc71;color:#fff;padding:10px 22px;border-radius:8px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);transition:opacity 0.4s;white-space:nowrap;pointer-events:none;';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg; t.style.opacity = '1';
+    clearTimeout(t._tmr); t._tmr = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+}
+function exportShareLink() {
+    const share = { v: 1 };
+    try { const p = JSON.parse(localStorage.getItem('dashboardBorsaPresets') || 'null'); if (p && Object.keys(p).length) share.presets = p; } catch(e) {}
+    try { const c = JSON.parse(localStorage.getItem('rankingCustomCats') || 'null'); if (c && Object.keys(c).length) share.cats = c; } catch(e) {}
+    if (!share.presets && !share.cats) { alert('Nessuna categoria o preset personalizzato da condividere.'); return; }
+    const url = location.origin + location.pathname + '?share=' + _encodeShare(share);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+            .then(() => showShareToast('✓ Link copiato — aprilo sull\'altro dispositivo'))
+            .catch(() => prompt('Copia questo link:', url));
+    } else { prompt('Copia questo link:', url); }
+}
+function checkShareImport() {
+    const encoded = new URLSearchParams(location.search).get('share');
+    if (!encoded) return;
+    history.replaceState(null, '', location.pathname);
+    try {
+        const share = _decodeShare(encoded);
+        let n = 0;
+        if (share.presets && typeof share.presets === 'object') {
+            try { const ex = JSON.parse(localStorage.getItem('dashboardBorsaPresets') || '{}'); localStorage.setItem('dashboardBorsaPresets', JSON.stringify({ ...ex, ...share.presets })); n += Object.keys(share.presets).length; } catch(e) {}
+        }
+        if (share.cats && typeof share.cats === 'object') {
+            try { const ex = JSON.parse(localStorage.getItem('rankingCustomCats') || '{}'); localStorage.setItem('rankingCustomCats', JSON.stringify({ ...ex, ...share.cats })); n += Object.keys(share.cats).length; } catch(e) {}
+        }
+        if (n > 0) setTimeout(() => showShareToast('✓ ' + n + (n === 1 ? ' elemento importato' : ' elementi importati') + '!'), 800);
+    } catch(e) { console.warn('Share link non valido'); }
+}
+
+// =====================================================================
 // INIT
 // =====================================================================
 loadTheme();
+checkShareImport();
 loadCustomCats();
 buildAllAssets();
 renderCustomCatButtons();
