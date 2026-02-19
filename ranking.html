@@ -291,15 +291,15 @@
             <span class="filter-label">Categorie</span>
             <div class="filter-btns" id="catBtns">
                 <!-- Categorie predefinite -->
-                <button class="cat-btn active" data-cat="nasdaq">NASDAQ</button>
-                <button class="cat-btn" data-cat="sp500">S&amp;P 500</button>
-                <button class="cat-btn" data-cat="italia">Borsa Italiana</button>
-                <button class="cat-btn" data-cat="cinesi">Titoli Cinesi</button>
-                <button class="cat-btn" data-cat="europee">Europee</button>
-                <button class="cat-btn" data-cat="crypto">Crypto</button>
-                <button class="cat-btn" data-cat="commodities">Materie Prime</button>
-                <button class="cat-btn" data-cat="forex">Forex</button>
-                <button class="cat-btn" data-cat="indici">Indici</button>
+                <button class="cat-btn active" data-cat="nasdaq" onclick="toggleCat(this)">NASDAQ</button>
+                <button class="cat-btn" data-cat="sp500" onclick="toggleCat(this)">S&amp;P 500</button>
+                <button class="cat-btn" data-cat="italia" onclick="toggleCat(this)">Borsa Italiana</button>
+                <button class="cat-btn" data-cat="cinesi" onclick="toggleCat(this)">Titoli Cinesi</button>
+                <button class="cat-btn" data-cat="europee" onclick="toggleCat(this)">Europee</button>
+                <button class="cat-btn" data-cat="crypto" onclick="toggleCat(this)">Crypto</button>
+                <button class="cat-btn" data-cat="commodities" onclick="toggleCat(this)">Materie Prime</button>
+                <button class="cat-btn" data-cat="forex" onclick="toggleCat(this)">Forex</button>
+                <button class="cat-btn" data-cat="indici" onclick="toggleCat(this)">Indici</button>
                 <!-- Le categorie custom vengono inserite qui dal JS -->
             </div>
             <button class="btn-selall" id="btnSelAll" onclick="toggleSelectAll()">Tutte</button>
@@ -584,10 +584,7 @@ function renderCustomCatButtons() {
         btn.dataset.cat = key;
         btn.style.cssText = 'border-left: 3px solid ' + color + ';';
         btn.textContent = cat.label;
-        btn.addEventListener('click', () => {
-            btn.classList.toggle('active');
-            updateSelAllBtn();
-        });
+        btn.setAttribute('onclick', 'toggleCat(this)');
 
         const actions = document.createElement('div');
         actions.className = 'custom-cat-actions';
@@ -709,12 +706,10 @@ document.querySelectorAll('.limit-btn').forEach(btn => {
     });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') loadRanking(); });
 })();
-document.getElementById('catBtns').addEventListener('click', function(e) {
-    if (e.target.classList.contains('cat-btn')) {
-        e.target.classList.toggle('active');
-        updateSelAllBtn();
-    }
-});
+function toggleCat(btn) {
+    btn.classList.toggle('active');
+    updateSelAllBtn();
+}
 
 function updateSelAllBtn() {
     const all = document.querySelectorAll('#catBtns .cat-btn');
