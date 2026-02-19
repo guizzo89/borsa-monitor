@@ -710,7 +710,10 @@ document.querySelectorAll('.limit-btn').forEach(btn => {
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') loadRanking(); });
 })();
 document.getElementById('catBtns').addEventListener('click', function(e) {
-    if (e.target.classList.contains('cat-btn')) updateSelAllBtn();
+    if (e.target.classList.contains('cat-btn')) {
+        e.target.classList.toggle('active');
+        updateSelAllBtn();
+    }
 });
 
 function updateSelAllBtn() {
