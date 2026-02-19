@@ -176,6 +176,13 @@
         .td-rank.bronze { color: #cd7f32; }
         .td-name { font-weight: 500; }
         .td-symbol { font-family: 'Courier New', monospace; font-size: 0.75rem; color: var(--text-secondary); }
+        .asset-link { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .asset-link:hover { color: var(--accent); }
+        .asset-link:hover .link-arrow { opacity: 1; transform: translate(1px,-1px); }
+        .link-arrow {
+            opacity: 0; font-size: 0.7rem; color: var(--accent);
+            transition: opacity 0.15s, transform 0.15s; flex-shrink: 0;
+        }
         .td-change { font-weight: 700; font-size: 0.88rem; white-space: nowrap; }
         .chg-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; width: 100%; min-width: 60px; }
         .chg-bar { height: 100%; border-radius: 2px; }
@@ -904,7 +911,7 @@ function renderRanking() {
 
         return '<tr>' +
             '<td class="td-rank ' + rankClass + '">' + rank + '</td>' +
-            '<td class="td-name">' + escapeHtml(item.name) + '</td>' +
+            '<td class="td-name"><a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(item.symbol) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.name) + '<span class="link-arrow">&#x2197;</span></a></td>' +
             '<td class="td-symbol">' + escapeHtml(item.symbol) + '</td>' +
             '<td class="td-change ' + (isPos ? 'pos' : 'neg') + '">' +
                 pct +
