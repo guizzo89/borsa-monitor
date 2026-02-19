@@ -267,6 +267,52 @@
         }
         .modal-actions .btn-save:hover { background: var(--accent-hover); }
 
+        /* ---- ASSET SEARCH / AUTOCOMPLETE ---- */
+        .asset-search-wrap { position: relative; }
+        .asset-search-input {
+            width: 100%; background: var(--btn-bg); color: var(--text-primary);
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 9px 12px; font-size: 0.88rem; font-family: inherit;
+            transition: border-color 0.15s;
+        }
+        .asset-search-input:focus { outline: none; border-color: var(--accent); }
+        .asset-dropdown {
+            display: none; position: absolute; top: calc(100% + 3px); left: 0; right: 0;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 7px; z-index: 310; max-height: 230px; overflow-y: auto;
+            box-shadow: 0 6px 28px rgba(0,0,0,0.45);
+        }
+        .asset-dropdown.open { display: block; }
+        .asset-dropdown-item {
+            padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border); font-size: 0.83rem; transition: background 0.1s;
+        }
+        .asset-dropdown-item:last-child { border-bottom: none; }
+        .asset-dropdown-item:hover { background: var(--btn-hover); }
+        .asset-dropdown-item.custom-add { color: var(--accent); font-size: 0.8rem; }
+        .adi-symbol { font-family: monospace; font-size: 0.75rem; color: var(--accent); min-width: 74px; flex-shrink: 0; }
+        .adi-name   { flex: 1; }
+        .adi-cat    { font-size: 0.62rem; color: var(--text-secondary); flex-shrink: 0; }
+        .asset-tags {
+            display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start;
+            min-height: 38px; margin: 8px 0 4px;
+            padding: 6px 8px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 6px;
+        }
+        .asset-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--btn-bg); border: 1px solid var(--border);
+            padding: 2px 6px 2px 8px; border-radius: 4px; font-size: 0.76rem;
+        }
+        .asset-tag-sym  { font-family: monospace; color: var(--accent); font-size: 0.7rem; }
+        .asset-tag-name { color: var(--text-primary); }
+        .asset-tag-remove {
+            color: var(--text-secondary); cursor: pointer; font-size: 0.82rem;
+            transition: color 0.15s; line-height: 1; padding: 0 1px; margin-left: 1px;
+        }
+        .asset-tag-remove:hover { color: var(--accent); }
+        .tags-empty { font-size: 0.74rem; color: var(--text-secondary); font-style: italic; align-self: center; }
+
         /* Responsive */
         @media (max-width: 700px) {
             .main-content { padding: 12px; }
@@ -375,15 +421,19 @@
             <input type="text" id="catModalName" placeholder="es. I Miei Preferiti" maxlength="24">
         </div>
         <div class="modal-field">
-            <label>Asset — uno per riga</label>
-            <textarea id="catModalSymbols" rows="10"
-                placeholder="AAPL Apple&#10;TSLA Tesla&#10;NVDA&#10;ENI.MI Eni&#10;BTC-USD Bitcoin&#10;EURUSD=X EUR/USD"></textarea>
+            <label>Cerca e aggiungi asset</label>
+            <div class="asset-search-wrap">
+                <input type="text" id="assetSearch" class="asset-search-input"
+                    placeholder="Cerca per nome o simbolo… (es. Apple, AAPL, Bitcoin, Eni)"
+                    autocomplete="off" oninput="assetSearchInput()" onkeydown="assetSearchKeyDown(event)">
+                <div class="asset-dropdown" id="assetDropdown"></div>
+            </div>
+        </div>
+        <div class="asset-tags" id="assetTags">
+            <span class="tags-empty">Nessun asset aggiunto — cerca sopra o premi Invio per aggiungere un simbolo personalizzato</span>
         </div>
         <div class="modal-hint">
-            Formato: <code>SIMBOLO</code> oppure <code>SIMBOLO Nome</code><br>
-            Esempi: <code>AAPL</code> &nbsp;·&nbsp; <code>AAPL Apple</code> &nbsp;·&nbsp;
-            <code>ENI.MI Eni</code> &nbsp;·&nbsp; <code>BTC-USD Bitcoin</code> &nbsp;·&nbsp;
-            <code>EURUSD=X EUR/USD</code> &nbsp;·&nbsp; <code>^GSPC S&amp;P 500</code>
+            Non trovi il simbolo? Scrivi direttamente <code>SIMBOLO</code> o <code>SIMBOLO Nome</code> e premi <strong>Invio</strong>.
         </div>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeCatModal()">Annulla</button>
@@ -518,8 +568,11 @@ const CUSTOM_COLORS = ['#6a1b9a','#2e7d32','#00838f','#ad1457','#bf360c','#1565c
 let isDark = true;
 let rankingData = [];
 let currentSort = 'desc';
-let customCats = {};      // { key: { label, items: [{symbol, name}] } }
-let modalEditKey = null;  // null = nuova, string = modifica
+let customCats = {};
+let modalEditKey = null;
+let modalSelectedItems = [];
+let allAssetsFlat = [];
+let dropdownItems = [];
 
 // ==================== THEME ====================
 function toggleTheme() {
@@ -629,9 +682,12 @@ function deleteCustomCat(key, wrapper, btn) {
 // ==================== MODAL CATEGORIE ====================
 function openNewCatModal() {
     modalEditKey = null;
+    modalSelectedItems = [];
     document.getElementById('catModalTitle').textContent = 'Nuova Categoria';
     document.getElementById('catModalName').value = '';
-    document.getElementById('catModalSymbols').value = '';
+    document.getElementById('assetSearch').value = '';
+    closeAssetDropdown();
+    renderModalTags();
     document.getElementById('catModal').classList.add('open');
     document.getElementById('catModalName').focus();
 }
@@ -639,9 +695,12 @@ function openNewCatModal() {
 function openEditCatModal(key) {
     modalEditKey = key;
     const cat = customCats[key];
+    modalSelectedItems = cat.items.map(i => ({ symbol: i.symbol, name: i.name }));
     document.getElementById('catModalTitle').textContent = 'Modifica Categoria';
     document.getElementById('catModalName').value = cat.label;
-    document.getElementById('catModalSymbols').value = cat.items.map(i => i.symbol === i.name ? i.symbol : i.symbol + ' ' + i.name).join('\n');
+    document.getElementById('assetSearch').value = '';
+    closeAssetDropdown();
+    renderModalTags();
     document.getElementById('catModal').classList.add('open');
     document.getElementById('catModalName').focus();
 }
@@ -649,30 +708,144 @@ function openEditCatModal(key) {
 function closeCatModal() {
     document.getElementById('catModal').classList.remove('open');
     modalEditKey = null;
+    closeAssetDropdown();
 }
 
 function saveCatModal() {
     const name = document.getElementById('catModalName').value.trim();
-    const symbolsText = document.getElementById('catModalSymbols').value;
-    const items = parseSymbolsText(symbolsText);
-
     if (!name) { document.getElementById('catModalName').focus(); alert('Inserisci il nome della categoria'); return; }
-    if (!items.length) { document.getElementById('catModalSymbols').focus(); alert('Inserisci almeno un simbolo'); return; }
-
+    if (!modalSelectedItems.length) { document.getElementById('assetSearch').focus(); alert('Aggiungi almeno un asset'); return; }
+    const items = modalSelectedItems.map(i => ({ symbol: i.symbol, name: i.name }));
     if (modalEditKey) {
-        // Modifica esistente
         customCats[modalEditKey].label = name;
         customCats[modalEditKey].items = items;
     } else {
-        // Nuova categoria
-        const key = 'cc_' + Date.now();
-        customCats[key] = { label: name, items };
+        customCats['cc_' + Date.now()] = { label: name, items };
     }
-
     saveCustomCats();
     renderCustomCatButtons();
     closeCatModal();
 }
+
+// ==================== ASSET AUTOCOMPLETE ====================
+function buildAllAssets() {
+    allAssetsFlat = [];
+    for (const k in ASSETS) {
+        for (const item of ASSETS[k].items) {
+            allAssetsFlat.push({ symbol: item.symbol, name: item.name, catLabel: ASSETS[k].label });
+        }
+    }
+}
+
+function assetSearchInput() {
+    const inp = document.getElementById('assetSearch');
+    const q = inp.value.trim().toLowerCase();
+    if (!q) { closeAssetDropdown(); return; }
+    const filtered = allAssetsFlat
+        .filter(a => (a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q))
+                  && !modalSelectedItems.some(s => s.symbol === a.symbol))
+        .slice(0, 10);
+    dropdownItems = filtered;
+    const rawQ = inp.value.trim();
+    const symUp = rawQ.split(/\s+/)[0].toUpperCase();
+    let html = filtered.map((item, i) =>
+        '<div class="asset-dropdown-item" data-idx="' + i + '">' +
+        '<span class="adi-symbol">' + escapeHtml(item.symbol) + '</span>' +
+        '<span class="adi-name">'   + escapeHtml(item.name)   + '</span>' +
+        '<span class="adi-cat">'    + escapeHtml(item.catLabel) + '</span>' +
+        '</div>'
+    ).join('');
+    if (symUp) {
+        const nameHint = rawQ.includes(' ') ? ' — <em>' + escapeHtml(rawQ) + '</em>' : '';
+        html += '<div class="asset-dropdown-item custom-add" data-idx="-1">' +
+            '+ Aggiungi <strong>' + escapeHtml(symUp) + '</strong>' + nameHint + ' come simbolo personalizzato' +
+            '</div>';
+    }
+    const dd = document.getElementById('assetDropdown');
+    dd.innerHTML = html;
+    dd.classList.add('open');
+}
+
+function assetSearchKeyDown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const first = document.querySelector('#assetDropdown .asset-dropdown-item:not(.custom-add)');
+        if (first) {
+            const idx = parseInt(first.dataset.idx);
+            if (!isNaN(idx) && dropdownItems[idx]) addAssetToModal(dropdownItems[idx].symbol, dropdownItems[idx].name);
+        } else {
+            addCustomAssetToModal();
+        }
+    } else if (e.key === 'Escape') {
+        if (document.getElementById('assetDropdown').classList.contains('open')) closeAssetDropdown();
+        else closeCatModal();
+    }
+}
+
+function closeAssetDropdown() {
+    const dd = document.getElementById('assetDropdown');
+    if (dd) dd.classList.remove('open');
+}
+
+function addAssetToModal(symbol, name) {
+    if (!modalSelectedItems.some(i => i.symbol === symbol)) {
+        modalSelectedItems.push({ symbol, name });
+        renderModalTags();
+    }
+    document.getElementById('assetSearch').value = '';
+    closeAssetDropdown();
+    document.getElementById('assetSearch').focus();
+}
+
+function addCustomAssetToModal() {
+    const raw = document.getElementById('assetSearch').value.trim();
+    if (!raw) return;
+    const parts = raw.split(/\s+/);
+    addAssetToModal(parts[0].toUpperCase(), parts.slice(1).join(' ') || parts[0].toUpperCase());
+}
+
+function removeAssetFromModal(idx) {
+    modalSelectedItems.splice(idx, 1);
+    renderModalTags();
+}
+
+function renderModalTags() {
+    const container = document.getElementById('assetTags');
+    if (!container) return;
+    if (!modalSelectedItems.length) {
+        container.innerHTML = '<span class="tags-empty">Nessun asset aggiunto — cerca sopra o premi Invio per aggiungere un simbolo personalizzato</span>';
+        return;
+    }
+    container.innerHTML = modalSelectedItems.map((item, i) =>
+        '<span class="asset-tag" data-idx="' + i + '">' +
+        '<span class="asset-tag-sym">'  + escapeHtml(item.symbol) + '</span>' +
+        (item.name !== item.symbol ? '<span class="asset-tag-name">' + escapeHtml(item.name) + '</span>' : '') +
+        '<span class="asset-tag-remove" title="Rimuovi">&#x2715;</span>' +
+        '</span>'
+    ).join('');
+}
+
+// Chiudi dropdown cliccando fuori
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.asset-search-wrap')) closeAssetDropdown();
+});
+
+// Delegazione click sul dropdown
+document.addEventListener('click', function(e) {
+    const item = e.target.closest('#assetDropdown .asset-dropdown-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx);
+    if (idx >= 0 && dropdownItems[idx]) addAssetToModal(dropdownItems[idx].symbol, dropdownItems[idx].name);
+    else addCustomAssetToModal();
+});
+
+// Delegazione click sui tag (rimozione)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.asset-tag-remove');
+    if (!btn) return;
+    const tag = btn.closest('.asset-tag');
+    if (tag) removeAssetFromModal(parseInt(tag.dataset.idx));
+});
 
 // Chiudi modal cliccando overlay
 document.getElementById('catModal').addEventListener('click', function(e) {
@@ -985,6 +1158,7 @@ function renderRanking() {
 // ==================== INIT ====================
 loadTheme();
 loadCustomCats();
+buildAllAssets();
 renderCustomCatButtons();
 </script>
 </body>
