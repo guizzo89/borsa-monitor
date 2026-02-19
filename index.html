@@ -67,6 +67,12 @@
         .btn-green.saved { animation: savedPulse 0.5s ease; }
         @keyframes savedPulse { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
 
+        /* Category bar (below header) */
+        .cat-bar {
+            background: var(--header-bg); border-bottom: 1px solid var(--border);
+            padding: 6px 24px; flex-shrink: 0;
+        }
+
         /* Preset bar */
         .preset-bar {
             display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
@@ -325,8 +331,8 @@
         @media (max-width: 640px) {
             .chart-grid { grid-template-columns: 1fr !important; grid-auto-rows: 350px; }
             header { padding: 8px 12px; }
+            .cat-bar { padding: 6px 12px; }
             h1 { font-size: 1rem; }
-            .preset-bar { width: 100%; }
         }
     </style>
 </head>
@@ -334,7 +340,6 @@
     <header>
         <div class="header-left">
             <h1>Dashboard <span>Borsa</span></h1>
-            <div class="preset-bar" id="presetBar"></div>
         </div>
         <div class="header-controls">
             <a href="calcolo.html" class="btn" title="Calcolatore Investimenti (nuova scheda)" target="_blank" rel="noopener noreferrer">Calcolatore</a>
@@ -362,6 +367,9 @@
             </div>
         </div>
     </header>
+    <div class="cat-bar">
+        <div class="preset-bar" id="presetBar"></div>
+    </div>
     <div class="chart-grid cols-3" id="chartGrid"></div>
 
     <!-- Modal: nuovo preset / rinomina -->
