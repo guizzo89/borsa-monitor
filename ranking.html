@@ -176,13 +176,22 @@
         .td-rank.bronze { color: #cd7f32; }
         .td-name { font-weight: 500; }
         .td-symbol { font-family: 'Courier New', monospace; font-size: 0.75rem; color: var(--text-secondary); }
-        .asset-link { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .chart-links { display: flex; align-items: center; gap: 7px; }
+        .asset-link { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; }
         .asset-link:hover { color: var(--accent); }
         .asset-link:hover .link-arrow { opacity: 1; transform: translate(1px,-1px); }
         .link-arrow {
             opacity: 0; font-size: 0.7rem; color: var(--accent);
             transition: opacity 0.15s, transform 0.15s; flex-shrink: 0;
         }
+        .tv-link {
+            font-size: 0.62rem; font-weight: 700; color: var(--text-secondary);
+            text-decoration: none; padding: 1px 5px; border-radius: 3px;
+            border: 1px solid var(--border); background: var(--btn-bg);
+            transition: all 0.15s; flex-shrink: 0; opacity: 0.65; white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+        .tv-link:hover { border-color: #2962ff; color: #2962ff; opacity: 1; background: rgba(41,98,255,0.12); }
         .td-change { font-weight: 700; font-size: 0.88rem; white-space: nowrap; }
         .chg-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; width: 100%; min-width: 60px; }
         .chg-bar { height: 100%; border-radius: 2px; }
@@ -881,6 +890,45 @@ function sortResults(dir) {
     renderRanking();
 }
 
+// ==================== TRADINGVIEW SYMBOL CONVERSION ====================
+function toTvSymbol(symbol) {
+    // Indices
+    const indicesMap = {
+        '^GSPC':'SP:SPX', '^IXIC':'NASDAQ:IXIC', '^DJI':'DJ:DJI',
+        '^FTSE':'TVC:UKX', '^GDAXI':'XETR:DAX', '^FCHI':'EURONEXT:PX1',
+        '^N225':'TVC:NI225', '^HSI':'TVC:HSI', '^STOXX50E':'TVC:SX5E',
+        '^RUT':'TVC:RUT', '^BSESN':'BSE:SENSEX', '000001.SS':'SSE:000001'
+    };
+    if (indicesMap[symbol]) return indicesMap[symbol];
+
+    // Futures
+    const futuresMap = {
+        'GC=F':'COMEX:GC1!', 'SI=F':'COMEX:SI1!', 'CL=F':'NYMEX:CL1!',
+        'BZ=F':'NYMEX:BB1!', 'NG=F':'NYMEX:NG1!', 'HG=F':'COMEX:HG1!',
+        'ZW=F':'CBOT:ZW1!', 'ZC=F':'CBOT:ZC1!', 'PL=F':'NYMEX:PL1!',
+        'PA=F':'NYMEX:PA1!'
+    };
+    if (futuresMap[symbol]) return futuresMap[symbol];
+
+    // Forex — EURUSD=X → FX:EURUSD
+    if (symbol.endsWith('=X')) return 'FX:' + symbol.slice(0, -2);
+
+    // Crypto — BTC-USD → BINANCE:BTCUSDT
+    if (symbol.endsWith('-USD')) return 'BINANCE:' + symbol.slice(0, -4) + 'USDT';
+
+    // European exchanges
+    if (symbol.endsWith('.MI')) return 'MIL:'      + symbol.slice(0, -3);
+    if (symbol.endsWith('.DE')) return 'XETR:'     + symbol.slice(0, -3);
+    if (symbol.endsWith('.PA')) return 'EURONEXT:' + symbol.slice(0, -3);
+    if (symbol.endsWith('.SW')) return 'SIX:'      + symbol.slice(0, -3);
+    if (symbol.endsWith('.AS')) return 'EURONEXT:' + symbol.slice(0, -3);
+    if (symbol.endsWith('.L'))  return 'LSE:'      + symbol.slice(0, -2);
+    if (symbol.endsWith('.SS')) return 'SSE:'      + symbol.slice(0, -3);
+
+    // US stocks — pass through, TradingView auto-resolves NASDAQ/NYSE
+    return symbol;
+}
+
 // ==================== RENDER ====================
 function formatPrice(price, currency) {
     if (price == null || !isFinite(price)) return '—';
@@ -907,9 +955,13 @@ function renderRanking() {
             ? '<span class="cat-pill" style="background:' + escapeHtml(item.pillStyle) + '">' + escapeHtml(item.catLabel) + '</span>'
             : '<span class="cat-pill ' + escapeHtml(item.pillClass) + '">' + escapeHtml(item.catLabel) + '</span>';
 
+        const tvSym = toTvSymbol(item.symbol);
         return '<tr>' +
             '<td class="td-rank ' + rankClass + '">' + rank + '</td>' +
-            '<td class="td-name"><a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(item.symbol) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.name) + '<span class="link-arrow">&#x2197;</span></a></td>' +
+            '<td class="td-name"><div class="chart-links">' +
+                '<a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(item.symbol) + '" target="_blank" rel="noopener noreferrer" title="Yahoo Finance">' + escapeHtml(item.name) + '<span class="link-arrow">&#x2197;</span></a>' +
+                '<a class="tv-link" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(tvSym) + '" target="_blank" rel="noopener noreferrer" title="Apri su TradingView">TV</a>' +
+            '</div></td>' +
             '<td class="td-symbol">' + escapeHtml(item.symbol) + '</td>' +
             '<td class="td-change ' + (isPos ? 'pos' : 'neg') + '">' +
                 pct +
