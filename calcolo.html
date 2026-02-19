@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolatore Investimenti</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #e94560;
+            --accent-hover: #ff6b81;
+            --border: #2a2a4a;
+            --btn-bg: #2a2a4a;
+            --btn-hover: #3a3a5a;
+            --header-bg: #0f0f23;
+            --green: #1b7a3d;
+            --green-hover: #22994d;
+        }
+        html.light {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666666;
+            --accent: #e94560;
+            --accent-hover: #c73650;
+            --border: #d0d0d0;
+            --btn-bg: #e0e0e0;
+            --btn-hover: #d0d0d0;
+            --header-bg: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary); color: var(--text-primary);
+            min-height: 100vh; display: flex; flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: var(--header-bg); border-bottom: 1px solid var(--border);
+            padding: 8px 24px; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap; gap: 8px;
+            flex-shrink: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        h1 { font-size: 1.3rem; font-weight: 700; white-space: nowrap; }
+        h1 span { color: var(--accent); }
+        .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* Buttons */
+        .btn {
+            background: var(--btn-bg); color: var(--text-primary); border: 1px solid var(--border);
+            padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;
+            font-weight: 500; transition: all 0.15s; white-space: nowrap; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .btn:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-green { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
+        .btn-green:hover { background: var(--green-hover); border-color: var(--green-hover); }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: relative; width: 48px; height: 26px;
+            background: var(--btn-bg); border-radius: 13px; cursor: pointer;
+            border: 1px solid var(--border); transition: background 0.3s;
+        }
+        .theme-toggle::after {
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 18px; height: 18px; background: var(--accent);
+            border-radius: 50%; transition: transform 0.3s;
+        }
+        html.light .theme-toggle::after { transform: translateX(22px); }
+        .theme-icons { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+
+        /* Main content */
+        .main-content {
+            flex: 1; padding: 16px 24px; overflow-y: auto;
+        }
+
+        /* Simulation rows */
+        .sim-container { display: flex; flex-direction: column; gap: 12px; max-width: 900px; margin: 0 auto; }
+
+        .sim-row {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px; position: relative;
+        }
+        .sim-row-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .sim-row-title { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); }
+        .sim-row-remove {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 1.2rem; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+            transition: all 0.15s;
+        }
+        .sim-row-remove:hover { color: var(--accent); background: rgba(233,69,96,0.15); }
+
+        .sim-inputs {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px; margin-bottom: 12px;
+        }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label {
+            font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .input-group input, .input-group select {
+            background: var(--bg-secondary); color: var(--text-primary);
+            border: 1px solid var(--border); padding: 8px 10px; border-radius: 6px;
+            font-size: 0.88rem; font-family: inherit; transition: border-color 0.15s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none; border-color: var(--accent);
+        }
+        .input-group input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+
+        /* Results */
+        .sim-results {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px; padding-top: 12px; border-top: 1px solid var(--border);
+        }
+        .result-item { display: flex; flex-direction: column; gap: 2px; }
+        .result-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+        .result-value { font-size: 1.05rem; font-weight: 600; font-family: 'Segoe UI', monospace; }
+        .result-value.positive { color: #2ecc71; }
+        .result-value.negative { color: #e74c3c; }
+        .result-value.neutral { color: var(--text-primary); }
+
+        /* Actions bar */
+        .actions-bar {
+            display: flex; justify-content: center; gap: 10px; margin-top: 8px;
+            max-width: 900px; margin-left: auto; margin-right: auto;
+        }
+
+        /* Autocomplete */
+        .asset-wrapper { position: relative; }
+        .asset-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; z-index: 200;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 0 0 8px 8px; max-height: 280px; overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none;
+        }
+        .asset-dropdown.open { display: block; }
+        .asset-dropdown-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; cursor: pointer; font-size: 0.84rem;
+            border-bottom: 1px solid var(--border); transition: background 0.1s;
+        }
+        .asset-dropdown-item:last-child { border-bottom: none; }
+        .asset-dropdown-item:hover, .asset-dropdown-item.active {
+            background: rgba(233,69,96,0.15);
+        }
+        .asset-badge {
+            font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+            padding: 2px 5px; border-radius: 3px; color: #fff; flex-shrink: 0;
+            min-width: 38px; text-align: center;
+        }
+        .asset-badge.stock { background: #2962ff; }
+        .asset-badge.crypto { background: #f7931a; }
+        .asset-badge.forex { background: #26a69a; }
+        .asset-badge.futures { background: #ab47bc; }
+        .asset-badge.index { background: #78909c; }
+        .asset-badge.other { background: #546e7a; }
+        .asset-item-symbol { font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+        .asset-item-desc {
+            color: var(--text-secondary); font-size: 0.78rem;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+        }
+        .asset-item-exchange { color: var(--text-secondary); font-size: 0.7rem; flex-shrink: 0; }
+        .asset-loading {
+            padding: 10px; text-align: center; color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        .asset-selected-badge {
+            display: inline-block; font-size: 0.7rem; color: var(--accent);
+            margin-top: 2px; font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .main-content { padding: 12px; }
+            header { padding: 8px 12px; }
+            h1 { font-size: 1rem; }
+            .sim-inputs { grid-template-columns: 1fr 1fr; }
+            .sim-results { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>Calcolatore <span>Investimenti</span></h1>
+        </div>
+        <div class="header-controls">
+            <a href="index.html" class="btn">Dashboard</a>
+            <div class="theme-icons">
+                <span>&#9790;</span>
+                <div class="theme-toggle" onclick="toggleTheme()" title="Cambia tema"></div>
+                <span>&#9788;</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="sim-container" id="simContainer"></div>
+        <div class="actions-bar">
+            <button class="btn btn-green" onclick="addRow()">+ Aggiungi simulazione</button>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'dashboardBorsa';
+        let isDark = true;
+        let rowCounter = 0;
+
+        // --- Theme ---
+        function loadThemeFromDashboard() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.dark !== undefined) isDark = parsed.dark;
+                }
+            } catch(e) {}
+            document.documentElement.classList.toggle('light', !isDark);
+        }
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.documentElement.classList.toggle('light', !isDark);
+            // Sync back to dashboard storage
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    parsed.dark = isDark;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                }
+            } catch(e) {}
+        }
+
+        // --- Formatting ---
+        function fmt(n, decimals) {
+            if (isNaN(n) || !isFinite(n)) return '—';
+            return n.toLocaleString('it-IT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+        function fmtEuro(n) {
+            if (isNaN(n) || !isFinite(n)) return '—';
+            return n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+        }
+
+        // --- Calculation ---
+        function getField(row, name) {
+            return row.querySelector('[data-field="' + name + '"]');
+        }
+
+        function resetFields(row) {
+            var fields = row.querySelectorAll('[data-field]');
+            for (var i = 0; i < fields.length; i++) {
+                fields[i].textContent = '-';
+                fields[i].className = 'result-value neutral';
+            }
+        }
+
+        function calculate(row) {
+            var cifraEl = row.querySelector('.in-cifra');
+            var prezzoEl = row.querySelector('.in-prezzo');
+            var modeEl = row.querySelector('.in-mode');
+            var targetEl = row.querySelector('.in-target');
+            if (!cifraEl || !prezzoEl || !modeEl || !targetEl) return;
+
+            var cifra = parseFloat(cifraEl.value);
+            var prezzoAcquisto = parseFloat(prezzoEl.value);
+            var mode = modeEl.value;
+            var targetVal = parseFloat(targetEl.value);
+
+            resetFields(row);
+
+            if (isNaN(cifra) || isNaN(prezzoAcquisto) || prezzoAcquisto <= 0 || cifra <= 0) return;
+
+            var qty = cifra / prezzoAcquisto;
+            var rQty = getField(row, 'qty');
+            if (rQty) rQty.textContent = fmt(qty, 6);
+
+            if (isNaN(targetVal)) return;
+
+            var prezzoFinale, variazionePct;
+
+            if (mode === 'prezzo') {
+                prezzoFinale = targetVal;
+                if (prezzoFinale < 0) return;
+                variazionePct = ((prezzoFinale - prezzoAcquisto) / prezzoAcquisto) * 100;
+            } else {
+                variazionePct = targetVal;
+                prezzoFinale = prezzoAcquisto * (1 + variazionePct / 100);
+            }
+
+            var valoreFinale = qty * prezzoFinale;
+            var guadagno = valoreFinale - cifra;
+
+            var rPF = getField(row, 'prezzo-finale');
+            var rVar = getField(row, 'variazione');
+            var rGua = getField(row, 'guadagno');
+            var rVal = getField(row, 'valore');
+
+            if (rPF) rPF.textContent = fmtEuro(prezzoFinale);
+            if (rVar) {
+                rVar.textContent = (variazionePct >= 0 ? '+' : '') + fmt(variazionePct, 2) + '%';
+                rVar.className = 'result-value ' + (variazionePct >= 0 ? 'positive' : 'negative');
+            }
+            if (rGua) {
+                rGua.textContent = (guadagno >= 0 ? '+' : '') + fmtEuro(guadagno);
+                rGua.className = 'result-value ' + (guadagno >= 0 ? 'positive' : 'negative');
+            }
+            if (rVal) {
+                rVal.textContent = fmtEuro(valoreFinale);
+                rVal.className = 'result-value ' + (guadagno >= 0 ? 'positive' : 'negative');
+            }
+        }
+
+        // --- Mode switch ---
+        function onModeChange(row) {
+            const mode = row.querySelector('.in-mode').value;
+            const label = row.querySelector('.target-label');
+            const input = row.querySelector('.in-target');
+            if (mode === 'prezzo') {
+                label.textContent = 'Prezzo Target (€)';
+                input.placeholder = 'es. 150.00';
+            } else {
+                label.textContent = 'Variazione attesa (%)';
+                input.placeholder = 'es. 10 o -5';
+            }
+            input.value = '';
+            calculate(row);
+        }
+
+        // --- Add row ---
+        function addRow() {
+            rowCounter++;
+            const container = document.getElementById('simContainer');
+            const row = document.createElement('div');
+            row.className = 'sim-row';
+            row.innerHTML = `
+                <div class="sim-row-header">
+                    <span class="sim-row-title">Simulazione #${rowCounter}</span>
+                    <button class="sim-row-remove" onclick="removeRow(this)" title="Rimuovi">&times;</button>
+                </div>
+                <div class="sim-inputs">
+                    <div class="input-group asset-wrapper">
+                        <label>Cerca Asset</label>
+                        <input type="text" class="in-asset" placeholder="es. Apple, Bitcoin, EURUSD..." autocomplete="off">
+                        <div class="asset-dropdown"></div>
+                        <span class="asset-selected-badge"></span>
+                    </div>
+                    <div class="input-group">
+                        <label>Cifra investita (€)</label>
+                        <input type="number" class="in-cifra" placeholder="es. 1000" min="0" step="any">
+                    </div>
+                    <div class="input-group">
+                        <label>Prezzo di acquisto (€)</label>
+                        <input type="number" class="in-prezzo" placeholder="es. 100.00" min="0" step="any">
+                    </div>
+                    <div class="input-group">
+                        <label>Modalità</label>
+                        <select class="in-mode">
+                            <option value="prezzo">Prezzo Target</option>
+                            <option value="percentuale">% Variazione</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="target-label">Prezzo Target (€)</label>
+                        <input type="number" class="in-target" placeholder="es. 150.00" step="any">
+                    </div>
+                </div>
+                <div class="sim-results">
+                    <div class="result-item">
+                        <span class="result-label">Quantit&agrave; acquistata</span>
+                        <span class="result-value neutral" data-field="qty">&mdash;</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Prezzo finale</span>
+                        <span class="result-value neutral" data-field="prezzo-finale">&mdash;</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Variazione %</span>
+                        <span class="result-value neutral" data-field="variazione">&mdash;</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Guadagno / Perdita</span>
+                        <span class="result-value neutral" data-field="guadagno">&mdash;</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Valore finale</span>
+                        <span class="result-value neutral" data-field="valore">&mdash;</span>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(row);
+        }
+
+        // --- Remove row ---
+        function removeRow(btn) {
+            const row = btn.closest('.sim-row');
+            const container = document.getElementById('simContainer');
+            if (container.children.length <= 1) return;
+            row.remove();
+        }
+
+        // --- Event delegation (robust for dynamic elements) ---
+        (function() {
+            const container = document.getElementById('simContainer');
+
+            function handleEvent(e) {
+                const row = e.target.closest('.sim-row');
+                if (!row) return;
+
+                if (e.target.classList.contains('in-mode')) {
+                    onModeChange(row);
+                } else {
+                    calculate(row);
+                }
+            }
+
+            container.addEventListener('input', handleEvent);
+            container.addEventListener('change', handleEvent);
+            container.addEventListener('keyup', handleEvent);
+        })();
+
+        // --- Asset search & autocomplete ---
+        const searchTimers = new WeakMap();
+        const searchRequestIds = new WeakMap();
+        const priceRequestIds = new WeakMap();
+        const SEARCH_CACHE_TTL_MS = 300000;
+        const searchCache = new Map();
+        let lastSearchQuery = '';
+        let lastSearchResults = [];
+        const PRICE_CACHE_TTL_MS = 60000;
+        const priceCache = new Map();
+
+        function stripTags(text) {
+            return String(text || '').replace(/<\/?em>/g, '').trim();
+        }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function nextRequestId(map, key) {
+            const next = (map.get(key) || 0) + 1;
+            map.set(key, next);
+            return next;
+        }
+
+        function getCachedPrice(key) {
+            if (!key) return null;
+            const entry = priceCache.get(key);
+            if (!entry) return null;
+            if (Date.now() - entry.ts > PRICE_CACHE_TTL_MS) {
+                priceCache.delete(key);
+                return null;
+            }
+            return entry.value || null;
+        }
+
+        function setCachedPrice(key, value) {
+            if (!key || !value) return;
+            if (toFiniteNumber(value.price) == null) return;
+            priceCache.set(key, { ts: Date.now(), value: value });
+        }
+
+        function normalizeSearchQuery(query) {
+            return String(query || '').trim().toLowerCase();
+        }
+
+        function getCachedSearch(query) {
+            const key = normalizeSearchQuery(query);
+            if (!key) return null;
+            const entry = searchCache.get(key);
+            if (!entry) return null;
+            if (Date.now() - entry.ts > SEARCH_CACHE_TTL_MS) {
+                searchCache.delete(key);
+                return null;
+            }
+            return entry.results || null;
+        }
+
+        function setCachedSearch(query, results) {
+            const key = normalizeSearchQuery(query);
+            if (!key || !Array.isArray(results) || results.length === 0) return;
+            searchCache.set(key, { ts: Date.now(), results: results });
+        }
+
+        function getInstantSearchCandidates(query) {
+            const exact = getCachedSearch(query);
+            if (exact && exact.length > 0) return exact;
+
+            const q = normalizeSearchQuery(query);
+            const lastQ = normalizeSearchQuery(lastSearchQuery);
+            if (!q || !lastQ || !Array.isArray(lastSearchResults) || lastSearchResults.length === 0) return [];
+            if (q.indexOf(lastQ) !== 0) return [];
+
+            return lastSearchResults.filter((item) => {
+                const symbol = normalizeSearchQuery(item.symbol);
+                const desc = normalizeSearchQuery(item.description);
+                const ticker = normalizeSearchQuery(item.displayTicker || item.ticker);
+                return symbol.indexOf(q) >= 0 || desc.indexOf(q) >= 0 || ticker.indexOf(q) >= 0;
+            }).slice(0, 8);
+        }
+
+        function toFiniteNumber(value) {
+            if (typeof value === 'number' && isFinite(value)) return value;
+            if (typeof value === 'string') {
+                const n = parseFloat(value.replace(',', '.').trim());
+                if (isFinite(n)) return n;
+            }
+            return null;
+        }
+
+        async function fetchWithTimeout(url, options, timeoutMs) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs || 3500);
+            try {
+                return await fetch(url, Object.assign({}, options || {}, { signal: controller.signal }));
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function isFileProtocol() {
+            return window.location && window.location.protocol === 'file:';
+        }
+
+        function getAssetBadgeClass(type) {
+            if (!type) return 'other';
+            const t = type.toLowerCase();
+            if (t === 'stock' || t === 'dr') return 'stock';
+            if (t === 'crypto') return 'crypto';
+            if (t === 'forex') return 'forex';
+            if (t === 'futures') return 'futures';
+            if (t === 'index') return 'index';
+            return 'other';
+        }
+
+        function clearSelectedAssetState(row) {
+            row.dataset.selectedTicker = '';
+            row.dataset.selectedLabel = '';
+            const badge = row.querySelector('.asset-selected-badge');
+            if (badge) badge.textContent = '';
+        }
+
+        function normalizeTradingViewResults(data) {
+            const list = Array.isArray(data) ? data : (data && Array.isArray(data.symbols) ? data.symbols : []);
+            return list.slice(0, 8).map((item) => {
+                const symbol = stripTags(item.symbol);
+                const description = stripTags(item.description);
+                const exchange = stripTags(item.exchange);
+                const type = stripTags(item.type);
+                const fullName = stripTags(item.full_name);
+                const ticker = fullName || (exchange ? `${exchange}:${symbol}` : symbol);
+
+                return {
+                    symbol: symbol,
+                    description: description,
+                    exchange: exchange,
+                    type: type || 'other',
+                    ticker: ticker,
+                    displayTicker: ticker,
+                    currency: stripTags(item.currency_code),
+                    source: 'tradingview'
+                };
+            }).filter((item) => !!item.ticker);
+        }
+
+        function mapYahooType(rawType) {
+            const t = String(rawType || '').toLowerCase();
+            if (t.indexOf('crypto') >= 0) return 'crypto';
+            if (t.indexOf('currency') >= 0 || t.indexOf('forex') >= 0) return 'forex';
+            if (t.indexOf('future') >= 0) return 'futures';
+            if (t.indexOf('index') >= 0) return 'index';
+            return 'stock';
+        }
+
+        function normalizeYahooSearchResults(data) {
+            const quotes = (data && Array.isArray(data.quotes))
+                ? data.quotes
+                : (data && data.data && Array.isArray(data.data.quotes) ? data.data.quotes : []);
+
+            return quotes
+                .filter((q) => q && q.symbol)
+                .slice(0, 8)
+                .map((q) => {
+                    const symbol = stripTags(q.symbol);
+                    const exchange = stripTags(q.exchDisp || q.exchange || q.exchangeDisplay || '');
+                    const description = stripTags(q.shortname || q.longname || symbol);
+                    const type = mapYahooType(q.quoteType || q.typeDisp);
+                    const displayTicker = exchange ? `${exchange}:${symbol}` : symbol;
+                    const marketPrice = toFiniteNumber(q.regularMarketPrice);
+                    return {
+                        symbol: symbol,
+                        description: description,
+                        exchange: exchange,
+                        type: type,
+                        ticker: `YH:${symbol}`,
+                        displayTicker: displayTicker,
+                        currency: stripTags(q.currency || ''),
+                        source: 'yahoo',
+                        yahooSymbol: symbol,
+                        marketPrice: marketPrice
+                    };
+                });
+        }
+
+        async function fetchJsonSafe(url, timeoutMs, fastMode) {
+            const fallbackUrls = fastMode
+                ? [
+                    url,
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`
+                ]
+                : [
+                    url,
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                ];
+
+            const attempts = fallbackUrls.map(async (candidateUrl) => {
+                const res = await fetchWithTimeout(candidateUrl, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json, text/plain, */*' }
+                }, timeoutMs || 2200);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const text = await res.text();
+                if (!text) throw new Error('Empty response');
+                const normalizedText = String(text)
+                    .replace(/^\uFEFF/, '')
+                    .replace(/^\)\]\}',?\s*/, '')
+                    .trim();
+                return JSON.parse(normalizedText);
+            });
+
+            try {
+                return await Promise.any(attempts);
+            } catch (err) {
+                if (err && Array.isArray(err.errors) && err.errors.length > 0) {
+                    throw err.errors[0];
+                }
+                throw err || new Error('GET failed');
+            }
+        }
+
+        async function searchSymbol(query) {
+            const cached = getCachedSearch(query);
+            if (cached && cached.length > 0) {
+                return cached;
+            }
+
+            const encoded = encodeURIComponent(query);
+            const yahooUrls = [
+                `https://query2.finance.yahoo.com/v1/finance/search?q=${encoded}&quotesCount=12&newsCount=0&enableFuzzyQuery=true`,
+                `https://query1.finance.yahoo.com/v1/finance/search?q=${encoded}&quotesCount=12&newsCount=0`
+            ];
+            const tradingViewUrls = [
+                `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encoded}&hl=1&lang=en&domain=production`,
+                `https://symbol-search.tradingview.com/symbol_search/?text=${encoded}&hl=1&lang=en&exchange=&search_type=&domain=production`
+            ];
+
+            async function searchProvider(urls, normalizer) {
+                const attempts = urls.map(async (url) => {
+                    const data = await fetchJsonSafe(url, 1300, true);
+                    const normalized = normalizer(data);
+                    if (!normalized || normalized.length === 0) throw new Error('No results');
+                    return normalized;
+                });
+                return Promise.any(attempts);
+            }
+
+            const providers = [
+                searchProvider(yahooUrls, normalizeYahooSearchResults),
+                searchProvider(tradingViewUrls, normalizeTradingViewResults)
+            ];
+
+            try {
+                const results = await Promise.any(providers);
+                if (results && results.length > 0) {
+                    setCachedSearch(query, results);
+                    lastSearchQuery = query;
+                    lastSearchResults = results;
+                    return results;
+                }
+            } catch (err) {
+                throw err;
+            }
+
+            return [];
+        }
+
+        async function fetchTradingViewPrice(ticker) {
+            const payload = {
+                symbols: { tickers: [ticker] },
+                columns: ['close', 'last_price', 'name', 'description', 'currency']
+            };
+
+            const endpoints = [
+                'https://scanner.tradingview.com/global/scan',
+                'https://corsproxy.io/?https://scanner.tradingview.com/global/scan'
+            ];
+
+            const attempts = endpoints.map(async (endpoint) => {
+                const res = await fetchWithTimeout(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }, 1600);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            });
+
+            let data = null;
+            try {
+                data = await Promise.any(attempts);
+            } catch (e) {
+                data = null;
+            }
+            if (!data) return null;
+            const rowData = data && data.data && data.data[0] && data.data[0].d ? data.data[0].d : null;
+            if (!rowData) return null;
+
+            const closePrice = rowData[0];
+            const lastPrice = rowData[1];
+            const numericPrice = toFiniteNumber(closePrice) != null
+                ? toFiniteNumber(closePrice)
+                : toFiniteNumber(lastPrice);
+
+            if (numericPrice == null) return null;
+            return {
+                price: numericPrice,
+                currency: stripTags(rowData[4])
+            };
+        }
+
+        function guessYahooSymbolFromTicker(ticker) {
+            if (!ticker) return '';
+            if (ticker.indexOf('YH:') === 0) return ticker.substring(3);
+
+            let symbol = ticker;
+            if (ticker.indexOf(':') >= 0) {
+                const parts = ticker.split(':');
+                symbol = parts[parts.length - 1];
+            }
+            symbol = String(symbol).replace(/\s+/g, '').toUpperCase();
+
+            if (/^[A-Z]{6}$/.test(symbol)) return symbol + '=X';
+            if (/^[A-Z]{3,6}USDT$/.test(symbol)) return symbol.replace(/USDT$/, '-USD');
+            if (/^[A-Z]{3,6}USD$/.test(symbol)) return symbol.replace(/USD$/, '-USD');
+            return symbol;
+        }
+
+        function parseYahooQuotePrice(data) {
+            const quote = data && data.quoteResponse && Array.isArray(data.quoteResponse.result)
+                ? data.quoteResponse.result[0]
+                : null;
+            if (!quote) return null;
+
+            const candidates = [
+                quote.regularMarketPrice,
+                quote.postMarketPrice,
+                quote.preMarketPrice,
+                quote.bid,
+                quote.ask,
+                quote.regularMarketPreviousClose
+            ];
+            let price = null;
+            for (let i = 0; i < candidates.length; i++) {
+                const v = toFiniteNumber(candidates[i]);
+                if (v != null) {
+                    price = v;
+                    break;
+                }
+            }
+            if (price == null) return null;
+            return {
+                price: price,
+                currency: stripTags(quote.currency || '')
+            };
+        }
+
+        function parseYahooChartPrice(data) {
+            const result = data && data.chart && Array.isArray(data.chart.result) ? data.chart.result[0] : null;
+            if (!result) return null;
+            const metaPrice = toFiniteNumber(result.meta && result.meta.regularMarketPrice);
+            if (metaPrice != null) {
+                return {
+                    price: metaPrice,
+                    currency: stripTags((result.meta && result.meta.currency) || '')
+                };
+            }
+
+            const closes = result.indicators && result.indicators.quote && result.indicators.quote[0]
+                ? result.indicators.quote[0].close
+                : null;
+            if (!Array.isArray(closes) || closes.length === 0) return null;
+            for (let i = closes.length - 1; i >= 0; i--) {
+                const v = toFiniteNumber(closes[i]);
+                if (v != null) {
+                    return {
+                        price: v,
+                        currency: stripTags((result.meta && result.meta.currency) || '')
+                    };
+                }
+            }
+            return null;
+        }
+
+        async function fetchYahooPrice(symbol) {
+            if (!symbol) return null;
+            const urls = [
+                `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`,
+                `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`,
+                `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d`
+            ];
+
+            const attempts = urls.map(async (url, i) => {
+                const data = await fetchJsonSafe(url, 1700);
+                const parsed = i < 2 ? parseYahooQuotePrice(data) : parseYahooChartPrice(data);
+                if (parsed && toFiniteNumber(parsed.price) != null) return parsed;
+                throw new Error('No price');
+            });
+
+            try {
+                return await Promise.any(attempts);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function fetchPrice(ticker, result) {
+            const yahooSymbol = result && result.yahooSymbol
+                ? result.yahooSymbol
+                : guessYahooSymbolFromTicker(ticker);
+            const cacheKeys = [
+                ticker ? `tv:${ticker}` : '',
+                yahooSymbol ? `yh:${yahooSymbol}` : ''
+            ].filter(Boolean);
+
+            for (let i = 0; i < cacheKeys.length; i++) {
+                const cached = getCachedPrice(cacheKeys[i]);
+                if (cached) return cached;
+            }
+
+            if (result && result.source === 'yahoo') {
+                const immediate = toFiniteNumber(result.marketPrice);
+                if (immediate != null) {
+                    const val = { price: immediate, currency: result.currency || '' };
+                    setCachedPrice(`yh:${yahooSymbol}`, val);
+                    return val;
+                }
+                const yahooOnly = await fetchYahooPrice(result.yahooSymbol || guessYahooSymbolFromTicker(result.ticker));
+                if (yahooOnly) setCachedPrice(`yh:${yahooSymbol}`, yahooOnly);
+                return yahooOnly || null;
+            }
+
+            const candidates = [
+                fetchTradingViewPrice(ticker),
+                fetchYahooPrice(yahooSymbol)
+            ].map((p) => p.then((value) => {
+                if (value && toFiniteNumber(value.price) != null) {
+                    return {
+                        price: toFiniteNumber(value.price),
+                        currency: value.currency || ''
+                    };
+                }
+                throw new Error('No price');
+            }));
+
+            try {
+                const value = await Promise.any(candidates);
+                setCachedPrice(`tv:${ticker}`, value);
+                if (yahooSymbol) setCachedPrice(`yh:${yahooSymbol}`, value);
+                return value;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function renderDropdown(row, results, loading) {
+            const dd = row.querySelector('.asset-dropdown');
+            if (!dd) return;
+
+            dd._results = Array.isArray(results) ? results : [];
+            dd._activeIndex = -1;
+
+            if (loading) {
+                dd.innerHTML = '<div class="asset-loading">Caricamento...</div>';
+                dd.classList.add('open');
+                return;
+            }
+            if (dd._results.length === 0) {
+                dd.innerHTML = '<div class="asset-loading">Nessun risultato</div>';
+                dd.classList.add('open');
+                return;
+            }
+            dd.innerHTML = dd._results.map((r, i) => `
+                <div class="asset-dropdown-item" data-index="${i}">
+                    <span class="asset-badge ${escapeHtml(getAssetBadgeClass(r.type))}">${escapeHtml((r.type || '?').toUpperCase())}</span>
+                    <span class="asset-item-symbol">${escapeHtml(r.symbol)}</span>
+                    <span class="asset-item-desc">${escapeHtml(r.description)}</span>
+                    <span class="asset-item-exchange">${escapeHtml(r.exchange)}</span>
+                </div>
+            `).join('');
+            dd.classList.add('open');
+        }
+
+        function renderDropdownError(row, message) {
+            const dd = row.querySelector('.asset-dropdown');
+            if (!dd) return;
+            dd._results = [];
+            dd._activeIndex = -1;
+            dd.innerHTML = '<div class="asset-loading">' + escapeHtml(message || 'Errore ricerca') + '</div>';
+            dd.classList.add('open');
+        }
+
+        function humanSearchError(err) {
+            if (isFileProtocol()) return 'Apri pagina da localhost (non file://)';
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'Nessuna connessione internet';
+            const msg = err && err.message ? String(err.message) : '';
+            if (msg) return 'Ricerca non disponibile (' + msg + ')';
+            return 'Servizio ricerca non disponibile';
+        }
+
+        function closeDropdown(row) {
+            const dd = row.querySelector('.asset-dropdown');
+            if (!dd) return;
+            dd.classList.remove('open');
+            dd._results = [];
+            dd._activeIndex = -1;
+        }
+
+        function highlightItem(dd, index) {
+            const items = dd.querySelectorAll('.asset-dropdown-item');
+            items.forEach((el) => el.classList.remove('active'));
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('active');
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+            dd._activeIndex = index;
+        }
+
+        async function selectAsset(row, result) {
+            closeDropdown(row);
+            const assetInput = row.querySelector('.in-asset');
+            const badge = row.querySelector('.asset-selected-badge');
+            const prezzoEl = row.querySelector('.in-prezzo');
+            if (!assetInput || !badge || !prezzoEl) return;
+
+            assetInput.value = result.symbol + ' - ' + result.description;
+            row.dataset.selectedTicker = result.ticker;
+            row.dataset.selectedLabel = assetInput.value;
+            badge.textContent = (result.displayTicker || result.ticker) + (result.currency ? ' (' + result.currency + ')' : '');
+
+            prezzoEl.value = '';
+            prezzoEl.placeholder = 'Caricamento prezzo...';
+            const requestId = nextRequestId(priceRequestIds, row);
+
+            try {
+                const priceData = await fetchPrice(result.ticker, result);
+                if (priceRequestIds.get(row) !== requestId) return;
+                if (row.dataset.selectedTicker !== result.ticker) return;
+                if (priceData && priceData.price != null) {
+                    prezzoEl.value = String(priceData.price);
+                    prezzoEl.placeholder = 'es. 100.00';
+                    calculate(row);
+                    return;
+                }
+
+                prezzoEl.placeholder = 'Prezzo non disponibile';
+            } catch (e) {
+                if (priceRequestIds.get(row) !== requestId) return;
+                prezzoEl.placeholder = isFileProtocol() ? 'Usa http://localhost' : 'Errore caricamento prezzo';
+            }
+        }
+
+        // Event delegation for asset search
+        (function() {
+            const container = document.getElementById('simContainer');
+
+            container.addEventListener('input', function(e) {
+                if (!e.target.classList.contains('in-asset')) return;
+                const row = e.target.closest('.sim-row');
+                const inputEl = e.target;
+                const query = inputEl.value.trim();
+                if (!row) return;
+
+                const prevTimer = searchTimers.get(inputEl);
+                if (prevTimer) clearTimeout(prevTimer);
+
+                if (!row.dataset.selectedLabel || query !== row.dataset.selectedLabel) {
+                    clearSelectedAssetState(row);
+                }
+
+                if (query.length < 2) {
+                    closeDropdown(row);
+                    return;
+                }
+
+                const instant = getInstantSearchCandidates(query);
+                if (instant.length > 0) {
+                    renderDropdown(row, instant, false);
+                } else {
+                    renderDropdown(row, [], true);
+                }
+
+                const exactCached = getCachedSearch(query);
+                if (exactCached && exactCached.length > 0) {
+                    return;
+                }
+
+                const requestId = nextRequestId(searchRequestIds, inputEl);
+
+                const timer = setTimeout(async () => {
+                    try {
+                        const results = await searchSymbol(query);
+                        if (searchRequestIds.get(inputEl) !== requestId) return;
+                        if (inputEl.value.trim() !== query) return;
+                        renderDropdown(row, results, false);
+                    } catch (err) {
+                        if (searchRequestIds.get(inputEl) !== requestId) return;
+                        renderDropdownError(row, humanSearchError(err));
+                    }
+                }, 160);
+                searchTimers.set(inputEl, timer);
+            });
+
+            // Click on dropdown item
+            container.addEventListener('click', function(e) {
+                const item = e.target.closest('.asset-dropdown-item');
+                if (!item) return;
+                const dd = item.closest('.asset-dropdown');
+                const row = item.closest('.sim-row');
+                const idx = parseInt(item.dataset.index, 10);
+                if (!dd || !row || !Array.isArray(dd._results)) return;
+                if (Number.isNaN(idx) || !dd._results[idx]) return;
+                selectAsset(row, dd._results[idx]);
+            });
+
+            // Keyboard navigation
+            container.addEventListener('keydown', function(e) {
+                if (!e.target.classList.contains('in-asset')) return;
+                const row = e.target.closest('.sim-row');
+                if (!row) return;
+                const dd = row.querySelector('.asset-dropdown');
+                if (!dd || !dd.classList.contains('open') || !Array.isArray(dd._results)) return;
+
+                const len = dd._results.length;
+                if (len === 0) return;
+                let idx = dd._activeIndex;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    idx = idx < len - 1 ? idx + 1 : 0;
+                    highlightItem(dd, idx);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    idx = idx > 0 ? idx - 1 : len - 1;
+                    highlightItem(dd, idx);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const selectedIndex = idx >= 0 ? idx : 0;
+                    if (dd._results[selectedIndex]) {
+                        selectAsset(row, dd._results[selectedIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    closeDropdown(row);
+                }
+            });
+        })();
+
+        // Close dropdowns on click outside
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.asset-wrapper')) return;
+            document.querySelectorAll('.sim-row').forEach((row) => closeDropdown(row));
+        });
+
+        // --- Init ---
+        loadThemeFromDashboard();
+        addRow();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Borsa Multi-Grafico</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #e94560;
+            --accent-hover: #ff6b81;
+            --border: #2a2a4a;
+            --btn-bg: #2a2a4a;
+            --btn-hover: #3a3a5a;
+            --header-bg: #0f0f23;
+            --green: #1b7a3d;
+            --green-hover: #22994d;
+        }
+        html.light {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666666;
+            --accent: #e94560;
+            --accent-hover: #c73650;
+            --border: #d0d0d0;
+            --btn-bg: #e0e0e0;
+            --btn-hover: #d0d0d0;
+            --header-bg: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary); color: var(--text-primary);
+            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: var(--header-bg); border-bottom: 1px solid var(--border);
+            padding: 8px 24px; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap; gap: 8px;
+            flex-shrink: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        h1 { font-size: 1.3rem; font-weight: 700; white-space: nowrap; }
+        h1 span { color: var(--accent); }
+        .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* Buttons */
+        .btn {
+            background: var(--btn-bg); color: var(--text-primary); border: 1px solid var(--border);
+            padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;
+            font-weight: 500; transition: all 0.15s; white-space: nowrap;
+        }
+        .btn:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-icon { padding: 6px 10px; font-size: 1rem; }
+        .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+        .btn-green { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
+        .btn-green:hover { background: var(--green-hover); border-color: var(--green-hover); }
+        .btn-green.saved { animation: savedPulse 0.5s ease; }
+        @keyframes savedPulse { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+
+        /* Preset bar */
+        .preset-bar {
+            display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
+        }
+        .preset-wrapper {
+            display: inline-flex; align-items: center; position: relative;
+        }
+        .preset-wrapper .btn { padding-right: 10px; }
+        .preset-actions {
+            display: none; position: absolute; top: 100%; left: 0; z-index: 50;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 6px; padding: 4px; min-width: 160px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+        .preset-wrapper:hover .preset-actions,
+        .preset-actions:hover { display: flex; flex-direction: column; gap: 2px; }
+        .preset-actions button {
+            background: none; border: none; color: var(--text-primary);
+            padding: 6px 10px; text-align: left; cursor: pointer;
+            font-size: 0.78rem; border-radius: 4px; white-space: nowrap;
+        }
+        .preset-actions button:hover { background: var(--btn-hover); }
+        .preset-actions button.danger { color: var(--accent); }
+        .preset-actions button.danger:hover { background: rgba(233,69,96,0.15); }
+
+        .btn-new-preset {
+            background: transparent; border: 1px dashed var(--accent);
+            color: var(--accent); font-size: 0.78rem; padding: 5px 12px;
+        }
+        .btn-new-preset:hover { background: var(--accent); color: #fff; }
+
+        .btn-reset-presets {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary); font-size: 0.72rem; padding: 4px 8px;
+        }
+        .btn-reset-presets:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Grid controls */
+        .grid-controls { display: flex; align-items: center; gap: 6px; }
+        .grid-controls label { font-size: 0.82rem; color: var(--text-secondary); }
+        .grid-controls select {
+            background: var(--btn-bg); color: var(--text-primary); border: 1px solid var(--border);
+            padding: 5px 8px; border-radius: 6px; font-size: 0.82rem; cursor: pointer;
+        }
+
+        /* Chart grid */
+        .chart-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 4px; padding: 4px; flex: 1; min-height: 0; grid-auto-rows: 1fr;
+        }
+        .chart-grid.cols-1 { grid-template-columns: 1fr; }
+        .chart-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .chart-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .chart-cell {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; overflow: hidden; position: relative; min-height: 0;
+        }
+        .chart-cell .tradingview-widget-container,
+        .chart-cell .tradingview-widget-container iframe { width: 100%; height: 100%; }
+        .chart-close-btn {
+            position: absolute; top: 6px; right: 6px; z-index: 12;
+            width: 26px; height: 26px; border: none; border-radius: 999px;
+            background: rgba(0,0,0,0.55); color: #fff; cursor: pointer;
+            font-size: 1.05rem; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.15s, background 0.15s;
+            pointer-events: auto;
+        }
+        .chart-cell:hover .chart-close-btn { opacity: 1; }
+        .chart-close-btn:hover { background: var(--accent); }
+        html.light .chart-close-btn { background: rgba(0,0,0,0.4); color: #fff; }
+        @media (hover: none) { .chart-close-btn { opacity: 1; } }
+
+        /* Chart search */
+        .chart-search-box {
+            position: absolute; left: 6px; bottom: 6px; z-index: 12;
+            width: min(120px, calc(100% - 46px));
+            pointer-events: auto;
+        }
+        .chart-search-input {
+            width: 100%;
+            background: rgba(0,0,0,0.58); color: #fff;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 6px; padding: 6px 10px;
+            font-size: 0.78rem; outline: none;
+        }
+        .chart-search-input:focus {
+            border-color: var(--accent);
+            background: rgba(0,0,0,0.75);
+        }
+        html.light .chart-search-input {
+            background: rgba(255,255,255,0.92);
+            color: #1a1a2e;
+            border-color: rgba(0,0,0,0.15);
+        }
+        .chart-search-input::placeholder { color: rgba(255,255,255,0.6); }
+        html.light .chart-search-input::placeholder { color: rgba(0,0,0,0.45); }
+        .chart-search-dropdown {
+            position: absolute; left: 0; right: auto; bottom: calc(100% + 4px);
+            width: min(430px, calc(100vw - 20px));
+            min-width: 100%;
+            background: rgba(12,12,24,0.97);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            max-height: 220px; overflow-y: auto;
+            display: none;
+        }
+        html.light .chart-search-dropdown { background: rgba(255,255,255,0.98); }
+        .chart-search-dropdown.open { display: block; }
+        .chart-search-item {
+            display: grid;
+            grid-template-columns: 44px minmax(90px, auto) 1fr auto;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 9px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.75rem;
+        }
+        html.light .chart-search-item { border-bottom-color: rgba(0,0,0,0.08); }
+        .chart-search-item:last-child { border-bottom: none; }
+        .chart-search-item:hover, .chart-search-item.active { background: rgba(233,69,96,0.16); }
+        .chart-search-type {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 38px; border-radius: 4px; padding: 2px 4px;
+            color: #fff; font-weight: 700; font-size: 0.62rem; text-transform: uppercase;
+            background: #546e7a;
+        }
+        .chart-search-type.stock { background: #2962ff; }
+        .chart-search-type.crypto { background: #f7931a; }
+        .chart-search-type.forex { background: #26a69a; }
+        .chart-search-type.index { background: #78909c; }
+        .chart-search-symbol { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+        .chart-search-desc {
+            color: var(--text-secondary);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .chart-search-exchange { color: var(--text-secondary); white-space: nowrap; }
+        .chart-search-note {
+            padding: 8px 10px;
+            color: var(--text-secondary);
+            font-size: 0.74rem;
+        }
+
+        /* Chart toolbar */
+        .chart-toolbar {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+            display: flex; align-items: center; gap: 3px; padding: 3px 4px;
+            background: rgba(0,0,0,0.8); opacity: 0; transition: opacity 0.2s;
+            flex-wrap: wrap;
+            pointer-events: none;
+        }
+        html.light .chart-toolbar { background: rgba(255,255,255,0.9); }
+        .chart-cell:hover .chart-toolbar { opacity: 1; }
+        .chart-toolbar input,
+        .chart-toolbar select,
+        .chart-toolbar button,
+        .chart-toolbar .ind-dropdown,
+        .chart-toolbar .ind-dropdown * {
+            pointer-events: auto;
+        }
+        .chart-toolbar input[type="text"] {
+            flex: 1; min-width: 80px;
+            background: rgba(255,255,255,0.12); color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 3px 6px; border-radius: 4px; font-size: 0.73rem; font-family: monospace;
+        }
+        html.light .chart-toolbar input[type="text"] {
+            background: rgba(0,0,0,0.06); color: #1a1a2e; border-color: rgba(0,0,0,0.15);
+        }
+        .chart-toolbar input::placeholder { color: rgba(255,255,255,0.4); }
+        .chart-toolbar select {
+            background: rgba(255,255,255,0.12); color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 2px 4px; border-radius: 4px; font-size: 0.72rem; cursor: pointer;
+        }
+        html.light .chart-toolbar select {
+            background: rgba(0,0,0,0.06); color: #1a1a2e; border-color: rgba(0,0,0,0.15);
+        }
+        .chart-toolbar button {
+            background: rgba(255,255,255,0.12); color: #fff; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 0.72rem;
+            padding: 3px 6px; white-space: nowrap;
+        }
+        html.light .chart-toolbar button { background: rgba(0,0,0,0.08); color: #1a1a2e; }
+        .chart-toolbar button:hover { background: var(--accent); color: #fff; }
+        .chart-toolbar button.tb-active { background: var(--accent); color: #fff; }
+        .chart-remove { background: none !important; font-size: 1rem; padding: 3px 5px; }
+
+        /* Indicators dropdown */
+        .ind-dropdown {
+            position: absolute; bottom: 100%; left: 0; right: 0;
+            background: rgba(15,15,35,0.95); border: 1px solid var(--border);
+            border-radius: 8px 8px 0 0; padding: 6px 8px;
+            display: none; flex-wrap: wrap; gap: 4px; z-index: 11;
+        }
+        html.light .ind-dropdown { background: rgba(245,245,250,0.97); }
+        .ind-dropdown.open { display: flex; }
+        .ind-dropdown label {
+            display: flex; align-items: center; gap: 3px;
+            font-size: 0.72rem; color: var(--text-primary); cursor: pointer;
+            background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 3px;
+            white-space: nowrap;
+        }
+        html.light .ind-dropdown label { background: rgba(0,0,0,0.05); }
+        .ind-dropdown input[type="checkbox"] { width: 12px; height: 12px; cursor: pointer; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 200; align-items: center; justify-content: center;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 24px; min-width: 340px; max-width: 90vw;
+        }
+        .modal h2 { font-size: 1.1rem; margin-bottom: 16px; }
+        .modal input[type="text"] {
+            width: 100%; padding: 8px 12px; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--btn-bg);
+            color: var(--text-primary); font-size: 0.9rem; margin-bottom: 8px;
+        }
+        .modal .hint { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 16px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: var(--green); color: #fff; padding: 10px 24px; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 500; z-index: 300; opacity: 0;
+            transition: opacity 0.3s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: relative; width: 48px; height: 26px;
+            background: var(--btn-bg); border-radius: 13px; cursor: pointer;
+            border: 1px solid var(--border); transition: background 0.3s;
+        }
+        .theme-toggle::after {
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 18px; height: 18px; background: var(--accent);
+            border-radius: 50%; transition: transform 0.3s;
+        }
+        html.light .theme-toggle::after { transform: translateX(22px); }
+        .theme-icons { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            body { overflow: auto; height: auto; }
+            .chart-grid { grid-template-columns: repeat(2, 1fr) !important; flex: none; grid-auto-rows: 300px; }
+        }
+        @media (max-width: 640px) {
+            .chart-grid { grid-template-columns: 1fr !important; grid-auto-rows: 350px; }
+            header { padding: 8px 12px; }
+            h1 { font-size: 1rem; }
+            .preset-bar { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>Dashboard <span>Borsa</span></h1>
+            <div class="preset-bar" id="presetBar"></div>
+        </div>
+        <div class="header-controls">
+            <a href="calcolo.html" class="btn" title="Calcolatore Investimenti (nuova scheda)" target="_blank" rel="noopener noreferrer">Calcolatore</a>
+            <button class="btn btn-green" id="btnSaveAll" onclick="saveAll()" title="Salva tutte le impostazioni">Salva tutto</button>
+            <div class="grid-controls">
+                <label>Grafici:</label>
+                <select id="chartCount" onchange="updateChartCount(this.value)">
+                    <option value="1">1</option><option value="2">2</option>
+                    <option value="3">3</option><option value="4">4</option>
+                    <option value="6" selected>6</option><option value="9">9</option>
+                </select>
+                <label>Colonne:</label>
+                <select id="colCount" onchange="updateColumns(this.value)">
+                    <option value="1">1</option><option value="2">2</option>
+                    <option value="3" selected>3</option>
+                </select>
+            </div>
+            <button class="btn btn-icon" onclick="addChart()" title="Aggiungi grafico">+</button>
+            <div class="theme-icons">
+                <span>&#9790;</span>
+                <div class="theme-toggle" onclick="toggleTheme()" title="Cambia tema"></div>
+                <span>&#9788;</span>
+            </div>
+        </div>
+    </header>
+    <div class="chart-grid cols-3" id="chartGrid"></div>
+
+    <!-- Modal: nuovo preset / rinomina -->
+    <div class="modal-overlay" id="presetModal">
+        <div class="modal">
+            <h2 id="presetModalTitle">Nuovo preset</h2>
+            <input type="text" id="presetModalInput" placeholder="Nome del preset" maxlength="20" />
+            <div class="hint" id="presetModalHint">Verranno salvati i grafici attuali con simboli, intervalli e indicatori.</div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closePresetModal()">Annulla</button>
+                <button class="btn active" id="presetModalConfirm" onclick="confirmPresetModal()">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const STORAGE_KEY = 'dashboardBorsa';
+        const PRESETS_KEY = 'dashboardBorsaPresets';
+
+        const INTERVALS = [
+            { value: '1', label: '1m' }, { value: '5', label: '5m' },
+            { value: '15', label: '15m' }, { value: '30', label: '30m' },
+            { value: '60', label: '1H' }, { value: '240', label: '4H' },
+            { value: 'D', label: '1G' }, { value: 'W', label: '1S' },
+            { value: 'M', label: '1M' }
+        ];
+
+        const AVAILABLE_STUDIES = [
+            { id: 'MASimple@tv-basicstudies', label: 'SMA' },
+            { id: 'MAExp@tv-basicstudies', label: 'EMA' },
+            { id: 'RSI@tv-basicstudies', label: 'RSI' },
+            { id: 'MACD@tv-basicstudies', label: 'MACD' },
+            { id: 'BollingerBands@tv-basicstudies', label: 'Boll.' },
+            { id: 'StochasticRSI@tv-basicstudies', label: 'Stoch' },
+            { id: 'VWAP@tv-basicstudies', label: 'VWAP' },
+            { id: 'IchimokuCloud@tv-basicstudies', label: 'Ichi' },
+            { id: 'AwesomeOscillator@tv-basicstudies', label: 'AO' }
+        ];
+
+        const CHART_STYLES = [
+            { value: '1', label: 'Candele' }, { value: '0', label: 'Barre' },
+            { value: '2', label: 'Linea' }, { value: '3', label: 'Area' },
+            { value: '8', label: 'HA' }
+        ];
+
+        // Default presets (used for first load & reset)
+        // Symbols use ETFs/OANDA/BINANCE that work in the free TradingView embed widget
+        const DEFAULT_PRESETS = {
+            mix: {
+                label: 'Mix', order: 0,
+                charts: [
+                    { symbol: 'AMEX:SPY', name: 'S&P 500 ETF' },
+                    { symbol: 'BITSTAMP:BTCUSD', name: 'Bitcoin' },
+                    { symbol: 'FX:EURUSD', name: 'EUR/USD' },
+                    { symbol: 'NASDAQ:AAPL', name: 'Apple' },
+                    { symbol: 'OANDA:XAUUSD', name: 'Oro' },
+                    { symbol: 'AMEX:QQQ', name: 'NASDAQ 100 ETF' },
+                    { symbol: 'NASDAQ:MSFT', name: 'Microsoft' },
+                    { symbol: 'NASDAQ:TSLA', name: 'Tesla' },
+                    { symbol: 'FX:GBPUSD', name: 'GBP/USD' }
+                ]
+            },
+            indici: {
+                label: 'Indici', order: 1,
+                charts: [
+                    { symbol: 'AMEX:SPY', name: 'S&P 500 ETF' },
+                    { symbol: 'AMEX:QQQ', name: 'NASDAQ 100 ETF' },
+                    { symbol: 'AMEX:DIA', name: 'Dow Jones ETF' },
+                    { symbol: 'AMEX:EWG', name: 'Germania ETF' },
+                    { symbol: 'AMEX:EWU', name: 'UK ETF' },
+                    { symbol: 'AMEX:EWJ', name: 'Giappone ETF' },
+                    { symbol: 'AMEX:EWI', name: 'Italia ETF' },
+                    { symbol: 'AMEX:EWH', name: 'Hong Kong ETF' },
+                    { symbol: 'AMEX:IEV', name: 'Europa ETF' }
+                ]
+            },
+            crypto: {
+                label: 'Crypto', order: 2,
+                charts: [
+                    { symbol: 'BITSTAMP:BTCUSD', name: 'Bitcoin' },
+                    { symbol: 'BITSTAMP:ETHUSD', name: 'Ethereum' },
+                    { symbol: 'BINANCE:SOLUSDT', name: 'Solana' },
+                    { symbol: 'BINANCE:BNBUSDT', name: 'BNB' },
+                    { symbol: 'BINANCE:XRPUSDT', name: 'XRP' },
+                    { symbol: 'BINANCE:ADAUSDT', name: 'Cardano' },
+                    { symbol: 'BINANCE:DOGEUSDT', name: 'Dogecoin' },
+                    { symbol: 'BINANCE:AVAXUSDT', name: 'Avalanche' },
+                    { symbol: 'BINANCE:DOTUSDT', name: 'Polkadot' }
+                ]
+            },
+            forex: {
+                label: 'Forex', order: 3,
+                charts: [
+                    { symbol: 'OANDA:EURUSD', name: 'EUR/USD' },
+                    { symbol: 'OANDA:GBPUSD', name: 'GBP/USD' },
+                    { symbol: 'OANDA:USDJPY', name: 'USD/JPY' },
+                    { symbol: 'OANDA:USDCHF', name: 'USD/CHF' },
+                    { symbol: 'OANDA:AUDUSD', name: 'AUD/USD' },
+                    { symbol: 'OANDA:USDCAD', name: 'USD/CAD' },
+                    { symbol: 'OANDA:EURGBP', name: 'EUR/GBP' },
+                    { symbol: 'OANDA:EURJPY', name: 'EUR/JPY' },
+                    { symbol: 'OANDA:NZDUSD', name: 'NZD/USD' }
+                ]
+            },
+            tech: {
+                label: 'Tech', order: 4,
+                charts: [
+                    { symbol: 'NASDAQ:AAPL', name: 'Apple' },
+                    { symbol: 'NASDAQ:MSFT', name: 'Microsoft' },
+                    { symbol: 'NASDAQ:GOOGL', name: 'Google' },
+                    { symbol: 'NASDAQ:AMZN', name: 'Amazon' },
+                    { symbol: 'NASDAQ:NVDA', name: 'NVIDIA' },
+                    { symbol: 'NASDAQ:META', name: 'Meta' },
+                    { symbol: 'NASDAQ:TSLA', name: 'Tesla' },
+                    { symbol: 'NASDAQ:AMD', name: 'AMD' },
+                    { symbol: 'NASDAQ:NFLX', name: 'Netflix' }
+                ]
+            },
+            commodities: {
+                label: 'Materie Prime', order: 5,
+                charts: [
+                    { symbol: 'OANDA:XAUUSD', name: 'Oro' },
+                    { symbol: 'OANDA:XAGUSD', name: 'Argento' },
+                    { symbol: 'TVC:USOIL', name: 'Petrolio WTI' },
+                    { symbol: 'OANDA:NATGASUSD', name: 'Gas Naturale' },
+                    { symbol: 'OANDA:XCUUSD', name: 'Rame' },
+                    { symbol: 'AMEX:GLD', name: 'Oro ETF' },
+                    { symbol: 'AMEX:USO', name: 'Petrolio ETF' },
+                    { symbol: 'AMEX:SLV', name: 'Argento ETF' },
+                    { symbol: 'OANDA:WHEATUSD', name: 'Grano' }
+                ]
+            }
+        };
+
+        let presets = {};
+        let currentCharts = [];
+        let currentPreset = 'mix';
+        let currentCols = 3;
+        let isDark = true;
+        let hasUnsavedChanges = false;
+        const chartWidgets = new Map();
+        const frameIndexByWindow = new WeakMap();
+        let widgetSyncIntervalId = null;
+        const assetSearchTimers = new WeakMap();
+        const assetSearchReqIds = new WeakMap();
+        const ASSET_SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+        const assetSearchCache = new Map();
+        let assetSearchOutsideBound = false;
+
+        const LOCAL_ASSET_HINTS = [
+            { ticker: 'NASDAQ:NDX', symbol: 'NDX', description: 'NASDAQ 100 Index', exchange: 'NASDAQ', type: 'index', aliases: ['nasdaq', 'nasdaq100', 'nasdaq 100', 'ndx'] },
+            { ticker: 'AMEX:QQQ', symbol: 'QQQ', description: 'Invesco QQQ ETF (Nasdaq 100)', exchange: 'AMEX', type: 'stock', aliases: ['nasdaq', 'nasdaq100', 'qqq'] },
+            { ticker: 'SP:SPX', symbol: 'SPX', description: 'S&P 500 Index', exchange: 'SP', type: 'index', aliases: ['sp500', 's&p500', 's and p 500', 'spx'] },
+            { ticker: 'AMEX:SPY', symbol: 'SPY', description: 'SPDR S&P 500 ETF', exchange: 'AMEX', type: 'stock', aliases: ['sp500', 's&p500', 'spy'] },
+            { ticker: 'XETR:DAX', symbol: 'DAX', description: 'Germany 40 (DAX)', exchange: 'XETR', type: 'index', aliases: ['germany40', 'germany 40', 'germania40', 'de40', 'dax'] },
+            { ticker: 'AMEX:EWG', symbol: 'EWG', description: 'Germany ETF', exchange: 'AMEX', type: 'stock', aliases: ['germany', 'germania', 'dax', 'de40'] },
+            { ticker: 'TVC:HSI', symbol: 'HSI', description: 'Hang Seng Index', exchange: 'TVC', type: 'index', aliases: ['cina', 'cinese', 'china', 'hong kong', 'hsi'] },
+            { ticker: 'TVC:SSEC', symbol: 'SSEC', description: 'Shanghai Composite Index', exchange: 'TVC', type: 'index', aliases: ['cina', 'cinese', 'china', 'shanghai', 'ssec'] },
+            { ticker: 'AMEX:MCHI', symbol: 'MCHI', description: 'China ETF', exchange: 'AMEX', type: 'stock', aliases: ['cina', 'cinese', 'china'] },
+            { ticker: 'TVC:NI225', symbol: 'NI225', description: 'Nikkei 225 Index', exchange: 'TVC', type: 'index', aliases: ['giappone', 'giapponese', 'japan', 'nikkei', 'n225', 'ni225'] },
+            { ticker: 'TVC:NKY', symbol: 'NKY', description: 'Nikkei 225 (NKY)', exchange: 'TVC', type: 'index', aliases: ['giappone', 'giapponese', 'japan', 'nikkei', 'nky'] },
+            { ticker: 'AMEX:EWJ', symbol: 'EWJ', description: 'Japan ETF', exchange: 'AMEX', type: 'stock', aliases: ['giappone', 'giapponese', 'japan', 'nikkei'] }
+        ];
+
+        // Modal state
+        let modalMode = 'new'; // 'new', 'rename', 'overwrite'
+        let modalTargetKey = null;
+
+        // --- Helpers ---
+        function cloneChart(c) {
+            return {
+                symbol: c.symbol, name: c.name || c.symbol,
+                interval: c.interval || 'D', style: c.style || '1',
+                studies: c.studies ? [...c.studies] : []
+            };
+        }
+        function currentChartsSnapshot() {
+            return currentCharts.map(c => cloneChart(c));
+        }
+        function nextOrder() {
+            let max = -1;
+            for (const k in presets) { if (presets[k].order > max) max = presets[k].order; }
+            return max + 1;
+        }
+
+        function stripHtmlTags(text) {
+            return String(text || '').replace(/<\/?em>/g, '').trim();
+        }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeText(text) {
+            return String(text || '').trim().toLowerCase();
+        }
+
+        function normalizeMatchKey(text) {
+            return normalizeText(text)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]/g, '');
+        }
+
+        function getAssetTypeClass(type) {
+            const t = normalizeText(type);
+            if (t.includes('crypto')) return 'crypto';
+            if (t.includes('forex') || t.includes('currency') || t.includes('fx')) return 'forex';
+            if (t.includes('index')) return 'index';
+            return 'stock';
+        }
+
+        function mapYahooType(rawType) {
+            return getAssetTypeClass(rawType || 'stock');
+        }
+
+        function getCachedAssetSearch(query) {
+            const key = normalizeText(query);
+            if (!key) return null;
+            const entry = assetSearchCache.get(key);
+            if (!entry) return null;
+            if (Date.now() - entry.ts > ASSET_SEARCH_CACHE_TTL_MS) {
+                assetSearchCache.delete(key);
+                return null;
+            }
+            return Array.isArray(entry.results) ? entry.results : null;
+        }
+
+        function setCachedAssetSearch(query, results) {
+            const key = normalizeText(query);
+            if (!key || !Array.isArray(results) || results.length === 0) return;
+            assetSearchCache.set(key, { ts: Date.now(), results: results });
+        }
+
+        async function fetchWithTimeout(url, options, timeoutMs) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs || 1400);
+            try {
+                return await fetch(url, Object.assign({}, options || {}, { signal: controller.signal }));
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        async function fetchJsonCandidates(url, timeoutMs) {
+            const urls = [
+                url,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+            ];
+
+            const attempts = urls.map(async (candidate) => {
+                const res = await fetchWithTimeout(candidate, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json, text/plain, */*' }
+                }, timeoutMs || 1300);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const raw = await res.text();
+                if (!raw) throw new Error('Empty response');
+                const text = String(raw)
+                    .replace(/^\uFEFF/, '')
+                    .replace(/^\)\]\}',?\s*/, '')
+                    .trim();
+                return JSON.parse(text);
+            });
+
+            return Promise.any(attempts);
+        }
+
+        function normalizeTradingViewResults(data) {
+            const list = Array.isArray(data) ? data : (data && Array.isArray(data.symbols) ? data.symbols : []);
+            return list.slice(0, 10).map((item) => {
+                const symbol = stripHtmlTags(item.symbol);
+                const description = stripHtmlTags(item.description);
+                const exchange = stripHtmlTags(item.exchange);
+                const fullName = stripHtmlTags(item.full_name);
+                const type = getAssetTypeClass(item.type);
+                const ticker = fullName || (exchange ? `${exchange}:${symbol}` : symbol);
+                return {
+                    ticker: String(ticker || '').toUpperCase(),
+                    symbol: symbol.toUpperCase(),
+                    description: description || symbol.toUpperCase(),
+                    exchange: exchange,
+                    type: type
+                };
+            }).filter((item) => !!item.ticker);
+        }
+
+        function normalizeYahooResults(data) {
+            const quotes = (data && Array.isArray(data.quotes))
+                ? data.quotes
+                : (data && data.data && Array.isArray(data.data.quotes) ? data.data.quotes : []);
+            return quotes.slice(0, 10).map((q) => {
+                const symbol = stripHtmlTags(q.symbol).toUpperCase();
+                const exchangeRaw = stripHtmlTags(q.exchDisp || q.exchange || q.exchangeDisplay || '');
+                let ticker = symbol;
+                const ex = exchangeRaw.toLowerCase();
+                if (symbol.endsWith('=X')) ticker = symbol.replace('=X', '');
+                if (ex.includes('nasdaq')) ticker = `NASDAQ:${symbol}`;
+                else if (ex.includes('nyse')) ticker = `NYSE:${symbol}`;
+                else if (ex.includes('amex')) ticker = `AMEX:${symbol}`;
+                else if (ex.includes('binance')) ticker = `BINANCE:${symbol}`;
+                else if (ex.includes('bitstamp')) ticker = `BITSTAMP:${symbol}`;
+                return {
+                    ticker: String(ticker || '').toUpperCase(),
+                    symbol: symbol,
+                    description: stripHtmlTags(q.shortname || q.longname || symbol),
+                    exchange: exchangeRaw,
+                    type: mapYahooType(q.quoteType || q.typeDisp)
+                };
+            }).filter((item) => !!item.ticker);
+        }
+
+        function dedupeAssetResults(list) {
+            const out = [];
+            const seen = new Set();
+            for (let i = 0; i < list.length; i++) {
+                const item = list[i];
+                const key = String(item.ticker || '').toUpperCase();
+                if (!key || seen.has(key)) continue;
+                seen.add(key);
+                out.push(item);
+                if (out.length >= 8) break;
+            }
+            return out;
+        }
+
+        function searchLocalAssetHints(query) {
+            const q = normalizeText(query);
+            const k = normalizeMatchKey(query);
+            if (!q || q.length < 2) return [];
+
+            return LOCAL_ASSET_HINTS.filter((item) => {
+                const hay = [
+                    item.ticker,
+                    item.symbol,
+                    item.description,
+                    item.exchange
+                ].concat(item.aliases || []);
+
+                for (let i = 0; i < hay.length; i++) {
+                    const val = String(hay[i] || '');
+                    if (!val) continue;
+                    if (normalizeText(val).includes(q)) return true;
+                    if (k && normalizeMatchKey(val).includes(k)) return true;
+                }
+                return false;
+            }).slice(0, 8).map((item) => ({
+                ticker: item.ticker,
+                symbol: item.symbol,
+                description: item.description,
+                exchange: item.exchange,
+                type: item.type
+            }));
+        }
+
+        async function searchTradingViewAssets(query) {
+            const encoded = encodeURIComponent(query);
+            const urls = [
+                `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encoded}&hl=1&lang=it&domain=production`,
+                `https://symbol-search.tradingview.com/symbol_search/?text=${encoded}&hl=1&lang=it&exchange=&search_type=&domain=production`
+            ];
+            const attempts = urls.map(async (url) => {
+                const data = await fetchJsonCandidates(url, 1300);
+                const results = normalizeTradingViewResults(data);
+                if (!results.length) throw new Error('No results');
+                return results;
+            });
+            return Promise.any(attempts);
+        }
+
+        async function searchYahooAssets(query) {
+            const encoded = encodeURIComponent(query);
+            const urls = [
+                `https://query2.finance.yahoo.com/v1/finance/search?q=${encoded}&quotesCount=10&newsCount=0&enableFuzzyQuery=true`,
+                `https://query1.finance.yahoo.com/v1/finance/search?q=${encoded}&quotesCount=10&newsCount=0`
+            ];
+            const attempts = urls.map(async (url) => {
+                const data = await fetchJsonCandidates(url, 1300);
+                const results = normalizeYahooResults(data);
+                if (!results.length) throw new Error('No results');
+                return results;
+            });
+            return Promise.any(attempts);
+        }
+
+        async function searchAssetSuggestions(query) {
+            const local = searchLocalAssetHints(query);
+            const cached = getCachedAssetSearch(query);
+            if (cached && cached.length > 0) {
+                return dedupeAssetResults([...(local || []), ...cached]);
+            }
+
+            const providers = [
+                searchTradingViewAssets(query).then((r) => ({ source: 'tv', results: r })),
+                searchYahooAssets(query).then((r) => ({ source: 'yh', results: r }))
+            ];
+
+            let first = [];
+            try {
+                const firstHit = await Promise.any(providers.map((p) =>
+                    p.then((x) => (x.results && x.results.length ? x.results : Promise.reject(new Error('No results'))))
+                ));
+                first = Array.isArray(firstHit) ? firstHit : [];
+            } catch (e) {
+                first = [];
+            }
+
+            const settled = await Promise.allSettled(providers);
+            const merged = [];
+            settled.forEach((res) => {
+                if (res.status === 'fulfilled' && Array.isArray(res.value.results)) {
+                    merged.push(...res.value.results);
+                }
+            });
+
+            const finalResults = dedupeAssetResults([...(local || []), ...(first.length ? [...first, ...merged] : merged)]);
+            if (finalResults.length > 0) setCachedAssetSearch(query, finalResults);
+            return finalResults;
+        }
+
+        function closeAssetSearchDropdown(dd) {
+            if (!dd) return;
+            dd.classList.remove('open');
+            dd._results = [];
+            dd._activeIndex = -1;
+            dd.innerHTML = '';
+        }
+
+        function renderAssetSearchDropdown(dd, results, loading, note) {
+            if (!dd) return;
+            dd._results = Array.isArray(results) ? results : [];
+            dd._activeIndex = -1;
+
+            if (loading) {
+                dd.innerHTML = '<div class="chart-search-note">Ricerca...</div>';
+                dd.classList.add('open');
+                return;
+            }
+
+            if (note) {
+                dd.innerHTML = `<div class="chart-search-note">${escapeHtml(note)}</div>`;
+                dd.classList.add('open');
+                return;
+            }
+
+            if (!dd._results.length) {
+                dd.innerHTML = '<div class="chart-search-note">Nessun risultato</div>';
+                dd.classList.add('open');
+                return;
+            }
+
+            dd.innerHTML = dd._results.map((item, idx) => `
+                <div class="chart-search-item" data-index="${idx}">
+                    <span class="chart-search-type ${escapeHtml(item.type)}">${escapeHtml(item.type)}</span>
+                    <span class="chart-search-symbol">${escapeHtml(item.symbol)}</span>
+                    <span class="chart-search-desc">${escapeHtml(item.description)}</span>
+                    <span class="chart-search-exchange">${escapeHtml(item.exchange)}</span>
+                </div>
+            `).join('');
+            dd.classList.add('open');
+        }
+
+        function highlightAssetSearchItem(dd, index) {
+            const items = dd.querySelectorAll('.chart-search-item');
+            items.forEach((el) => el.classList.remove('active'));
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('active');
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+            dd._activeIndex = index;
+        }
+
+        function bindAssetSearchOutsideClose() {
+            if (assetSearchOutsideBound) return;
+            assetSearchOutsideBound = true;
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.chart-search-box')) return;
+                document.querySelectorAll('.chart-search-dropdown.open').forEach((dd) => closeAssetSearchDropdown(dd));
+            });
+        }
+
+        function bindChartAssetSearch(inputEl, ddEl, chartIndex) {
+            if (!inputEl || !ddEl) return;
+
+            function selectSuggestion(item) {
+                closeAssetSearchDropdown(ddEl);
+                if (!item || !item.ticker) return;
+                inputEl.value = item.ticker;
+                changeSymbol(chartIndex, item.ticker);
+                setTimeout(() => {
+                    if (document.body.contains(inputEl)) inputEl.value = '';
+                }, 40);
+            }
+
+            inputEl.addEventListener('input', function() {
+                const query = inputEl.value.trim();
+                const prev = assetSearchTimers.get(inputEl);
+                if (prev) clearTimeout(prev);
+
+                if (query.length < 2) {
+                    closeAssetSearchDropdown(ddEl);
+                    return;
+                }
+
+                const cached = getCachedAssetSearch(query);
+                if (cached && cached.length) renderAssetSearchDropdown(ddEl, cached, false, '');
+                else renderAssetSearchDropdown(ddEl, [], true, '');
+
+                const reqId = (assetSearchReqIds.get(inputEl) || 0) + 1;
+                assetSearchReqIds.set(inputEl, reqId);
+
+                const timer = setTimeout(async () => {
+                    try {
+                        const results = await searchAssetSuggestions(query);
+                        if (assetSearchReqIds.get(inputEl) !== reqId) return;
+                        if (inputEl.value.trim() !== query) return;
+                        renderAssetSearchDropdown(ddEl, results, false, '');
+                    } catch (e) {
+                        if (assetSearchReqIds.get(inputEl) !== reqId) return;
+                        renderAssetSearchDropdown(ddEl, [], false, 'Ricerca non disponibile');
+                    }
+                }, 170);
+
+                assetSearchTimers.set(inputEl, timer);
+            });
+
+            inputEl.addEventListener('keydown', function(e) {
+                if (!ddEl.classList.contains('open') || !Array.isArray(ddEl._results)) return;
+                const len = ddEl._results.length;
+                if (!len) return;
+                let idx = ddEl._activeIndex;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    idx = idx < len - 1 ? idx + 1 : 0;
+                    highlightAssetSearchItem(ddEl, idx);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    idx = idx > 0 ? idx - 1 : len - 1;
+                    highlightAssetSearchItem(ddEl, idx);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const selectedIndex = idx >= 0 ? idx : 0;
+                    if (ddEl._results[selectedIndex]) selectSuggestion(ddEl._results[selectedIndex]);
+                } else if (e.key === 'Escape') {
+                    closeAssetSearchDropdown(ddEl);
+                }
+            });
+
+            inputEl.addEventListener('focus', function() {
+                const q = inputEl.value.trim();
+                if (q.length < 2) return;
+                const cached = getCachedAssetSearch(q);
+                if (cached && cached.length) renderAssetSearchDropdown(ddEl, cached, false, '');
+            });
+
+            ddEl.addEventListener('click', function(e) {
+                const itemEl = e.target.closest('.chart-search-item');
+                if (!itemEl) return;
+                const idx = parseInt(itemEl.dataset.index, 10);
+                if (!Array.isArray(ddEl._results) || Number.isNaN(idx) || !ddEl._results[idx]) return;
+                selectSuggestion(ddEl._results[idx]);
+            });
+        }
+
+        // --- Storage ---
+        let storageOk = false;
+
+        function testStorage() {
+            try {
+                localStorage.setItem('__test__', '1');
+                const v = localStorage.getItem('__test__');
+                localStorage.removeItem('__test__');
+                if (v === '1') { storageOk = true; return true; }
+            } catch(e) {}
+            storageOk = false;
+            console.error('localStorage NON funziona!');
+            return false;
+        }
+
+        function saveState() {
+            if (!storageOk) return;
+            try {
+                const data = JSON.stringify({
+                    charts: currentCharts, preset: currentPreset,
+                    cols: currentCols, dark: isDark
+                });
+                localStorage.setItem(STORAGE_KEY, data);
+                console.log('State salvato, charts:', currentCharts.length,
+                    'symbols:', currentCharts.map(c=>c.symbol).join(', '));
+            } catch(e) { console.error('Errore saveState:', e); }
+        }
+
+        function loadState() {
+            try {
+                const r = localStorage.getItem(STORAGE_KEY);
+                if (!r) { console.log('Nessuno state salvato trovato'); return null; }
+                const parsed = JSON.parse(r);
+                console.log('State caricato, charts:', parsed.charts ? parsed.charts.length : 0,
+                    'symbols:', parsed.charts ? parsed.charts.map(c=>c.symbol).join(', ') : 'nessuno');
+                return parsed;
+            } catch(e) { console.error('Errore loadState:', e); return null; }
+        }
+
+        function savePresets() {
+            if (!storageOk) return;
+            try {
+                localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+                console.log('Presets salvati:', Object.keys(presets).join(', '));
+            } catch(e) { console.error('Errore savePresets:', e); }
+        }
+
+        function loadPresets() {
+            try {
+                const r = localStorage.getItem(PRESETS_KEY);
+                if (!r) return null;
+                return JSON.parse(r);
+            } catch(e) { return null; }
+        }
+
+        // Cleanup old keys from previous versions
+        function cleanupOldKeys() {
+            try {
+                localStorage.removeItem('dashboardBorsaCustomPresets');
+            } catch(e) {}
+        }
+
+        // --- Toast ---
+        let toastTimer;
+        function showToast(msg) {
+            clearTimeout(toastTimer);
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // --- Auto-save on every change ---
+        function autoSave() {
+            saveState();
+            hasUnsavedChanges = false;
+        }
+        // "Salva tutto" = visual confirmation
+        function saveAll() {
+            syncChartsFromWidgets();
+            saveState();
+            savePresets();
+            hasUnsavedChanges = false;
+            const btn = document.getElementById('btnSaveAll');
+            btn.textContent = 'Salvato!'; btn.classList.add('saved');
+            showToast('Impostazioni salvate');
+            setTimeout(() => { btn.textContent = 'Salva tutto'; btn.classList.remove('saved'); }, 2000);
+        }
+
+        // --- Theme ---
+        function getTheme() { return isDark ? 'dark' : 'light'; }
+        function toggleTheme() {
+            isDark = !isDark;
+            document.documentElement.classList.toggle('light', !isDark);
+            renderCharts(); autoSave();
+        }
+
+        // --- TradingView ---
+        function pickWidgetSymbol(symbolInfo, fallback) {
+            if (!symbolInfo) return fallback;
+            const full = symbolInfo.full_name || symbolInfo.pro_name || symbolInfo.ticker || symbolInfo.name;
+            if (typeof full === 'string' && full.trim()) return full.trim().toUpperCase();
+
+            const name = symbolInfo.name || symbolInfo.ticker || '';
+            const exchange = symbolInfo.exchange || symbolInfo.listed_exchange || '';
+            if (name && exchange) return (exchange + ':' + name).toUpperCase();
+
+            return fallback;
+        }
+
+        function readSymbolFromWidget(widget, fallback) {
+            if (!widget) return fallback;
+            try {
+                if (typeof widget.activeChart === 'function') {
+                    const ac = widget.activeChart();
+                    if (ac) {
+                        if (typeof ac.symbol === 'function') {
+                            const s1 = ac.symbol();
+                            if (typeof s1 === 'string' && s1.trim()) return s1.trim().toUpperCase();
+                        }
+                        if (typeof ac.symbolExt === 'function') {
+                            const ext = ac.symbolExt();
+                            if (ext && typeof ext === 'object') {
+                                const s2 = ext.full_name || ext.pro_name || ext.ticker || ext.name;
+                                if (typeof s2 === 'string' && s2.trim()) return s2.trim().toUpperCase();
+                            }
+                        }
+                    }
+                }
+                if (typeof widget.symbolInterval === 'function') {
+                    const si = widget.symbolInterval();
+                    if (si && typeof si === 'object' && typeof si.symbol === 'string' && si.symbol.trim()) {
+                        return si.symbol.trim().toUpperCase();
+                    }
+                    if (typeof si === 'string' && si.trim()) {
+                        return si.trim().toUpperCase();
+                    }
+                }
+            } catch (e) {}
+            return fallback;
+        }
+
+        function syncChartsFromWidgets() {
+            let changed = false;
+            chartWidgets.forEach((widget, chartIndex) => {
+                if (typeof chartIndex !== 'number') return;
+                if (!currentCharts[chartIndex]) return;
+
+                const current = currentCharts[chartIndex];
+                const liveSymbol = readSymbolFromWidget(widget, current.symbol);
+                if (!liveSymbol || liveSymbol === current.symbol) return;
+
+                current.symbol = liveSymbol;
+                current.name = liveSymbol;
+                changed = true;
+            });
+
+            if (changed) {
+                syncCurrentToPreset();
+                autoSave();
+            }
+        }
+
+        function registerChartIframe(containerId, chartIndex) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const tryBind = function(delay) {
+                setTimeout(function() {
+                    const iframe = container.querySelector('iframe');
+                    if (!iframe || !iframe.contentWindow) return;
+                    frameIndexByWindow.set(iframe.contentWindow, chartIndex);
+                }, delay);
+            };
+
+            tryBind(0);
+            tryBind(500);
+            tryBind(1200);
+        }
+
+        function normalizeSymbolText(symbol, fallback) {
+            const s = String(symbol || '').trim().toUpperCase();
+            if (!s) return fallback;
+            if (s.indexOf(':') > 0) return s;
+            if (/^[A-Z]{6}$/.test(s)) return s;
+            if (/^[A-Z0-9._-]{1,20}$/.test(s)) return s;
+            return fallback;
+        }
+
+        function extractSymbolFromMessageData(data) {
+            const candidates = [];
+            const seen = new Set();
+
+            function pushCandidate(value) {
+                if (typeof value !== 'string') return;
+                const t = value.trim();
+                if (!t) return;
+                if (seen.has(t)) return;
+                seen.add(t);
+                candidates.push(t);
+            }
+
+            function walk(value, depth) {
+                if (depth > 4 || value == null) return;
+                if (typeof value === 'string') {
+                    pushCandidate(value);
+                    return;
+                }
+                if (typeof value !== 'object') return;
+                if (Array.isArray(value)) {
+                    for (let i = 0; i < value.length; i++) walk(value[i], depth + 1);
+                    return;
+                }
+
+                const keys = ['symbol', 'full_name', 'pro_name', 'ticker', 'newSymbol', 'symbolName'];
+                for (let i = 0; i < keys.length; i++) {
+                    const k = keys[i];
+                    if (typeof value[k] === 'string') pushCandidate(value[k]);
+                }
+                Object.keys(value).forEach((k) => walk(value[k], depth + 1));
+            }
+
+            walk(data, 0);
+
+            for (let i = 0; i < candidates.length; i++) {
+                const c = candidates[i];
+                const m = c.match(/[A-Z]+:[A-Z0-9._-]+/g);
+                if (m && m.length > 0) return m[0];
+            }
+
+            for (let i = 0; i < candidates.length; i++) {
+                const c = candidates[i].toUpperCase();
+                if (/^[A-Z0-9._-]{1,20}$/.test(c)) return c;
+            }
+
+            return '';
+        }
+
+        function startWidgetSyncLoop() {
+            if (widgetSyncIntervalId) return;
+            widgetSyncIntervalId = setInterval(function() {
+                if (document.hidden) return;
+                syncChartsFromWidgets();
+            }, 1200);
+        }
+
+        function createChartWidget(containerId, chartData, chartIndex) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            const wDiv = document.createElement('div');
+            wDiv.className = 'tradingview-widget-container';
+            wDiv.style.cssText = 'height:100%;width:100%';
+            const inner = document.createElement('div');
+            inner.id = containerId + '_inner';
+            inner.style.cssText = 'height:100%;width:100%';
+            wDiv.appendChild(inner); container.appendChild(wDiv);
+
+            const cfg = {
+                container_id: inner.id, autosize: true,
+                symbol: chartData.symbol, interval: chartData.interval || 'D',
+                timezone: 'Europe/Rome', theme: getTheme(),
+                style: chartData.style || '1', locale: 'it',
+                toolbar_bg: isDark ? '#1a1a2e' : '#ffffff',
+                // Allow direct symbol change from TradingView chart UI
+                enable_publishing: false, allow_symbol_change: true,
+                save_image: false, hide_volume: false,
+                studies: chartData.studies || [],
+                hide_top_toolbar: false,
+                show_popup_button: false, popup_width: '1000', popup_height: '650'
+            };
+            if (typeof TradingView !== 'undefined') {
+                const widget = new TradingView.widget(cfg);
+                if (typeof chartIndex === 'number') chartWidgets.set(chartIndex, widget);
+                if (widget && typeof widget.onChartReady === 'function') {
+                    widget.onChartReady(function() {
+                        try {
+                            const chartApi = (typeof widget.activeChart === 'function') ? widget.activeChart() : null;
+                            if (!chartApi || typeof chartApi.onSymbolChanged !== 'function') return;
+
+                            chartApi.onSymbolChanged().subscribe(null, function(symbolInfo) {
+                                if (typeof chartIndex !== 'number') return;
+                                if (!currentCharts[chartIndex]) return;
+
+                                const current = currentCharts[chartIndex];
+                                const liveSymbol = readSymbolFromWidget(widget, current.symbol);
+                                const nextSymbol = pickWidgetSymbol(symbolInfo, liveSymbol || current.symbol);
+                                if (!nextSymbol || nextSymbol === current.symbol) return;
+
+                                current.symbol = nextSymbol;
+                                current.name = symbolInfo && symbolInfo.description
+                                    ? String(symbolInfo.description)
+                                    : nextSymbol;
+                                syncCurrentToPreset();
+                                autoSave();
+                            });
+                            registerChartIframe(containerId, chartIndex);
+                        } catch (e) {}
+                    });
+                }
+            } else {
+                const s = document.createElement('script');
+                s.src = 'https://s3.tradingview.com/tv.js';
+                s.onload = () => { if (typeof TradingView !== 'undefined') createChartWidget(containerId, chartData, chartIndex); };
+                document.head.appendChild(s);
+            }
+        }
+
+        function reloadChart(i) { createChartWidget('tv_chart_' + i, currentCharts[i], i); syncCurrentToPreset(); autoSave(); }
+        function changeSymbol(i, sym) {
+            sym = sym.trim().toUpperCase(); if (!sym) return;
+            currentCharts[i].symbol = sym; currentCharts[i].name = sym; reloadChart(i);
+        }
+        function changeInterval(i, v) { currentCharts[i].interval = v; reloadChart(i); }
+        function changeStyle(i, v) { currentCharts[i].style = v; reloadChart(i); }
+        function toggleStudy(i, id, on) {
+            const c = currentCharts[i]; if (!c.studies) c.studies = [];
+            if (on) { if (!c.studies.includes(id)) c.studies.push(id); }
+            else { c.studies = c.studies.filter(s => s !== id); }
+            reloadChart(i);
+        }
+
+        // --- Render charts ---
+        function renderCharts() {
+            const grid = document.getElementById('chartGrid');
+            grid.innerHTML = '';
+            chartWidgets.clear();
+            currentCharts.forEach((chart, i) => {
+                if (!chart.interval) chart.interval = 'D';
+                if (!chart.style) chart.style = '1';
+                if (!chart.studies) chart.studies = [];
+
+                const cell = document.createElement('div'); cell.className = 'chart-cell';
+                const rm = document.createElement('button');
+                rm.className = 'chart-close-btn';
+                rm.innerHTML = '&times;';
+                rm.title = 'Chiudi grafico (Shift+Click o tasto destro: cambia simbolo)';
+                rm.onclick = function(e) {
+                    e.stopPropagation();
+                    if (e.shiftKey) {
+                        const next = prompt('Nuovo simbolo (es. NASDAQ:PYPL)', currentCharts[i].symbol || '');
+                        if (next) changeSymbol(i, next);
+                        return;
+                    }
+                    removeChart(i);
+                };
+                rm.oncontextmenu = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const next = prompt('Nuovo simbolo (es. NASDAQ:PYPL)', currentCharts[i].symbol || '');
+                    if (next) changeSymbol(i, next);
+                };
+                cell.appendChild(rm);
+
+                const searchBox = document.createElement('div');
+                searchBox.className = 'chart-search-box';
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.className = 'chart-search-input';
+                searchInput.placeholder = 'Cerca asset (es. paypal, aapl, eurusd)';
+                searchInput.autocomplete = 'off';
+                searchInput.spellcheck = false;
+                searchInput.title = 'Digita e scegli un suggerimento';
+                const searchDropdown = document.createElement('div');
+                searchDropdown.className = 'chart-search-dropdown';
+                searchBox.append(searchInput, searchDropdown);
+                bindChartAssetSearch(searchInput, searchDropdown, i);
+                cell.appendChild(searchBox);
+
+                const wc = document.createElement('div'); wc.id = 'tv_chart_' + i;
+                wc.style.cssText = 'height:100%;width:100%';
+                cell.appendChild(wc); grid.appendChild(cell);
+            });
+
+            currentCharts.forEach((c, i) => {
+                setTimeout(() => createChartWidget('tv_chart_' + i, c, i), i * 300);
+            });
+            document.getElementById('chartCount').value = currentCharts.length;
+        }
+
+        // ===================== PRESET SYSTEM =====================
+
+        function getSortedPresetKeys() {
+            return Object.keys(presets).sort((a, b) => (presets[a].order || 0) - (presets[b].order || 0));
+        }
+
+        function renderPresetBar() {
+            const bar = document.getElementById('presetBar');
+            bar.innerHTML = '';
+
+            getSortedPresetKeys().forEach(key => {
+                const p = presets[key];
+                const wrapper = document.createElement('div'); wrapper.className = 'preset-wrapper';
+
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-sm' + (currentPreset === key ? ' active' : '');
+                btn.textContent = p.label;
+                btn.onclick = () => applyPreset(key);
+
+                const actions = document.createElement('div'); actions.className = 'preset-actions';
+
+                // Overwrite
+                const aOver = document.createElement('button');
+                aOver.textContent = 'Sovrascrivi con grafici attuali';
+                aOver.onclick = (e) => { e.stopPropagation(); overwritePreset(key); };
+
+                // Rename
+                const aRen = document.createElement('button');
+                aRen.textContent = 'Rinomina';
+                aRen.onclick = (e) => { e.stopPropagation(); openRenameModal(key); };
+
+                // Delete
+                const aDel = document.createElement('button');
+                aDel.className = 'danger';
+                aDel.textContent = 'Elimina';
+                aDel.onclick = (e) => { e.stopPropagation(); deletePreset(key); };
+
+                actions.append(aOver, aRen, aDel);
+                wrapper.append(btn, actions);
+                bar.appendChild(wrapper);
+            });
+
+            // + Nuovo
+            const newBtn = document.createElement('button');
+            newBtn.className = 'btn btn-new-preset';
+            newBtn.textContent = '+ Nuovo';
+            newBtn.title = 'Crea un nuovo preset dai grafici attuali';
+            newBtn.onclick = openNewPresetModal;
+            bar.appendChild(newBtn);
+
+            // Ripristina predefiniti
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'btn btn-reset-presets';
+            resetBtn.textContent = 'Ripristina';
+            resetBtn.title = 'Ripristina i preset predefiniti (quelli personalizzati rimangono)';
+            resetBtn.onclick = resetDefaultPresets;
+            bar.appendChild(resetBtn);
+        }
+
+        // --- Apply preset ---
+        function applyPreset(key) {
+            if (!presets[key]) return;
+            syncChartsFromWidgets();
+            currentPreset = key;
+            const src = presets[key].charts;
+            currentCharts = src.map(c => cloneChart(c));
+            currentCols = presets[key].cols || 3;
+            document.getElementById('chartCount').value = currentCharts.length;
+            document.getElementById('colCount').value = currentCols;
+            document.getElementById('chartGrid').className = 'chart-grid cols-' + currentCols;
+            renderPresetBar(); renderCharts(); autoSave();
+        }
+
+        // --- Overwrite preset ---
+        function overwritePreset(key) {
+            syncChartsFromWidgets();
+            const label = presets[key].label;
+            if (!confirm('Sovrascrivere il preset "' + label + '" con i grafici attuali?')) return;
+            presets[key].charts = currentChartsSnapshot();
+            presets[key].cols = currentCols;
+            savePresets();
+            currentPreset = key;
+            renderPresetBar();
+            showToast('Preset "' + label + '" aggiornato');
+            autoSave();
+        }
+
+        // --- Delete preset ---
+        function deletePreset(key) {
+            const keys = Object.keys(presets);
+            if (keys.length <= 1) {
+                showToast('Devi avere almeno un preset');
+                return;
+            }
+            if (!confirm('Eliminare il preset "' + presets[key].label + '"?')) return;
+            delete presets[key];
+            savePresets();
+            if (currentPreset === key) {
+                currentPreset = getSortedPresetKeys()[0];
+            }
+            renderPresetBar(); saveState();
+            showToast('Preset eliminato');
+        }
+
+        // --- Reset defaults ---
+        function resetDefaultPresets() {
+            if (!confirm('Ripristinare i preset predefiniti? I tuoi preset personalizzati NON verranno eliminati.')) return;
+            for (const key in DEFAULT_PRESETS) {
+                presets[key] = JSON.parse(JSON.stringify(DEFAULT_PRESETS[key]));
+            }
+            savePresets(); renderPresetBar();
+            showToast('Preset predefiniti ripristinati');
+        }
+
+        // --- Modal: new preset ---
+        function openNewPresetModal() {
+            modalMode = 'new'; modalTargetKey = null;
+            document.getElementById('presetModalTitle').textContent = 'Nuovo preset';
+            document.getElementById('presetModalHint').textContent =
+                'Verranno salvati i grafici attuali con simboli, intervalli e indicatori.';
+            document.getElementById('presetModalConfirm').textContent = 'Crea';
+            document.getElementById('presetModalInput').value = '';
+            document.getElementById('presetModal').classList.add('visible');
+            document.getElementById('presetModalInput').focus();
+        }
+
+        // --- Modal: rename preset ---
+        function openRenameModal(key) {
+            modalMode = 'rename'; modalTargetKey = key;
+            document.getElementById('presetModalTitle').textContent = 'Rinomina preset';
+            document.getElementById('presetModalHint').textContent =
+                'Inserisci il nuovo nome per "' + presets[key].label + '".';
+            document.getElementById('presetModalConfirm').textContent = 'Rinomina';
+            document.getElementById('presetModalInput').value = presets[key].label;
+            document.getElementById('presetModal').classList.add('visible');
+            document.getElementById('presetModalInput').focus();
+            document.getElementById('presetModalInput').select();
+        }
+
+        function closePresetModal() {
+            document.getElementById('presetModal').classList.remove('visible');
+        }
+
+        function confirmPresetModal() {
+            syncChartsFromWidgets();
+            const name = document.getElementById('presetModalInput').value.trim();
+            if (!name) { document.getElementById('presetModalInput').focus(); return; }
+
+            if (modalMode === 'new') {
+                const key = 'p_' + Date.now();
+                presets[key] = {
+                    label: name,
+                    order: nextOrder(),
+                    charts: currentChartsSnapshot(),
+                    cols: currentCols
+                };
+                savePresets();
+                currentPreset = key;
+                renderPresetBar(); saveState();
+                showToast('Preset "' + name + '" creato');
+            } else if (modalMode === 'rename' && modalTargetKey && presets[modalTargetKey]) {
+                presets[modalTargetKey].label = name;
+                savePresets(); renderPresetBar();
+                showToast('Preset rinominato in "' + name + '"');
+            }
+            closePresetModal();
+        }
+
+        document.getElementById('presetModal').addEventListener('click', function(e) {
+            if (e.target === this) closePresetModal();
+        });
+        document.getElementById('presetModalInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') confirmPresetModal();
+            if (e.key === 'Escape') closePresetModal();
+        });
+
+        // ===================== CHART COUNT / COLUMNS =====================
+
+        function getPresetCharts() {
+            return (presets[currentPreset] && presets[currentPreset].charts) || [{ symbol: 'BITSTAMP:BTCUSD', name: 'Bitcoin' }];
+        }
+
+        function updateChartCount(count) {
+            count = parseInt(count);
+            const src = getPresetCharts();
+            if (count > currentCharts.length) {
+                while (currentCharts.length < count) {
+                    const s = src[currentCharts.length % src.length];
+                    currentCharts.push(cloneChart(s));
+                }
+            } else {
+                currentCharts = currentCharts.slice(0, count);
+            }
+            // Aggiorna anche il preset corrente
+            if (presets[currentPreset]) {
+                presets[currentPreset].charts = currentChartsSnapshot();
+                savePresets();
+            }
+            renderCharts(); autoSave();
+        }
+
+        function updateColumns(cols) {
+            currentCols = parseInt(cols);
+            document.getElementById('chartGrid').className = 'chart-grid cols-' + currentCols;
+            // Salva colonne anche nel preset corrente
+            if (presets[currentPreset]) {
+                presets[currentPreset].cols = currentCols;
+                savePresets();
+            }
+            autoSave();
+        }
+
+        function addChart() {
+            if (currentCharts.length >= 9) return;
+            const src = getPresetCharts();
+            currentCharts.push(cloneChart(src[currentCharts.length % src.length]));
+            document.getElementById('chartCount').value = currentCharts.length;
+            syncCurrentToPreset();
+            renderCharts(); autoSave();
+        }
+
+        function removeChart(i) {
+            if (currentCharts.length <= 1) return;
+            currentCharts.splice(i, 1);
+            document.getElementById('chartCount').value = currentCharts.length;
+            syncCurrentToPreset();
+            renderCharts(); autoSave();
+        }
+
+        // Sync current state into the active preset
+        function syncCurrentToPreset() {
+            if (presets[currentPreset]) {
+                presets[currentPreset].charts = currentChartsSnapshot();
+                presets[currentPreset].cols = currentCols;
+                savePresets();
+            }
+        }
+
+
+        // ===================== INIT =====================
+        function init() {
+            // 1. Test localStorage
+            testStorage();
+            cleanupOldKeys();
+
+            if (!storageOk) {
+                setTimeout(() =>
+                    showToast('ATTENZIONE: localStorage non disponibile! Le impostazioni NON verranno salvate.'), 500);
+            }
+
+            // 2. Load presets (or seed with defaults)
+            const savedPresets = loadPresets();
+            if (savedPresets && Object.keys(savedPresets).length > 0) {
+                presets = savedPresets;
+                console.log('[INIT] Presets caricati:', Object.keys(presets).join(', '));
+            } else {
+                presets = JSON.parse(JSON.stringify(DEFAULT_PRESETS));
+                savePresets();
+                console.log('[INIT] Presets inizializzati con defaults');
+            }
+
+            // 3. Load app state
+            const state = loadState();
+            if (state && state.charts && state.charts.length > 0) {
+                currentCharts = state.charts.map(c => cloneChart(c));
+                currentPreset = state.preset || getSortedPresetKeys()[0];
+                currentCols = state.cols || 3;
+                isDark = state.dark !== undefined ? state.dark : true;
+                console.log('[INIT] State ripristinato -', currentCharts.length, 'grafici:',
+                    currentCharts.map(c => c.symbol).join(', '));
+            } else {
+                currentPreset = 'mix';
+                const src = presets.mix ? presets.mix.charts : presets[getSortedPresetKeys()[0]].charts;
+                currentCharts = src.slice(0, 6).map(c => cloneChart(c));
+                console.log('[INIT] Nessuno state salvato, caricati defaults');
+            }
+
+            if (!presets[currentPreset]) currentPreset = getSortedPresetKeys()[0];
+
+            document.documentElement.classList.toggle('light', !isDark);
+            document.getElementById('colCount').value = currentCols;
+            document.getElementById('chartGrid').className = 'chart-grid cols-' + currentCols;
+
+            renderPresetBar();
+            renderCharts();
+            bindAssetSearchOutsideClose();
+            // Salva subito per assicurarsi che lo state iniziale sia persistito
+            saveState();
+            hasUnsavedChanges = false;
+            startWidgetSyncLoop();
+
+            // Last chance sync when leaving/changing visibility
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'hidden') syncChartsFromWidgets();
+            });
+            window.addEventListener('beforeunload', function() {
+                syncChartsFromWidgets();
+            });
+            window.addEventListener('message', function(event) {
+                try {
+                    if (!event || !event.source) return;
+                    const idx = frameIndexByWindow.get(event.source);
+                    if (typeof idx !== 'number') return;
+                    if (!currentCharts[idx]) return;
+
+                    const current = currentCharts[idx];
+                    const raw = extractSymbolFromMessageData(event.data);
+                    const next = normalizeSymbolText(raw, current.symbol);
+                    if (!next || next === current.symbol) return;
+
+                    current.symbol = next;
+                    current.name = next;
+                    syncCurrentToPreset();
+                    autoSave();
+                } catch (e) {}
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
