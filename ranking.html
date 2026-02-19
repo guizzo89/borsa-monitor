@@ -115,6 +115,20 @@
         }
         .btn-new-cat:hover { background: var(--accent); color: #fff; }
 
+        /* Limit custom input */
+        .limit-input {
+            width: 62px; padding: 5px 8px; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--btn-bg);
+            color: var(--text-primary); font-size: 0.8rem; font-family: inherit;
+            text-align: center; transition: border-color 0.15s;
+        }
+        .limit-input:focus { outline: none; border-color: var(--accent); }
+        .limit-input.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(233,69,96,0.25); }
+        /* hide number arrows */
+        .limit-input::-webkit-outer-spin-button,
+        .limit-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .limit-input[type=number] { -moz-appearance: textfield; }
+
         /* Load row */
         .load-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .btn-load {
@@ -305,9 +319,11 @@
             <div class="filter-btns">
                 <button class="limit-btn" data-limit="5">5</button>
                 <button class="limit-btn" data-limit="10">10</button>
-                <button class="limit-btn" data-limit="15">15</button>
                 <button class="limit-btn" data-limit="20">20</button>
+                <button class="limit-btn" data-limit="50">50</button>
                 <button class="limit-btn active" data-limit="0">Tutti</button>
+                <input type="number" id="limitCustom" class="limit-input"
+                    min="1" max="999" placeholder="N…" title="Numero personalizzato">
             </div>
         </div>
 
@@ -663,8 +679,29 @@ document.querySelectorAll('.limit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        const inp = document.getElementById('limitCustom');
+        inp.value = '';
+        inp.classList.remove('active');
     });
 });
+(function() {
+    const inp = document.getElementById('limitCustom');
+    inp.addEventListener('input', () => {
+        const v = inp.value.trim();
+        if (v && parseInt(v) > 0) {
+            document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('active'));
+            inp.classList.add('active');
+        } else {
+            inp.classList.remove('active');
+            // se svuotato, riattiva Tutti
+            if (!v) {
+                document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.limit-btn[data-limit="0"]').classList.add('active');
+            }
+        }
+    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') loadRanking(); });
+})();
 document.getElementById('catBtns').addEventListener('click', function(e) {
     if (e.target.classList.contains('cat-btn')) updateSelAllBtn();
 });
@@ -760,12 +797,15 @@ async function fetchPerf(symbol, range, interval) {
 async function loadRanking() {
     const selectedCatKeys = [...document.querySelectorAll('#catBtns .cat-btn.active')].map(b => b.dataset.cat);
     const periodBtn = document.querySelector('.period-btn.active');
-    const limitBtn  = document.querySelector('.limit-btn.active');
     if (!selectedCatKeys.length) { alert('Seleziona almeno una categoria'); return; }
 
     const range    = periodBtn.dataset.period;
     const interval = periodBtn.dataset.interval;
-    const limit    = parseInt(limitBtn.dataset.limit) || 0;
+
+    // Priorità: input custom → bottone attivo → 0 (Tutti)
+    const customVal = parseInt(document.getElementById('limitCustom').value) || 0;
+    const limitBtn  = document.querySelector('.limit-btn.active');
+    const limit     = customVal > 0 ? customVal : (limitBtn ? parseInt(limitBtn.dataset.limit) || 0 : 0);
 
     const allCats = getAllCats();
     const toFetch = [];
