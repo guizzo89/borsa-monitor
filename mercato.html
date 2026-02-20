@@ -54,7 +54,17 @@
         }
         html.light .theme-toggle::after { transform: translateX(22px); }
 
-        .main-content { flex: 1; padding: 20px 24px; width: 100%; max-width: none; margin: 0; }
+        .main-content {
+            flex: 1;
+            min-height: 0;
+            padding: 20px 24px;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
         /* ---- DISCLAIMER ---- */
         .disclaimer {
@@ -159,13 +169,17 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px;
             align-items: start;
+            flex: 1;
+            min-height: 0;
         }
         .results-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 12px;
-            min-height: 240px;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
         .results-panel-title {
             font-size: 0.78rem;
@@ -188,10 +202,12 @@
         .sort-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         .results-info { margin-left: auto; font-size: 0.78rem; color: var(--text-secondary); }
         #rankingResultsArea, #resultsArea {
-            max-height: 58vh;
+            flex: 1;
+            min-height: 0;
             overflow: auto;
         }
         #qsArea { margin-bottom: 10px; }
+        #qsRankArea { margin-bottom: 10px; }
 
         /* ---- TABLE ---- */
         .rank-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
@@ -514,6 +530,8 @@
                     autocomplete="off" oninput="qsOnInput()" onkeydown="qsOnKeyDown(event)">
                 <div class="asset-dropdown" id="qsDropdown"></div>
             </div>
+            <button class="btn-load" id="qsRankBtn" onclick="runQuickRankingSearch()"
+                style="padding:7px 16px;font-size:0.82rem;">Classifica</button>
             <button class="btn-load" id="qsBtn" onclick="runQuickSearch()"
                 style="padding:7px 16px;font-size:0.82rem;">Analizza</button>
         </div>
@@ -586,6 +604,7 @@
                 <button class="sort-btn" id="btnRankAsc" onclick="sortRanking('asc')">Peggiori prima &#8595;</button>
                 <span class="results-info" id="rankingResultsInfo"></span>
             </div>
+            <div id="qsRankArea" style="display:none"></div>
             <div id="rankingResultsArea">
                 <div class="status-box">
                     Seleziona le categorie, imposta periodo e limite, poi clicca <strong>Carica Classifica</strong>
@@ -2133,6 +2152,44 @@ function qsPick(sym, name) {
     qsSym = sym; qsName = name;
     document.getElementById('qsInput').value = name !== sym ? name + ' (' + sym + ')' : sym;
     closeQsDropdown();
+}
+
+async function runQuickRankingSearch() {
+    const inp = document.getElementById('qsInput').value.trim();
+    if (!inp && !qsSym) return;
+    if (!qsSym) {
+        const p = inp.split(/\s+/);
+        qsSym = p[0].toUpperCase(); qsName = p.slice(1).join(' ') || qsSym;
+    }
+    const symbol = qsSym, name = qsName;
+    const periodBtn = document.querySelector('.period-btn.active');
+    const range = periodBtn ? periodBtn.dataset.period : '1mo';
+    const interval = periodBtn ? periodBtn.dataset.interval : '1d';
+    const btn = document.getElementById('qsRankBtn');
+    btn.disabled = true; btn.textContent = '...';
+    const area = document.getElementById('qsRankArea');
+    area.style.display = 'block';
+    area.innerHTML = '<div class="status-box" style="padding:14px 20px"><div class="spinner" style="width:18px;height:18px;border-width:2px;margin-bottom:0;vertical-align:middle;margin-right:8px;display:inline-block"></div>Classifica di <strong>' + escapeHtml(symbol) + '</strong>...</div>';
+    const perf = await fetchPerf(symbol, range, interval);
+    btn.disabled = false; btn.textContent = 'Classifica';
+    if (!perf) {
+        area.innerHTML = '<div class="status-box" style="padding:12px 16px;background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.3)">Nessun dato trovato per <strong>' + escapeHtml(symbol) + '</strong>. Verifica il simbolo (es. AAPL, ENI.MI, BTC-USD, EURUSD=X).</div>';
+        return;
+    }
+    const isPos = perf.changePct >= 0;
+    const pct = (isPos ? '+' : '') + perf.changePct.toFixed(2) + '%';
+    const tvSym = toTvSymbol(symbol);
+    area.innerHTML =
+        '<div style="font-size:0.7rem;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#9906; Risultato ricerca classifica</div>' +
+        '<table class="rank-table"><thead><tr><th>Nome</th><th>Simbolo</th><th>Variazione</th><th>Prezzo</th></tr></thead><tbody><tr>' +
+        '<td class="td-name"><div class="chart-links">' +
+            '<a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(symbol) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(name) + '<span class="link-arrow">&#x2197;</span></a>' +
+            '<a class="tv-link" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(tvSym) + '" target="_blank" rel="noopener noreferrer">TV</a>' +
+        '</div></td>' +
+        '<td class="td-symbol">' + escapeHtml(symbol) + '</td>' +
+        '<td class="td-change ' + (isPos ? 'pos' : 'neg') + '">' + pct + '</td>' +
+        '<td class="td-price">' + formatPrice(perf.currentPrice, perf.currency) + '</td>' +
+        '</tr></tbody></table>';
 }
 
 async function runQuickSearch() {
