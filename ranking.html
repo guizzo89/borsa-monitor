@@ -391,6 +391,19 @@
             </div>
         </div>
 
+        <!-- CERCA ASSET RAPIDO -->
+        <div class="filter-row">
+            <span class="filter-label">Cerca Asset</span>
+            <div class="asset-search-wrap" id="qsWrap" style="flex:1;min-width:200px;max-width:320px;">
+                <input type="text" id="qsInput" class="asset-search-input"
+                    placeholder="Simbolo o nome… (es. AAPL, Apple, BTC-USD, ENI.MI)"
+                    autocomplete="off" oninput="qsOnInput()" onkeydown="qsOnKeyDown(event)">
+                <div class="asset-dropdown" id="qsDropdown"></div>
+            </div>
+            <button class="btn-load" id="qsBtn" onclick="runQuickSearch()"
+                style="padding:7px 16px;font-size:0.82rem;">Cerca</button>
+        </div>
+
         <!-- CARICA -->
         <div class="load-row">
             <button class="btn-load" id="loadBtn" onclick="loadRanking()">Carica Classifica</button>
@@ -405,6 +418,8 @@
         <button class="sort-btn" id="btnAsc" onclick="sortResults('asc')">Peggiori prima &#8595;</button>
         <span class="results-info" id="resultsInfo"></span>
     </div>
+
+    <div id="qsArea" style="display:none;margin-bottom:12px;"></div>
 
     <div id="resultsArea">
         <div class="status-box">
@@ -1310,6 +1325,122 @@ function checkShareImport() {
         if (n > 0) setTimeout(() => showShareToast('✓ ' + n + (n === 1 ? ' elemento importato' : ' elementi importati') + '!'), 800);
     } catch(e) { console.warn('Share link non valido'); }
 }
+
+// ==================== QUICK SEARCH ====================
+let qsItems = [], qsSym = '', qsName = '';
+
+function qsOnInput() {
+    qsSym = ''; qsName = '';
+    const q = document.getElementById('qsInput').value.trim().toLowerCase();
+    if (!q) { closeQsDropdown(); return; }
+    qsItems = allAssetsFlat
+        .filter(a => a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q))
+        .slice(0, 10);
+    const rawQ = document.getElementById('qsInput').value.trim();
+    const symUp = rawQ.split(/\s+/)[0].toUpperCase();
+    let html = qsItems.map((it, i) =>
+        '<div class="asset-dropdown-item" data-qs="' + i + '">' +
+        '<span class="adi-symbol">' + escapeHtml(it.symbol) + '</span>' +
+        '<span class="adi-name">' + escapeHtml(it.name) + '</span>' +
+        '<span class="adi-cat">' + escapeHtml(it.catLabel) + '</span>' +
+        '</div>'
+    ).join('');
+    if (symUp && !qsItems.some(f => f.symbol === symUp)) {
+        html += '<div class="asset-dropdown-item custom-add" data-qs="-1">' +
+            '&#8629; Cerca simbolo <strong>' + escapeHtml(symUp) + '</strong></div>';
+    }
+    const dd = document.getElementById('qsDropdown');
+    dd.innerHTML = html; dd.classList.add('open');
+}
+
+function qsOnKeyDown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const inp = document.getElementById('qsInput').value.trim();
+        if (!inp) return;
+        if (!qsSym) {
+            const first = document.querySelector('#qsDropdown .asset-dropdown-item:not(.custom-add)');
+            if (first && qsItems[parseInt(first.dataset.qs)]) {
+                const it = qsItems[parseInt(first.dataset.qs)];
+                qsPick(it.symbol, it.name);
+            } else {
+                const p = inp.split(/\s+/);
+                qsSym = p[0].toUpperCase(); qsName = p.slice(1).join(' ') || qsSym;
+                closeQsDropdown();
+            }
+        }
+        runQuickSearch();
+    } else if (e.key === 'Escape') {
+        closeQsDropdown();
+    }
+}
+
+function closeQsDropdown() {
+    const dd = document.getElementById('qsDropdown');
+    if (dd) dd.classList.remove('open');
+}
+
+function qsPick(sym, name) {
+    qsSym = sym; qsName = name;
+    document.getElementById('qsInput').value = name !== sym ? name + ' (' + sym + ')' : sym;
+    closeQsDropdown();
+}
+
+async function runQuickSearch() {
+    const inp = document.getElementById('qsInput').value.trim();
+    if (!inp && !qsSym) return;
+    if (!qsSym) {
+        const p = inp.split(/\s+/);
+        qsSym = p[0].toUpperCase(); qsName = p.slice(1).join(' ') || qsSym;
+    }
+    const symbol = qsSym, name = qsName;
+    const periodBtn = document.querySelector('.period-btn.active');
+    const range    = periodBtn ? periodBtn.dataset.period   : '1mo';
+    const interval = periodBtn ? periodBtn.dataset.interval : '1d';
+    const btn = document.getElementById('qsBtn');
+    btn.disabled = true; btn.textContent = '…';
+    const area = document.getElementById('qsArea');
+    area.style.display = 'block';
+    area.innerHTML = '<div class="status-box" style="padding:14px 20px"><div class="spinner" style="width:18px;height:18px;border-width:2px;margin-bottom:0;vertical-align:middle;margin-right:8px;display:inline-block"></div>Recupero dati per <strong>' + escapeHtml(symbol) + '</strong>…</div>';
+    const perf = await fetchPerf(symbol, range, interval);
+    btn.disabled = false; btn.textContent = 'Cerca';
+    if (!perf) {
+        area.innerHTML = '<div class="status-box" style="padding:12px 16px;background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.3)">Nessun dato trovato per <strong>' + escapeHtml(symbol) + '</strong>. Verifica il simbolo (es. AAPL, ENI.MI, BTC-USD, EURUSD=X).</div>';
+        return;
+    }
+    const isPos = perf.changePct >= 0;
+    const pct = (isPos ? '+' : '') + perf.changePct.toFixed(2) + '%';
+    const tvSym = toTvSymbol(symbol);
+    area.innerHTML =
+        '<div style="font-size:0.7rem;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#9906; Risultato ricerca</div>' +
+        '<table class="rank-table"><thead><tr><th>Nome</th><th>Simbolo</th><th>Variazione</th><th>Prezzo</th></tr></thead><tbody><tr>' +
+        '<td class="td-name"><div class="chart-links">' +
+            '<a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(symbol) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(name) + '<span class="link-arrow">&#x2197;</span></a>' +
+            '<a class="tv-link" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(tvSym) + '" target="_blank" rel="noopener noreferrer">TV</a>' +
+        '</div></td>' +
+        '<td class="td-symbol">' + escapeHtml(symbol) + '</td>' +
+        '<td class="td-change ' + (isPos ? 'pos' : 'neg') + '">' + pct + '</td>' +
+        '<td class="td-price">' + formatPrice(perf.currentPrice, perf.currency) + '</td>' +
+        '</tr></tbody></table>';
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#qsWrap')) closeQsDropdown();
+});
+document.addEventListener('click', function(e) {
+    const item = e.target.closest('#qsDropdown .asset-dropdown-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.qs);
+    if (idx >= 0 && qsItems[idx]) {
+        qsPick(qsItems[idx].symbol, qsItems[idx].name);
+    } else {
+        const p = document.getElementById('qsInput').value.trim().split(/\s+/);
+        qsSym = p[0].toUpperCase(); qsName = p.slice(1).join(' ') || qsSym;
+        document.getElementById('qsInput').value = qsName !== qsSym ? qsName + ' (' + qsSym + ')' : qsSym;
+        closeQsDropdown();
+    }
+    runQuickSearch();
+});
 
 // ==================== INIT ====================
 loadTheme();

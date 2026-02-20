@@ -459,6 +459,19 @@
             </div>
         </div>
 
+        <!-- CERCA ASSET RAPIDO -->
+        <div class="filter-row">
+            <span class="filter-label">Cerca Asset</span>
+            <div class="asset-search-wrap" id="qsWrap" style="flex:1;min-width:200px;max-width:320px;">
+                <input type="text" id="qsInput" class="asset-search-input"
+                    placeholder="Simbolo o nome… (es. AAPL, Apple, BTC-USD, ENI.MI)"
+                    autocomplete="off" oninput="qsOnInput()" onkeydown="qsOnKeyDown(event)">
+                <div class="asset-dropdown" id="qsDropdown"></div>
+            </div>
+            <button class="btn-load" id="qsBtn" onclick="runQuickSearch()"
+                style="padding:7px 16px;font-size:0.82rem;">Analizza</button>
+        </div>
+
         <div class="load-row">
             <button class="btn-load" id="loadBtn" onclick="runAnalysis()">Analizza</button>
             <span class="progress-text" id="progressText"></span>
@@ -526,6 +539,8 @@
         <button class="sort-btn"        data-sort="rsi"    onclick="setSort('rsi')">RSI (più basso)</button>
         <span class="results-info" id="resultsInfo"></span>
     </div>
+
+    <div id="qsArea" style="display:none;margin-bottom:12px;"></div>
 
     <div id="resultsArea">
         <div class="status-box">
@@ -1826,6 +1841,209 @@ function checkShareImport() {
         if (n > 0) setTimeout(() => showShareToast('✓ ' + n + (n === 1 ? ' elemento importato' : ' elementi importati') + '!'), 800);
     } catch(e) { console.warn('Share link non valido'); }
 }
+
+// =====================================================================
+// QUICK SEARCH
+// =====================================================================
+let qsItems = [], qsSym = '', qsName = '';
+
+function qsOnInput() {
+    qsSym = ''; qsName = '';
+    const q = document.getElementById('qsInput').value.trim().toLowerCase();
+    if (!q) { closeQsDropdown(); return; }
+    qsItems = allAssetsFlat
+        .filter(a => a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q))
+        .slice(0, 10);
+    const rawQ = document.getElementById('qsInput').value.trim();
+    const symUp = rawQ.split(/\s+/)[0].toUpperCase();
+    let html = qsItems.map((it, i) =>
+        '<div class="asset-dropdown-item" data-qs="' + i + '">' +
+        '<span class="adi-symbol">' + escapeHtml(it.symbol) + '</span>' +
+        '<span class="adi-name">' + escapeHtml(it.name) + '</span>' +
+        '<span class="adi-cat">' + escapeHtml(it.catLabel) + '</span>' +
+        '</div>'
+    ).join('');
+    if (symUp && !qsItems.some(f => f.symbol === symUp)) {
+        html += '<div class="asset-dropdown-item custom-add" data-qs="-1">' +
+            '&#8629; Analizza simbolo <strong>' + escapeHtml(symUp) + '</strong></div>';
+    }
+    const dd = document.getElementById('qsDropdown');
+    dd.innerHTML = html; dd.classList.add('open');
+}
+
+function qsOnKeyDown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const inp = document.getElementById('qsInput').value.trim();
+        if (!inp) return;
+        if (!qsSym) {
+            const first = document.querySelector('#qsDropdown .asset-dropdown-item:not(.custom-add)');
+            if (first && qsItems[parseInt(first.dataset.qs)]) {
+                const it = qsItems[parseInt(first.dataset.qs)];
+                qsPick(it.symbol, it.name);
+            } else {
+                const p = inp.split(/\s+/);
+                qsSym = p[0].toUpperCase(); qsName = p.slice(1).join(' ') || qsSym;
+                closeQsDropdown();
+            }
+        }
+        runQuickSearch();
+    } else if (e.key === 'Escape') {
+        closeQsDropdown();
+    }
+}
+
+function closeQsDropdown() {
+    const dd = document.getElementById('qsDropdown');
+    if (dd) dd.classList.remove('open');
+}
+
+function qsPick(sym, name) {
+    qsSym = sym; qsName = name;
+    document.getElementById('qsInput').value = name !== sym ? name + ' (' + sym + ')' : sym;
+    closeQsDropdown();
+}
+
+async function runQuickSearch() {
+    const inp = document.getElementById('qsInput').value.trim();
+    if (!inp && !qsSym) return;
+    if (!qsSym) {
+        const p = inp.split(/\s+/);
+        qsSym = p[0].toUpperCase(); qsName = p.slice(1).join(' ') || qsSym;
+    }
+    const symbol = qsSym, name = qsName;
+    const equity = isEquity(symbol);
+    const btn = document.getElementById('qsBtn');
+    btn.disabled = true; btn.textContent = '…';
+    const area = document.getElementById('qsArea');
+    area.style.display = 'block';
+    area.innerHTML = '<div class="status-box" style="padding:14px 20px"><div class="spinner" style="width:18px;height:18px;border-width:2px;margin-bottom:0;vertical-align:middle;margin-right:8px;display:inline-block"></div>Analisi di <strong>' + escapeHtml(symbol) + '</strong>…</div>';
+    let priceData, fundData;
+    try {
+        [priceData, fundData] = await Promise.all([
+            fetchPriceHistory(symbol),
+            equity ? fetchFundamentals(symbol) : Promise.resolve(null)
+        ]);
+    } catch(e) { priceData = null; fundData = null; }
+    btn.disabled = false; btn.textContent = 'Analizza';
+    if (!priceData) {
+        area.innerHTML = '<div class="status-box" style="padding:12px 16px;background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.3)">Nessun dato trovato per <strong>' + escapeHtml(symbol) + '</strong>. Verifica il simbolo (es. AAPL, ENI.MI, BTC-USD, EURUSD=X).</div>';
+        return;
+    }
+    const tech = calcTechScore(priceData.closes, priceData.currentPrice);
+    const fund = calcFundScore(fundData);
+    const overall = calcOverall(tech.score, fund, equity);
+    const item = {
+        symbol, name, equity, tech, fund, overall,
+        currentPrice: priceData.currentPrice, high52w: priceData.high52w, low52w: priceData.low52w,
+        beta: fundData?.beta ?? null, dividendYield: fundData?.dividendYield ?? null,
+        catLabel: '—', pillClass: '', pillStyle: null
+    };
+    const sc = item.overall;
+    const barCls = sc >= 65 ? 'bar-buy' : sc >= 45 ? 'bar-neutral' : 'bar-caution';
+    const sigCls = sc >= 65 ? 'signal-buy' : sc >= 45 ? 'signal-neutral' : 'signal-caution';
+    const sigTxt = sc >= 65 ? 'Acquista' : sc >= 45 ? 'Neutro' : 'Attenzione';
+    const rsi = item.tech.rsi;
+    const rsiCls = rsi === null ? 'rsi-neutral' : rsi < 30 ? 'rsi-oversold' : rsi < 40 ? 'rsi-low' : rsi < 60 ? 'rsi-neutral' : rsi < 70 ? 'rsi-high' : 'rsi-overbought';
+    const rsiTxt = rsi !== null ? rsi.toFixed(1) : '—';
+    let macdHtml = '<span class="val-na">—</span>';
+    if (item.tech.macd) {
+        const m = item.tech.macd;
+        const macdCls   = m.histogram > 0 ? 'macd-bull' : m.histogram < 0 ? 'macd-bear' : 'macd-neut';
+        const macdArrow = m.histogram > 0 ? '▲' : m.histogram < 0 ? '▼' : '→';
+        const crossNote = m.bullishCross ? ' | cross rialzista ↑' : m.bearishCross ? ' | cross ribassista ↓' : '';
+        macdHtml = '<span class="' + macdCls + '" title="MACD: ' + m.macdLine.toFixed(3) + ' | Segnale: ' + m.signal.toFixed(3) + crossNote + '">' + macdArrow + '</span>';
+    }
+    const trend = getTrend(item.tech.currentPrice, item.tech.ma20, item.tech.ma50);
+    const trendHtml = trend
+        ? '<span class="trend-val ' + trend.cls + '" title="' + escapeHtml(trend.title) + '">' + trend.arrow + '</span>'
+        : '<span class="val-na">—</span>';
+    const tScore = item.tech.score.toFixed(1);
+    let fundSubTxt = '', peHtml = '<span class="val-na">—</span>', roeHtml = '<span class="val-na">—</span>', growHtml = '<span class="val-na">—</span>';
+    if (item.fund) {
+        fundSubTxt = ' F:' + item.fund.score.toFixed(1);
+        const d = item.fund.data;
+        if (d.pe !== null && d.pe > 0) {
+            const peCls = d.pe < 15 ? 'val-good' : d.pe < 30 ? 'val-ok' : d.pe < 50 ? 'val-warn' : 'val-bad';
+            peHtml = '<span class="' + peCls + '">' + d.pe.toFixed(1) + '</span>';
+            if (item.fund.peg !== null) {
+                const peg = item.fund.peg;
+                const pegCls = peg < 1 ? 'val-good' : peg < 2 ? 'val-ok' : 'val-warn';
+                peHtml += '<div style="font-size:0.63rem;margin-top:1px;line-height:1.2"><span style="color:var(--text-secondary)">PEG </span><span class="' + pegCls + '">' + peg.toFixed(2) + '</span></div>';
+            }
+        }
+        if (d.roe !== null) {
+            const roePct = d.roe * 100;
+            const roeCls = roePct > 20 ? 'val-good' : roePct > 10 ? 'val-ok' : roePct > 0 ? 'val-warn' : 'val-bad';
+            roeHtml = '<span class="' + roeCls + '">' + roePct.toFixed(1) + '%</span>';
+            if (d.profitMargins != null) {
+                const mgPct = d.profitMargins * 100;
+                const mgCls = mgPct > 15 ? 'val-good' : mgPct > 5 ? 'val-ok' : mgPct > 0 ? 'val-warn' : 'val-bad';
+                roeHtml += '<div style="font-size:0.63rem;margin-top:1px;line-height:1.2"><span style="color:var(--text-secondary)">Mg </span><span class="' + mgCls + '">' + mgPct.toFixed(1) + '%</span></div>';
+            }
+        }
+        const g = d.revenueGrowth ?? d.earningsGrowth;
+        if (g !== null) {
+            const gPct = g * 100;
+            const gCls = gPct > 10 ? 'val-good' : gPct > 0 ? 'val-ok' : gPct > -10 ? 'val-warn' : 'val-bad';
+            growHtml = '<span class="' + gCls + '">' + (gPct >= 0 ? '+' : '') + gPct.toFixed(1) + '%</span>';
+        }
+    } else if (!item.equity) {
+        fundSubTxt = ' <span class="only-tech">solo tec.</span>';
+    }
+    const betaTxt = (item.equity && item.beta != null) ? ' β:' + item.beta.toFixed(1) : '';
+    const scoreHtml =
+        '<div class="score-bar-wrap"><div class="score-bar ' + barCls + '" style="width:' + sc.toFixed(0) + '%"></div></div>' +
+        '<div class="score-row"><span class="score-main">' + sc.toFixed(0) + '</span>' +
+        '<span class="score-sub">T:' + tScore + fundSubTxt + betaTxt + '</span></div>';
+    const warnings = getWarnings(item);
+    const warningsHtml = warnings.length
+        ? '<div class="warn-badges">' + warnings.map(w => '<span class="warn-badge ' + w.cls + '" title="' + escapeHtml(w.title) + '">' + escapeHtml(w.text) + '</span>').join('') + '</div>'
+        : '';
+    const tvSym = toTvSymbol(symbol);
+    const nameCell =
+        '<div class="chart-links"><a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(symbol) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(name) + '<span class="link-arrow">&#x2197;</span></a>' +
+        '<a class="tv-link" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(tvSym) + '" target="_blank" rel="noopener noreferrer">TV</a></div>';
+    const row =
+        '<tr>' +
+        '<td class="td-name">' + nameCell + '</td>' +
+        '<td class="td-symbol th-sym">' + escapeHtml(symbol) + '</td>' +
+        '<td><span class="signal ' + sigCls + '">' + sigTxt + '</span>' + warningsHtml + '</td>' +
+        '<td class="td-score">' + scoreHtml + '</td>' +
+        '<td class="td-rsi"><span class="rsi-val ' + rsiCls + '">' + rsiTxt + '</span></td>' +
+        '<td class="td-macd th-macd">' + macdHtml + '</td>' +
+        '<td class="td-trend th-trend">' + trendHtml + '</td>' +
+        '<td class="td-pe th-pe">' + peHtml + '</td>' +
+        '<td class="td-roe th-roe">' + roeHtml + '</td>' +
+        '<td class="td-growth th-growth">' + growHtml + '</td>' +
+        '<td class="th-cat"><span class="val-na">—</span></td>' +
+        '</tr>';
+    area.innerHTML =
+        '<div style="font-size:0.7rem;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#9906; Risultato ricerca</div>' +
+        '<table class="rank-table"><thead><tr>' +
+        '<th>Nome</th><th class="th-sym">Simbolo</th><th>Segnale</th><th>Punteggio</th><th>RSI</th>' +
+        '<th class="th-macd">MACD</th><th class="th-trend">Trend</th>' +
+        '<th class="th-pe">P/E</th><th class="th-roe">ROE</th><th class="th-growth">Crescita</th><th class="th-cat">Cat.</th>' +
+        '</tr></thead><tbody>' + row + '</tbody></table>';
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#qsWrap')) closeQsDropdown();
+});
+document.addEventListener('click', function(e) {
+    const item = e.target.closest('#qsDropdown .asset-dropdown-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.qs);
+    if (idx >= 0 && qsItems[idx]) {
+        qsPick(qsItems[idx].symbol, qsItems[idx].name);
+    } else {
+        const p = document.getElementById('qsInput').value.trim().split(/\s+/);
+        qsSym = p[0].toUpperCase(); qsName = p.slice(1).join(' ') || qsSym;
+        document.getElementById('qsInput').value = qsName !== qsSym ? qsName + ' (' + qsSym + ')' : qsSym;
+        closeQsDropdown();
+    }
+    runQuickSearch();
+});
 
 // =====================================================================
 // INIT
