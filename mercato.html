@@ -353,7 +353,7 @@
         .pill-italia { background: #1e7a2e; } .pill-cinesi  { background: #c62828; }
         .pill-europee{ background: #0277bd; } .pill-crypto  { background: #e65100; }
         .pill-commodities { background: #5d4037; } .pill-forex { background: #00695c; }
-        .pill-indici { background: #37474f; } .pill-robotica { background: #8e24aa; }
+        .pill-indici { background: #37474f; }
         .td-change { font-weight: 700; font-size: 0.88rem; white-space: nowrap; }
         .chg-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; width: 100%; min-width: 60px; }
         .chg-bar { height: 100%; border-radius: 2px; }
@@ -587,12 +587,6 @@
                     <button class="cat-btn" data-cat="indici" onclick="toggleCat(this)">Indici</button>
                     <div class="custom-cat-actions">
                         <button type="button" onclick="openCatAssetsModal('indici'); event.stopPropagation();">Mostra asset</button>
-                    </div>
-                </div>
-                <div class="cat-menu-wrapper">
-                    <button class="cat-btn" data-cat="robotica" onclick="toggleCat(this)">Robotica</button>
-                    <div class="custom-cat-actions">
-                        <button type="button" onclick="openCatAssetsModal('robotica'); event.stopPropagation();">Mostra asset</button>
                     </div>
                 </div>
             </div>
@@ -986,28 +980,6 @@ const ASSETS = {
             {symbol:'GBPAUD=X',name:'GBP/AUD'},{symbol:'AUDCAD=X',name:'AUD/CAD'}
         ]
     },
-    robotica: {
-        label: 'Robotica', pillClass: 'pill-robotica',
-        items: [
-            {symbol:'6954.T',name:'FANUC CORPORATION'},
-            {symbol:'6506.T',name:'YASKAWA ELECTRIC CORP'},
-            {symbol:'ABBN.SW',name:'ABB'},
-            {symbol:'7012.T',name:'KAWASAKI HEAVY INDUSTRIES'},
-            {symbol:'6503.T',name:'MITSUBISHI ELECTRIC CORP'},
-            {symbol:'6645.T',name:'OMRON CORP'},
-            {symbol:'6902.T',name:'DENSO CORP'},
-            {symbol:'6724.T',name:'SEIKO EPSON CORP'},
-            {symbol:'6594.T',name:'NIDEC CORPORATION'},
-            {symbol:'SIE.DE',name:'Siemens'},
-            {symbol:'SU.PA',name:'Schneider Electric'},
-            {symbol:'ROK',name:'Rockwell Automation, Inc.'},
-            {symbol:'TER',name:'Teradyne, Inc.'},
-            {symbol:'454910.KS',name:'Doosan Robotics'},
-            {symbol:'ISRG',name:'Intuitive Surgical, Inc.'},
-            {symbol:'SYK',name:'Stryker Corporation'},
-            {symbol:'MDT',name:'Medtronic'}
-        ]
-    },
     indici: {
         label: 'Indici', pillClass: 'pill-indici',
         items: [
@@ -1029,6 +1001,26 @@ const ASSETS = {
 };
 
 const CUSTOM_COLORS = ['#6a1b9a','#2e7d32','#00838f','#ad1457','#bf360c','#1565c0','#37474f','#558b2f','#4a148c','#006064'];
+const ROBOTICA_SEED_FLAG_KEY = 'mercatoRoboticaSeedV1';
+const ROBOTICA_SEED_ITEMS = [
+    {symbol:'6954.T',name:'FANUC CORPORATION'},
+    {symbol:'6506.T',name:'YASKAWA ELECTRIC CORP'},
+    {symbol:'ABBN.SW',name:'ABB'},
+    {symbol:'7012.T',name:'KAWASAKI HEAVY INDUSTRIES'},
+    {symbol:'6503.T',name:'MITSUBISHI ELECTRIC CORP'},
+    {symbol:'6645.T',name:'OMRON CORP'},
+    {symbol:'6902.T',name:'DENSO CORP'},
+    {symbol:'6724.T',name:'SEIKO EPSON CORP'},
+    {symbol:'6594.T',name:'NIDEC CORPORATION'},
+    {symbol:'SIE.DE',name:'Siemens'},
+    {symbol:'SU.PA',name:'Schneider Electric'},
+    {symbol:'ROK',name:'Rockwell Automation, Inc.'},
+    {symbol:'TER',name:'Teradyne, Inc.'},
+    {symbol:'454910.KS',name:'Doosan Robotics'},
+    {symbol:'ISRG',name:'Intuitive Surgical, Inc.'},
+    {symbol:'SYK',name:'Stryker Corporation'},
+    {symbol:'MDT',name:'Medtronic'}
+];
 
 // =====================================================================
 // STATE
@@ -1097,6 +1089,25 @@ function loadCustomCats() {
 }
 function saveCustomCats() {
     try { localStorage.setItem(CUSTOM_CATS_KEY, JSON.stringify(customCats)); } catch(e) {}
+}
+function seedRoboticaCustomCategory() {
+    let alreadySeeded = false;
+    try { alreadySeeded = localStorage.getItem(ROBOTICA_SEED_FLAG_KEY) === '1'; } catch (e) {}
+    if (alreadySeeded) return;
+
+    const hasRobotica = Object.values(customCats).some(cat =>
+        String(cat?.label || '').trim().toLowerCase() === 'robotica'
+    );
+    if (!hasRobotica) {
+        let key = 'cc_robotica_seed';
+        while (customCats[key]) key = 'cc_robotica_seed_' + Date.now();
+        customCats[key] = {
+            label: 'Robotica',
+            items: ROBOTICA_SEED_ITEMS.map(item => ({ symbol: item.symbol, name: item.name }))
+        };
+        saveCustomCats();
+    }
+    try { localStorage.setItem(ROBOTICA_SEED_FLAG_KEY, '1'); } catch (e) {}
 }
 function parseSymbolsText(text) {
     const items = []; const seen = new Set();
@@ -2612,6 +2623,7 @@ document.addEventListener('click', function(e) {
 loadTheme();
 checkShareImport();
 loadCustomCats();
+seedRoboticaCustomCategory();
 buildAllAssets();
 renderCustomCatButtons();
 try { setResultsTab(localStorage.getItem('mercatoActiveTab') === 'analysis' ? 'analysis' : 'ranking'); } catch (e) { setResultsTab('ranking'); }
