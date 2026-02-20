@@ -154,6 +154,27 @@
         .legend-section strong { color: var(--text-primary); display: block; margin-bottom: 4px; font-size: 0.8rem; }
 
         /* ---- RESULTS HEADER ---- */
+        .results-sections {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            align-items: start;
+        }
+        .results-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 240px;
+        }
+        .results-panel-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
         .results-header {
             display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
         }
@@ -166,6 +187,11 @@
         .sort-btn:hover { border-color: var(--accent); }
         .sort-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         .results-info { margin-left: auto; font-size: 0.78rem; color: var(--text-secondary); }
+        #rankingResultsArea, #resultsArea {
+            max-height: 58vh;
+            overflow: auto;
+        }
+        #qsArea { margin-bottom: 10px; }
 
         /* ---- TABLE ---- */
         .rank-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
@@ -394,6 +420,8 @@
 
         /* ---- RESPONSIVE ---- */
         @media (max-width: 860px) {
+            .results-sections { grid-template-columns: 1fr; }
+            #rankingResultsArea, #resultsArea { max-height: none; }
             .th-roe, .td-roe, .th-growth, .td-growth, .th-macd, .td-macd { display: none; }
         }
         @media (max-width: 680px) {
@@ -548,36 +576,41 @@
             </div>
         </div>
     </div>
+    <div class="results-sections">
+        <!-- CLASSIFICA -->
+        <section class="results-panel">
+            <div class="results-panel-title">Classifica</div>
+            <div id="rankingResultsHeader" class="results-header" style="display:none">
+                <span class="sort-label">Ordina:</span>
+                <button class="sort-btn active" id="btnRankDesc" onclick="sortRanking('desc')">Migliori prima &#8593;</button>
+                <button class="sort-btn" id="btnRankAsc" onclick="sortRanking('asc')">Peggiori prima &#8595;</button>
+                <span class="results-info" id="rankingResultsInfo"></span>
+            </div>
+            <div id="rankingResultsArea">
+                <div class="status-box">
+                    Seleziona le categorie, imposta periodo e limite, poi clicca <strong>Carica Classifica</strong>
+                </div>
+            </div>
+        </section>
 
-    <!-- CLASSIFICA -->
-    <div id="rankingResultsHeader" class="results-header" style="display:none">
-        <span class="sort-label">Classifica:</span>
-        <button class="sort-btn active" id="btnRankDesc" onclick="sortRanking('desc')">Migliori prima &#8593;</button>
-        <button class="sort-btn" id="btnRankAsc" onclick="sortRanking('asc')">Peggiori prima &#8595;</button>
-        <span class="results-info" id="rankingResultsInfo"></span>
-    </div>
-    <div id="rankingResultsArea" style="margin-bottom:14px;">
-        <div class="status-box">
-            Seleziona le categorie, imposta periodo e limite, poi clicca <strong>Carica Classifica</strong>
-        </div>
-    </div>
-
-    <!-- ANALISI -->
-    <div id="resultsHeader" class="results-header" style="display:none">
-        <span class="sort-label">Ordina per:</span>
-        <button class="sort-btn active" data-sort="score"  onclick="setSort('score')">Punteggio &#8595;</button>
-        <button class="sort-btn"        data-sort="tech"   onclick="setSort('tech')">Tecnico</button>
-        <button class="sort-btn"        data-sort="fund"   onclick="setSort('fund')">Fondamentale</button>
-        <button class="sort-btn"        data-sort="rsi"    onclick="setSort('rsi')">RSI (più basso)</button>
-        <span class="results-info" id="resultsInfo"></span>
-    </div>
-
-    <div id="qsArea" style="display:none;margin-bottom:12px;"></div>
-
-    <div id="resultsArea">
-        <div class="status-box">
-            Seleziona le categorie, imposta il limite e clicca <strong>Analizza</strong>
-        </div>
+        <!-- ANALISI -->
+        <section class="results-panel">
+            <div class="results-panel-title">Analisi</div>
+            <div id="resultsHeader" class="results-header" style="display:none">
+                <span class="sort-label">Ordina per:</span>
+                <button class="sort-btn active" data-sort="score"  onclick="setSort('score')">Punteggio &#8595;</button>
+                <button class="sort-btn"        data-sort="tech"   onclick="setSort('tech')">Tecnico</button>
+                <button class="sort-btn"        data-sort="fund"   onclick="setSort('fund')">Fondamentale</button>
+                <button class="sort-btn"        data-sort="rsi"    onclick="setSort('rsi')">RSI (più basso)</button>
+                <span class="results-info" id="resultsInfo"></span>
+            </div>
+            <div id="qsArea" style="display:none"></div>
+            <div id="resultsArea">
+                <div class="status-box">
+                    Seleziona le categorie, imposta il limite e clicca <strong>Analizza</strong>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
 
@@ -2254,3 +2287,4 @@ renderCustomCatButtons();
 </script>
 </body>
 </html>
+
