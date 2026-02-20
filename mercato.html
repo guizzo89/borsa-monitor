@@ -353,7 +353,7 @@
         .pill-italia { background: #1e7a2e; } .pill-cinesi  { background: #c62828; }
         .pill-europee{ background: #0277bd; } .pill-crypto  { background: #e65100; }
         .pill-commodities { background: #5d4037; } .pill-forex { background: #00695c; }
-        .pill-indici { background: #37474f; }
+        .pill-indici { background: #37474f; } .pill-robotica { background: #8e24aa; }
         .td-change { font-weight: 700; font-size: 0.88rem; white-space: nowrap; }
         .chg-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; width: 100%; min-width: 60px; }
         .chg-bar { height: 100%; border-radius: 2px; }
@@ -587,6 +587,12 @@
                     <button class="cat-btn" data-cat="indici" onclick="toggleCat(this)">Indici</button>
                     <div class="custom-cat-actions">
                         <button type="button" onclick="openCatAssetsModal('indici'); event.stopPropagation();">Mostra asset</button>
+                    </div>
+                </div>
+                <div class="cat-menu-wrapper">
+                    <button class="cat-btn" data-cat="robotica" onclick="toggleCat(this)">Robotica</button>
+                    <div class="custom-cat-actions">
+                        <button type="button" onclick="openCatAssetsModal('robotica'); event.stopPropagation();">Mostra asset</button>
                     </div>
                 </div>
             </div>
@@ -978,6 +984,28 @@ const ASSETS = {
             {symbol:'USDKRW=X',name:'USD/KRW'},{symbol:'EURAUD=X',name:'EUR/AUD'},
             {symbol:'EURNZD=X',name:'EUR/NZD'},{symbol:'EURCAD=X',name:'EUR/CAD'},
             {symbol:'GBPAUD=X',name:'GBP/AUD'},{symbol:'AUDCAD=X',name:'AUD/CAD'}
+        ]
+    },
+    robotica: {
+        label: 'Robotica', pillClass: 'pill-robotica',
+        items: [
+            {symbol:'6954.T',name:'FANUC CORPORATION'},
+            {symbol:'6506.T',name:'YASKAWA ELECTRIC CORP'},
+            {symbol:'ABBN.SW',name:'ABB'},
+            {symbol:'7012.T',name:'KAWASAKI HEAVY INDUSTRIES'},
+            {symbol:'6503.T',name:'MITSUBISHI ELECTRIC CORP'},
+            {symbol:'6645.T',name:'OMRON CORP'},
+            {symbol:'6902.T',name:'DENSO CORP'},
+            {symbol:'6724.T',name:'SEIKO EPSON CORP'},
+            {symbol:'6594.T',name:'NIDEC CORPORATION'},
+            {symbol:'SIE.DE',name:'Siemens'},
+            {symbol:'SU.PA',name:'Schneider Electric'},
+            {symbol:'ROK',name:'Rockwell Automation, Inc.'},
+            {symbol:'TER',name:'Teradyne, Inc.'},
+            {symbol:'454910.KS',name:'Doosan Robotics'},
+            {symbol:'ISRG',name:'Intuitive Surgical, Inc.'},
+            {symbol:'SYK',name:'Stryker Corporation'},
+            {symbol:'MDT',name:'Medtronic'}
         ]
     },
     indici: {
