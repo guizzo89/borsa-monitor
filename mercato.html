@@ -206,8 +206,14 @@
             min-height: 0;
             overflow: auto;
         }
-        #qsArea { margin-bottom: 10px; }
-        #qsRankArea { margin-bottom: 10px; }
+        #qsArea, #qsRankArea {
+            margin-bottom: 10px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        #qsArea .rank-table, #qsRankArea .rank-table {
+            min-width: 980px;
+        }
 
         /* ---- TABLE ---- */
         .rank-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
@@ -2136,7 +2142,6 @@ function qsOnKeyDown(e) {
                 closeQsDropdown();
             }
         }
-        runQuickSearch();
     } else if (e.key === 'Escape') {
         closeQsDropdown();
     }
@@ -2329,7 +2334,6 @@ document.addEventListener('click', function(e) {
         document.getElementById('qsInput').value = qsName !== qsSym ? qsName + ' (' + qsSym + ')' : qsSym;
         closeQsDropdown();
     }
-    runQuickSearch();
 });
 
 // =====================================================================
