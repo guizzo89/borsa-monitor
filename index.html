@@ -523,18 +523,82 @@
         let assetSearchOutsideBound = false;
 
         const LOCAL_ASSET_HINTS = [
-            { ticker: 'NASDAQ:NDX', symbol: 'NDX', description: 'NASDAQ 100 Index', exchange: 'NASDAQ', type: 'index', aliases: ['nasdaq', 'nasdaq100', 'nasdaq 100', 'ndx'] },
-            { ticker: 'AMEX:QQQ', symbol: 'QQQ', description: 'Invesco QQQ ETF (Nasdaq 100)', exchange: 'AMEX', type: 'stock', aliases: ['nasdaq', 'nasdaq100', 'qqq'] },
-            { ticker: 'SP:SPX', symbol: 'SPX', description: 'S&P 500 Index', exchange: 'SP', type: 'index', aliases: ['sp500', 's&p500', 's and p 500', 'spx'] },
-            { ticker: 'AMEX:SPY', symbol: 'SPY', description: 'SPDR S&P 500 ETF', exchange: 'AMEX', type: 'stock', aliases: ['sp500', 's&p500', 'spy'] },
-            { ticker: 'XETR:DAX', symbol: 'DAX', description: 'Germany 40 (DAX)', exchange: 'XETR', type: 'index', aliases: ['germany40', 'germany 40', 'germania40', 'de40', 'dax'] },
-            { ticker: 'AMEX:EWG', symbol: 'EWG', description: 'Germany ETF', exchange: 'AMEX', type: 'stock', aliases: ['germany', 'germania', 'dax', 'de40'] },
-            { ticker: 'TVC:HSI', symbol: 'HSI', description: 'Hang Seng Index', exchange: 'TVC', type: 'index', aliases: ['cina', 'cinese', 'china', 'hong kong', 'hsi'] },
-            { ticker: 'TVC:SSEC', symbol: 'SSEC', description: 'Shanghai Composite Index', exchange: 'TVC', type: 'index', aliases: ['cina', 'cinese', 'china', 'shanghai', 'ssec'] },
-            { ticker: 'AMEX:MCHI', symbol: 'MCHI', description: 'China ETF', exchange: 'AMEX', type: 'stock', aliases: ['cina', 'cinese', 'china'] },
-            { ticker: 'TVC:NI225', symbol: 'NI225', description: 'Nikkei 225 Index', exchange: 'TVC', type: 'index', aliases: ['giappone', 'giapponese', 'japan', 'nikkei', 'n225', 'ni225'] },
-            { ticker: 'TVC:NKY', symbol: 'NKY', description: 'Nikkei 225 (NKY)', exchange: 'TVC', type: 'index', aliases: ['giappone', 'giapponese', 'japan', 'nikkei', 'nky'] },
-            { ticker: 'AMEX:EWJ', symbol: 'EWJ', description: 'Japan ETF', exchange: 'AMEX', type: 'stock', aliases: ['giappone', 'giapponese', 'japan', 'nikkei'] }
+            // ── Indici principali ──────────────────────────────────────────────
+            { ticker: 'SP:SPX',          symbol: 'SPX',       description: 'S&P 500 Index',                  exchange: 'SP',       type: 'index',  aliases: ['sp500', 's&p500', 's and p 500', 'spx', 'sp 500'] },
+            { ticker: 'NASDAQ:NDX',      symbol: 'NDX',       description: 'NASDAQ 100 Index',               exchange: 'NASDAQ',   type: 'index',  aliases: ['nasdaq', 'nasdaq100', 'nasdaq 100', 'ndx'] },
+            { ticker: 'DJ:DJI',          symbol: 'DJI',       description: 'Dow Jones Industrial Avg',       exchange: 'DJ',       type: 'index',  aliases: ['dow', 'dow jones', 'djia', 'dji', 'industrial'] },
+            { ticker: 'XETR:DAX',        symbol: 'DAX',       description: 'Germany 40 (DAX)',               exchange: 'XETR',     type: 'index',  aliases: ['dax', 'de40', 'germany40', 'germania40', 'germany 40'] },
+            { ticker: 'EURONEXT:CAC40',  symbol: 'CAC40',     description: 'CAC 40 Index (France)',          exchange: 'EURONEXT', type: 'index',  aliases: ['cac', 'cac40', 'france', 'francia', 'fr40'] },
+            { ticker: 'LSE:UKX',         symbol: 'UKX',       description: 'FTSE 100 Index',                 exchange: 'LSE',      type: 'index',  aliases: ['ftse', 'ftse100', 'uk100', 'gb100', 'london'] },
+            { ticker: 'EURONEXT:AEX',    symbol: 'AEX',       description: 'AEX Index (Olanda)',             exchange: 'EURONEXT', type: 'index',  aliases: ['aex', 'olanda', 'netherlands', 'paesi bassi'] },
+            { ticker: 'EUREX:FESX',      symbol: 'FESX',      description: 'Euro Stoxx 50',                  exchange: 'EUREX',    type: 'index',  aliases: ['stoxx50', 'euro stoxx', 'stoxx', 'eurostoxx'] },
+            { ticker: 'TVC:HSI',         symbol: 'HSI',       description: 'Hang Seng Index',                exchange: 'TVC',      type: 'index',  aliases: ['hsi', 'hang seng', 'china', 'cina', 'hong kong'] },
+            { ticker: 'TVC:SSEC',        symbol: 'SSEC',      description: 'Shanghai Composite Index',       exchange: 'TVC',      type: 'index',  aliases: ['ssec', 'shanghai', 'cina', 'cinese', 'china'] },
+            { ticker: 'TVC:NI225',       symbol: 'NI225',     description: 'Nikkei 225 Index',               exchange: 'TVC',      type: 'index',  aliases: ['nikkei', 'n225', 'ni225', 'giappone', 'japan'] },
+            { ticker: 'BSE:SENSEX',      symbol: 'SENSEX',    description: 'BSE Sensex (India)',             exchange: 'BSE',      type: 'index',  aliases: ['sensex', 'india', 'bse', 'bombay'] },
+            // ── ETF indici ────────────────────────────────────────────────────
+            { ticker: 'AMEX:SPY',        symbol: 'SPY',       description: 'SPDR S&P 500 ETF',               exchange: 'AMEX',     type: 'stock',  aliases: ['spy', 'sp500 etf', 's&p etf'] },
+            { ticker: 'AMEX:QQQ',        symbol: 'QQQ',       description: 'Invesco QQQ ETF (Nasdaq 100)',   exchange: 'AMEX',     type: 'stock',  aliases: ['qqq', 'nasdaq etf', 'nasdaq100 etf'] },
+            { ticker: 'AMEX:IWM',        symbol: 'IWM',       description: 'iShares Russell 2000 ETF',       exchange: 'AMEX',     type: 'stock',  aliases: ['iwm', 'russell 2000', 'small cap'] },
+            { ticker: 'AMEX:EWG',        symbol: 'EWG',       description: 'Germany ETF',                    exchange: 'AMEX',     type: 'stock',  aliases: ['ewg', 'germany etf', 'germania etf'] },
+            { ticker: 'AMEX:MCHI',       symbol: 'MCHI',      description: 'China ETF',                      exchange: 'AMEX',     type: 'stock',  aliases: ['mchi', 'china etf', 'cina etf'] },
+            { ticker: 'AMEX:EWJ',        symbol: 'EWJ',       description: 'Japan ETF',                      exchange: 'AMEX',     type: 'stock',  aliases: ['ewj', 'japan etf', 'giappone etf'] },
+            // ── US Tech / Blue chip ───────────────────────────────────────────
+            { ticker: 'NASDAQ:AAPL',     symbol: 'AAPL',      description: 'Apple Inc.',                     exchange: 'NASDAQ',   type: 'stock',  aliases: ['apple', 'aapl'] },
+            { ticker: 'NASDAQ:MSFT',     symbol: 'MSFT',      description: 'Microsoft Corp.',                exchange: 'NASDAQ',   type: 'stock',  aliases: ['microsoft', 'msft'] },
+            { ticker: 'NASDAQ:NVDA',     symbol: 'NVDA',      description: 'NVIDIA Corp.',                   exchange: 'NASDAQ',   type: 'stock',  aliases: ['nvidia', 'nvda'] },
+            { ticker: 'NASDAQ:GOOGL',    symbol: 'GOOGL',     description: 'Alphabet Inc. (Google)',         exchange: 'NASDAQ',   type: 'stock',  aliases: ['google', 'alphabet', 'googl', 'goog'] },
+            { ticker: 'NASDAQ:AMZN',     symbol: 'AMZN',      description: 'Amazon.com Inc.',                exchange: 'NASDAQ',   type: 'stock',  aliases: ['amazon', 'amzn'] },
+            { ticker: 'NASDAQ:META',     symbol: 'META',      description: 'Meta Platforms Inc.',            exchange: 'NASDAQ',   type: 'stock',  aliases: ['meta', 'facebook', 'fb'] },
+            { ticker: 'NASDAQ:TSLA',     symbol: 'TSLA',      description: 'Tesla Inc.',                     exchange: 'NASDAQ',   type: 'stock',  aliases: ['tesla', 'tsla'] },
+            { ticker: 'NASDAQ:NFLX',     symbol: 'NFLX',      description: 'Netflix Inc.',                   exchange: 'NASDAQ',   type: 'stock',  aliases: ['netflix', 'nflx'] },
+            { ticker: 'NASDAQ:AMD',      symbol: 'AMD',       description: 'Advanced Micro Devices',         exchange: 'NASDAQ',   type: 'stock',  aliases: ['amd', 'advanced micro'] },
+            { ticker: 'NYSE:BRK.B',      symbol: 'BRK.B',    description: 'Berkshire Hathaway B',           exchange: 'NYSE',     type: 'stock',  aliases: ['berkshire', 'buffett', 'brk', 'brkb'] },
+            { ticker: 'NYSE:JPM',        symbol: 'JPM',       description: 'JPMorgan Chase & Co.',          exchange: 'NYSE',     type: 'stock',  aliases: ['jpmorgan', 'jpm', 'chase'] },
+            // ── Borsa Italiana (MIL) ──────────────────────────────────────────
+            { ticker: 'MIL:ENI',         symbol: 'ENI',       description: 'ENI S.p.A.',                     exchange: 'MIL',      type: 'stock',  aliases: ['eni', 'eni.mi'] },
+            { ticker: 'MIL:ENEL',        symbol: 'ENEL',      description: 'Enel S.p.A.',                    exchange: 'MIL',      type: 'stock',  aliases: ['enel', 'enel.mi'] },
+            { ticker: 'MIL:ISP',         symbol: 'ISP',       description: 'Intesa Sanpaolo',                exchange: 'MIL',      type: 'stock',  aliases: ['intesa', 'intesa sanpaolo', 'isp', 'isp.mi'] },
+            { ticker: 'MIL:UCG',         symbol: 'UCG',       description: 'UniCredit S.p.A.',               exchange: 'MIL',      type: 'stock',  aliases: ['unicredit', 'ucg', 'ucg.mi'] },
+            { ticker: 'MIL:RACE',        symbol: 'RACE',      description: 'Ferrari N.V.',                   exchange: 'MIL',      type: 'stock',  aliases: ['ferrari', 'race', 'race.mi'] },
+            { ticker: 'MIL:STLAM',       symbol: 'STLAM',     description: 'Stellantis N.V.',                exchange: 'MIL',      type: 'stock',  aliases: ['stellantis', 'stlam', 'stlam.mi', 'fca'] },
+            { ticker: 'MIL:LDO',         symbol: 'LDO',       description: 'Leonardo S.p.A.',                exchange: 'MIL',      type: 'stock',  aliases: ['leonardo', 'ldo', 'ldo.mi'] },
+            { ticker: 'MIL:MONC',        symbol: 'MONC',      description: 'Moncler S.p.A.',                 exchange: 'MIL',      type: 'stock',  aliases: ['moncler', 'monc', 'monc.mi'] },
+            { ticker: 'MIL:MB',          symbol: 'MB',        description: 'Mediobanca',                     exchange: 'MIL',      type: 'stock',  aliases: ['mediobanca', 'mb', 'mb.mi'] },
+            { ticker: 'MIL:STM',         symbol: 'STM',       description: 'STMicroelectronics',             exchange: 'MIL',      type: 'stock',  aliases: ['stm', 'stmicroelectronics', 'stm.mi'] },
+            { ticker: 'MIL:TIT',         symbol: 'TIT',       description: 'Telecom Italia',                 exchange: 'MIL',      type: 'stock',  aliases: ['telecom', 'telecom italia', 'tim', 'tit', 'tit.mi'] },
+            { ticker: 'MIL:PRY',         symbol: 'PRY',       description: 'Prysmian S.p.A.',                exchange: 'MIL',      type: 'stock',  aliases: ['prysmian', 'pry', 'pry.mi'] },
+            // ── Europa ────────────────────────────────────────────────────────
+            { ticker: 'NASDAQ:ASML',     symbol: 'ASML',      description: 'ASML Holding N.V.',              exchange: 'NASDAQ',   type: 'stock',  aliases: ['asml', 'semiconduttori', 'chip'] },
+            { ticker: 'XETR:SAP',        symbol: 'SAP',       description: 'SAP SE',                         exchange: 'XETR',     type: 'stock',  aliases: ['sap', 'sap.de'] },
+            { ticker: 'XETR:SIE',        symbol: 'SIE',       description: 'Siemens AG',                     exchange: 'XETR',     type: 'stock',  aliases: ['siemens', 'sie', 'sie.de'] },
+            { ticker: 'SIX:NESN',        symbol: 'NESN',      description: 'Nestlé S.A.',                    exchange: 'SIX',      type: 'stock',  aliases: ['nestle', 'nestlé', 'nesn'] },
+            { ticker: 'EURONEXT:MC',     symbol: 'MC',        description: 'LVMH Moët Hennessy',            exchange: 'EURONEXT', type: 'stock',  aliases: ['lvmh', 'mc', 'louis vuitton', 'moet'] },
+            { ticker: 'EURONEXT:AIR',    symbol: 'AIR',       description: 'Airbus SE',                      exchange: 'EURONEXT', type: 'stock',  aliases: ['airbus', 'air', 'aereo'] },
+            { ticker: 'LSE:AZN',         symbol: 'AZN',       description: 'AstraZeneca PLC',                exchange: 'LSE',      type: 'stock',  aliases: ['astrazeneca', 'azn'] },
+            { ticker: 'LSE:SHEL',        symbol: 'SHEL',      description: 'Shell PLC',                      exchange: 'LSE',      type: 'stock',  aliases: ['shell', 'shel', 'royal dutch'] },
+            // ── Crypto ───────────────────────────────────────────────────────
+            { ticker: 'BITSTAMP:BTCUSD', symbol: 'BTCUSD',   description: 'Bitcoin / USD',                  exchange: 'BITSTAMP', type: 'crypto', aliases: ['bitcoin', 'btc', 'btcusd', 'xbt'] },
+            { ticker: 'BITSTAMP:ETHUSD', symbol: 'ETHUSD',   description: 'Ethereum / USD',                 exchange: 'BITSTAMP', type: 'crypto', aliases: ['ethereum', 'eth', 'ethusd'] },
+            { ticker: 'BINANCE:SOLUSDT', symbol: 'SOLUSDT',  description: 'Solana / USDT',                  exchange: 'BINANCE',  type: 'crypto', aliases: ['solana', 'sol', 'solusdt'] },
+            { ticker: 'BINANCE:XRPUSDT', symbol: 'XRPUSDT',  description: 'XRP / USDT',                     exchange: 'BINANCE',  type: 'crypto', aliases: ['xrp', 'ripple', 'xrpusdt'] },
+            { ticker: 'BINANCE:BNBUSDT', symbol: 'BNBUSDT',  description: 'BNB / USDT',                     exchange: 'BINANCE',  type: 'crypto', aliases: ['bnb', 'binance coin', 'bnbusdt'] },
+            { ticker: 'BINANCE:DOGEUSDT', symbol: 'DOGEUSDT', description: 'Dogecoin / USDT',               exchange: 'BINANCE',  type: 'crypto', aliases: ['dogecoin', 'doge', 'dogeusdt'] },
+            { ticker: 'BINANCE:ADAUSDT', symbol: 'ADAUSDT',  description: 'Cardano / USDT',                 exchange: 'BINANCE',  type: 'crypto', aliases: ['cardano', 'ada', 'adausdt'] },
+            { ticker: 'BINANCE:AVAXUSDT', symbol: 'AVAXUSDT', description: 'Avalanche / USDT',              exchange: 'BINANCE',  type: 'crypto', aliases: ['avalanche', 'avax', 'avaxusdt'] },
+            // ── Forex ────────────────────────────────────────────────────────
+            { ticker: 'FX:EURUSD',       symbol: 'EURUSD',   description: 'Euro / Dollaro USA',             exchange: 'FX',       type: 'forex',  aliases: ['eurusd', 'euro dollar', 'eur usd', 'euro'] },
+            { ticker: 'FX:GBPUSD',       symbol: 'GBPUSD',   description: 'Sterlina / Dollaro USA',         exchange: 'FX',       type: 'forex',  aliases: ['gbpusd', 'cable', 'sterlina', 'gbp usd'] },
+            { ticker: 'FX:USDJPY',       symbol: 'USDJPY',   description: 'Dollaro USA / Yen',              exchange: 'FX',       type: 'forex',  aliases: ['usdjpy', 'yen', 'dollaro yen', 'usd jpy'] },
+            { ticker: 'FX:USDCHF',       symbol: 'USDCHF',   description: 'Dollaro USA / Franco Svizzero',  exchange: 'FX',       type: 'forex',  aliases: ['usdchf', 'franco svizzero', 'swissy', 'chf'] },
+            { ticker: 'FX:AUDUSD',       symbol: 'AUDUSD',   description: 'Dollaro Australiano / USD',      exchange: 'FX',       type: 'forex',  aliases: ['audusd', 'aussie', 'aud usd', 'australia'] },
+            { ticker: 'FX:USDCAD',       symbol: 'USDCAD',   description: 'Dollaro USA / Canadese',         exchange: 'FX',       type: 'forex',  aliases: ['usdcad', 'loonie', 'canadese', 'cad'] },
+            // ── Materie Prime ────────────────────────────────────────────────
+            { ticker: 'TVC:GOLD',        symbol: 'GOLD',      description: 'Oro (Gold Spot)',                exchange: 'TVC',      type: 'stock',  aliases: ['gold', 'oro', 'xau', 'xauusd'] },
+            { ticker: 'TVC:SILVER',      symbol: 'SILVER',    description: 'Argento (Silver Spot)',          exchange: 'TVC',      type: 'stock',  aliases: ['silver', 'argento', 'xag', 'xagusd'] },
+            { ticker: 'TVC:USOIL',       symbol: 'USOIL',     description: 'WTI Crude Oil',                  exchange: 'TVC',      type: 'stock',  aliases: ['petrolio', 'oil', 'wti', 'crude', 'usoil'] },
+            { ticker: 'TVC:UKOIL',       symbol: 'UKOIL',     description: 'Brent Crude Oil',                exchange: 'TVC',      type: 'stock',  aliases: ['brent', 'ukoil', 'crude brent'] },
+            { ticker: 'TVC:NATGASUSD',   symbol: 'NATGASUSD', description: 'Natural Gas (USD)',              exchange: 'TVC',      type: 'stock',  aliases: ['gas naturale', 'natural gas', 'natgas', 'gas'] }
         ];
 
         // Modal state
@@ -559,7 +623,11 @@
         }
 
         function stripHtmlTags(text) {
-            return String(text || '').replace(/<\/?em>/g, '').trim();
+            return String(text || '')
+                .replace(/<[^>]*>/g, '')
+                .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+                .trim();
         }
 
         function escapeHtml(text) {
@@ -673,14 +741,38 @@
             return quotes.slice(0, 10).map((q) => {
                 const symbol = stripHtmlTags(q.symbol).toUpperCase();
                 const exchangeRaw = stripHtmlTags(q.exchDisp || q.exchange || q.exchangeDisplay || '');
-                let ticker = symbol;
                 const ex = exchangeRaw.toLowerCase();
-                if (symbol.endsWith('=X')) ticker = symbol.replace('=X', '');
-                if (ex.includes('nasdaq')) ticker = `NASDAQ:${symbol}`;
-                else if (ex.includes('nyse')) ticker = `NYSE:${symbol}`;
-                else if (ex.includes('amex')) ticker = `AMEX:${symbol}`;
-                else if (ex.includes('binance')) ticker = `BINANCE:${symbol}`;
-                else if (ex.includes('bitstamp')) ticker = `BITSTAMP:${symbol}`;
+                let ticker = symbol;
+
+                if (symbol.endsWith('=X')) {
+                    // Forex: EUR=X → FX:EURUSD, EURUSD=X → FX:EURUSD
+                    const base = symbol.replace('=X', '');
+                    const pair = base.length === 3 ? `${base}USD` : base;
+                    ticker = `FX:${pair}`;
+                } else if (ex.includes('nasdaq')) {
+                    ticker = `NASDAQ:${symbol}`;
+                } else if (ex.includes('nyse')) {
+                    ticker = `NYSE:${symbol}`;
+                } else if (ex.includes('amex') || ex.includes('nyse arca')) {
+                    ticker = `AMEX:${symbol}`;
+                } else if (ex.includes('milan') || ex.includes('mta') || ex.includes('borsa italiana')) {
+                    ticker = `MIL:${symbol.replace(/\.MI$/i, '')}`;
+                } else if (ex.includes('xetra') || ex.includes('frankfurt')) {
+                    ticker = `XETR:${symbol.replace(/\.DE$/i, '')}`;
+                } else if (ex.includes('london stock exchange') || ex.includes('lse') || ex.includes('london')) {
+                    ticker = `LSE:${symbol.replace(/\.L$/i, '')}`;
+                } else if (ex.includes('euronext') || ex.includes('amsterdam') || ex.includes('paris') || ex.includes('brussels')) {
+                    ticker = `EURONEXT:${symbol.replace(/\.(PA|AS|BR)$/i, '')}`;
+                } else if (ex.includes('six') || ex.includes('swiss exchange')) {
+                    ticker = `SIX:${symbol.replace(/\.SW$/i, '')}`;
+                } else if (ex.includes('bolsa') || ex.includes('madrid') || ex.includes('bme')) {
+                    ticker = `BME:${symbol.replace(/\.MC$/i, '')}`;
+                } else if (ex.includes('binance')) {
+                    ticker = `BINANCE:${symbol}`;
+                } else if (ex.includes('bitstamp')) {
+                    ticker = `BITSTAMP:${symbol}`;
+                }
+
                 return {
                     ticker: String(ticker || '').toUpperCase(),
                     symbol: symbol,
@@ -776,16 +868,6 @@
                 searchYahooAssets(query).then((r) => ({ source: 'yh', results: r }))
             ];
 
-            let first = [];
-            try {
-                const firstHit = await Promise.any(providers.map((p) =>
-                    p.then((x) => (x.results && x.results.length ? x.results : Promise.reject(new Error('No results'))))
-                ));
-                first = Array.isArray(firstHit) ? firstHit : [];
-            } catch (e) {
-                first = [];
-            }
-
             const settled = await Promise.allSettled(providers);
             const merged = [];
             settled.forEach((res) => {
@@ -794,7 +876,7 @@
                 }
             });
 
-            const finalResults = dedupeAssetResults([...(local || []), ...(first.length ? [...first, ...merged] : merged)]);
+            const finalResults = dedupeAssetResults([...(local || []), ...merged]);
             if (finalResults.length > 0) setCachedAssetSearch(query, finalResults);
             return finalResults;
         }
