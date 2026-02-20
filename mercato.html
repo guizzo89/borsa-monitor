@@ -225,6 +225,35 @@
         #qsArea .rank-table, #qsRankArea .rank-table {
             min-width: 980px;
         }
+        .quick-result-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .quick-result-title {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .quick-close-btn {
+            border: 1px solid var(--border);
+            background: var(--btn-bg);
+            color: var(--text-secondary);
+            border-radius: 5px;
+            padding: 2px 8px;
+            font-size: 0.86rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .quick-close-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--btn-hover);
+        }
 
         /* ---- TABLE ---- */
         .rank-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
@@ -2220,6 +2249,13 @@ function qsPick(sym, name) {
     closeQsDropdown();
 }
 
+function clearQuickResult(areaId) {
+    const area = document.getElementById(areaId);
+    if (!area) return;
+    area.innerHTML = '';
+    area.style.display = 'none';
+}
+
 async function runQuickRankingSearch() {
     setResultsTab('ranking');
     const inp = document.getElementById('qsInput').value.trim();
@@ -2247,7 +2283,10 @@ async function runQuickRankingSearch() {
     const pct = (isPos ? '+' : '') + perf.changePct.toFixed(2) + '%';
     const tvSym = toTvSymbol(symbol);
     area.innerHTML =
-        '<div style="font-size:0.7rem;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#9906; Risultato ricerca classifica</div>' +
+        '<div class="quick-result-head">' +
+        '<div class="quick-result-title">&#9906; Risultato ricerca classifica</div>' +
+        '<button type="button" class="quick-close-btn" onclick="clearQuickResult(\'qsRankArea\')" title="Chiudi">x</button>' +
+        '</div>' +
         '<table class="rank-table"><thead><tr><th>Nome</th><th>Simbolo</th><th>Variazione</th><th>Prezzo</th></tr></thead><tbody><tr>' +
         '<td class="td-name"><div class="chart-links">' +
             '<a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(symbol) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(name) + '<span class="link-arrow">&#x2197;</span></a>' +
@@ -2375,7 +2414,10 @@ async function runQuickSearch() {
         '<td class="th-cat"><span class="val-na">—</span></td>' +
         '</tr>';
     area.innerHTML =
-        '<div style="font-size:0.7rem;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#9906; Risultato ricerca</div>' +
+        '<div class="quick-result-head">' +
+        '<div class="quick-result-title">&#9906; Risultato ricerca</div>' +
+        '<button type="button" class="quick-close-btn" onclick="clearQuickResult(\'qsArea\')" title="Chiudi">x</button>' +
+        '</div>' +
         '<table class="rank-table"><thead><tr>' +
         '<th>Nome</th><th class="th-sym">Simbolo</th><th>Segnale</th><th>Punteggio</th><th>RSI</th>' +
         '<th class="th-macd">MACD</th><th class="th-trend">Trend</th>' +
