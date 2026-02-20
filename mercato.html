@@ -88,7 +88,27 @@
         .cat-btn.active, .period-btn.active, .limit-btn.active {
             background: var(--accent); color: #fff; border-color: var(--accent);
         }
-        .custom-cat-wrapper { position: relative; display: inline-flex; }
+        .cat-chip, .custom-cat-wrapper { display: inline-flex; align-items: center; }
+        .custom-cat-wrapper { position: relative; }
+        .cat-view-btn {
+            margin-left: 4px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--btn-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-weight: 600;
+            line-height: 1;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .cat-view-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--btn-hover);
+        }
         .custom-cat-actions {
             display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
             background: var(--bg-secondary); border: 1px solid var(--border);
@@ -384,6 +404,21 @@
             max-height: 90vh; overflow-y: auto;
         }
         .modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
+        .assets-modal { width: min(640px, 94vw); }
+        .cat-assets-count {
+            margin-bottom: 10px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+        .cat-assets-list {
+            max-height: 58vh;
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .cat-assets-list table { border: none; border-radius: 0; }
+        .cat-assets-list .td-idx { width: 36px; color: var(--text-secondary); font-size: 0.75rem; }
+        .cat-assets-list .td-symbol { white-space: nowrap; }
         .modal-field { margin-bottom: 14px; display: flex; flex-direction: column; gap: 5px; }
         .modal-field label {
             font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);
@@ -518,15 +553,42 @@
         <div class="filter-row">
             <span class="filter-label">Categorie</span>
             <div class="filter-btns" id="catBtns">
-                <button class="cat-btn active" data-cat="nasdaq"      onclick="toggleCat(this)">NASDAQ</button>
-                <button class="cat-btn"        data-cat="sp500"       onclick="toggleCat(this)">S&amp;P 500</button>
-                <button class="cat-btn"        data-cat="italia"      onclick="toggleCat(this)">Borsa Italiana</button>
-                <button class="cat-btn"        data-cat="cinesi"      onclick="toggleCat(this)">Titoli Cinesi</button>
-                <button class="cat-btn"        data-cat="europee"     onclick="toggleCat(this)">Europee</button>
-                <button class="cat-btn"        data-cat="crypto"      onclick="toggleCat(this)">Crypto</button>
-                <button class="cat-btn"        data-cat="commodities" onclick="toggleCat(this)">Materie Prime</button>
-                <button class="cat-btn"        data-cat="forex"       onclick="toggleCat(this)">Forex</button>
-                <button class="cat-btn"        data-cat="indici"      onclick="toggleCat(this)">Indici</button>
+                <div class="cat-chip">
+                    <button class="cat-btn active" data-cat="nasdaq" onclick="toggleCat(this)">NASDAQ</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('nasdaq')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="sp500" onclick="toggleCat(this)">S&amp;P 500</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('sp500')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="italia" onclick="toggleCat(this)">Borsa Italiana</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('italia')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="cinesi" onclick="toggleCat(this)">Titoli Cinesi</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('cinesi')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="europee" onclick="toggleCat(this)">Europee</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('europee')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="crypto" onclick="toggleCat(this)">Crypto</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('crypto')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="commodities" onclick="toggleCat(this)">Materie Prime</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('commodities')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="forex" onclick="toggleCat(this)">Forex</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('forex')" title="Mostra asset categoria">Asset</button>
+                </div>
+                <div class="cat-chip">
+                    <button class="cat-btn" data-cat="indici" onclick="toggleCat(this)">Indici</button>
+                    <button class="cat-view-btn" type="button" onclick="openCatAssetsModal('indici')" title="Mostra asset categoria">Asset</button>
+                </div>
             </div>
             <button class="btn-selall" id="btnSelAll" onclick="toggleSelectAll()">Tutte</button>
             <button class="btn-new-cat" onclick="openNewCatModal()">+ Nuova categoria</button>
@@ -697,6 +759,17 @@
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeCatModal()">Annulla</button>
             <button class="btn-save"   onclick="saveCatModal()">Salva</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="catAssetsModal">
+    <div class="modal assets-modal">
+        <h2 id="catAssetsTitle">Asset categoria</h2>
+        <div class="cat-assets-count" id="catAssetsCount"></div>
+        <div class="cat-assets-list" id="catAssetsList"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeCatAssetsModal()">Chiudi</button>
         </div>
     </div>
 </div>
@@ -1023,12 +1096,18 @@ function renderCustomCatButtons() {
         btn.style.cssText = 'border-left:3px solid ' + color + ';';
         btn.textContent = cat.label;
         btn.setAttribute('onclick', 'toggleCat(this)');
+        const btnView = document.createElement('button');
+        btnView.className = 'cat-view-btn';
+        btnView.type = 'button';
+        btnView.textContent = 'Asset';
+        btnView.title = 'Mostra asset categoria';
+        btnView.addEventListener('click', (e) => { e.stopPropagation(); openCatAssetsModal(key); });
         const actions = document.createElement('div'); actions.className = 'custom-cat-actions';
         const btnEdit = document.createElement('button'); btnEdit.textContent = '✎ Modifica';
         btnEdit.addEventListener('click', (e) => { e.stopPropagation(); openEditCatModal(key); });
         const btnDel = document.createElement('button'); btnDel.textContent = '✕ Elimina'; btnDel.className = 'danger';
         btnDel.addEventListener('click', (e) => { e.stopPropagation(); deleteCustomCat(key, wrapper); });
-        actions.append(btnEdit, btnDel); wrapper.append(btn, actions); container.appendChild(wrapper);
+        actions.append(btnEdit, btnDel); wrapper.append(btn, btnView, actions); container.appendChild(wrapper);
     }
     updateSelAllBtn();
 }
@@ -1226,6 +1305,7 @@ document.addEventListener('click', function(e) {
 });
 
 document.getElementById('catModal').addEventListener('click', function(e) { if (e.target === this) closeCatModal(); });
+document.getElementById('catAssetsModal').addEventListener('click', function(e) { if (e.target === this) closeCatAssetsModal(); });
 
 // =====================================================================
 // FILTERS
@@ -1282,6 +1362,29 @@ function getAllCats() {
         ci++;
     }
     return all;
+}
+function openCatAssetsModal(catKey) {
+    const allCats = getAllCats();
+    const cat = allCats[catKey];
+    if (!cat) return;
+    const items = Array.isArray(cat.items) ? cat.items : [];
+    document.getElementById('catAssetsTitle').textContent = 'Asset: ' + cat.label;
+    document.getElementById('catAssetsCount').textContent = items.length + ' asset';
+    const rows = items.map((item, idx) =>
+        '<tr>' +
+        '<td class="td-idx">' + (idx + 1) + '</td>' +
+        '<td class="td-symbol">' + escapeHtml(item.symbol) + '</td>' +
+        '<td>' + escapeHtml(item.name || item.symbol) + '</td>' +
+        '</tr>'
+    ).join('');
+    document.getElementById('catAssetsList').innerHTML =
+        '<table class="rank-table"><thead><tr><th>#</th><th>Simbolo</th><th>Nome</th></tr></thead><tbody>' +
+        (rows || '<tr><td class="td-idx">-</td><td colspan="2"><span class="val-na">Nessun asset nella categoria</span></td></tr>') +
+        '</tbody></table>';
+    document.getElementById('catAssetsModal').classList.add('open');
+}
+function closeCatAssetsModal() {
+    document.getElementById('catAssetsModal').classList.remove('open');
 }
 
 // =====================================================================
