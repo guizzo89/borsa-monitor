@@ -913,6 +913,8 @@ let modalEditKey = null;
 let modalSelectedItems = [];
 let allAssetsFlat = [];
 let dropdownItems = [];
+let assetSearchReqId = 0;
+let quickSearchReqId = 0;
 
 // =====================================================================
 // THEME
@@ -1054,14 +1056,46 @@ function buildAllAssets() {
     }
 }
 
-function assetSearchInput() {
+async function fetchYahooAssetSuggestions(query, limit) {
+    const q = String(query || '').trim();
+    if (q.length < 2) return [];
+    try {
+        const url = 'https://query1.finance.yahoo.com/v1/finance/search?q=' +
+            encodeURIComponent(q) + '&quotesCount=50&newsCount=0';
+        const data = await fetchJson(url, 8000);
+        const quotes = (data && data.quotes) || [];
+        const allowed = new Set(['EQUITY', 'ETF', 'CRYPTOCURRENCY', 'INDEX', 'MUTUALFUND']);
+        const out = [];
+        const seen = new Set();
+        quotes.forEach(it => {
+            const type = String(it.quoteType || '').toUpperCase();
+            const symbol = String(it.symbol || '').trim().toUpperCase();
+            if (!symbol || seen.has(symbol) || !allowed.has(type)) return;
+            const name = String(it.shortname || it.longname || symbol).trim() || symbol;
+            seen.add(symbol);
+            out.push({ symbol, name, catLabel: 'Yahoo' });
+        });
+        return out.slice(0, limit || 10);
+    } catch (e) {
+        return [];
+    }
+}
+
+async function assetSearchInput() {
     const inp = document.getElementById('assetSearch');
     const q = inp.value.trim().toLowerCase();
     if (!q) { closeAssetDropdown(); return; }
-    const filtered = allAssetsFlat
+    const reqId = ++assetSearchReqId;
+    const filteredLocal = allAssetsFlat
         .filter(a => (a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q))
                   && !modalSelectedItems.some(s => s.symbol === a.symbol))
         .slice(0, 10);
+    let filtered = filteredLocal;
+    if (!filtered.length) {
+        const remote = await fetchYahooAssetSuggestions(inp.value.trim(), 10);
+        if (reqId !== assetSearchReqId) return;
+        filtered = remote.filter(a => !modalSelectedItems.some(s => s.symbol === a.symbol));
+    }
     dropdownItems = filtered;
     const rawQ = inp.value.trim();
     const symUp = rawQ.split(/\s+/)[0].toUpperCase();
@@ -2123,14 +2157,21 @@ function checkShareImport() {
 // =====================================================================
 let qsItems = [], qsSym = '', qsName = '';
 
-function qsOnInput() {
+async function qsOnInput() {
     qsSym = ''; qsName = '';
-    const q = document.getElementById('qsInput').value.trim().toLowerCase();
+    const qsInput = document.getElementById('qsInput');
+    const q = qsInput.value.trim().toLowerCase();
     if (!q) { closeQsDropdown(); return; }
-    qsItems = allAssetsFlat
+    const reqId = ++quickSearchReqId;
+    const localItems = allAssetsFlat
         .filter(a => a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q))
         .slice(0, 10);
-    const rawQ = document.getElementById('qsInput').value.trim();
+    qsItems = localItems;
+    if (!qsItems.length) {
+        qsItems = await fetchYahooAssetSuggestions(qsInput.value.trim(), 10);
+        if (reqId !== quickSearchReqId) return;
+    }
+    const rawQ = qsInput.value.trim();
     const symUp = rawQ.split(/\s+/)[0].toUpperCase();
     let html = qsItems.map((it, i) =>
         '<div class="asset-dropdown-item" data-qs="' + i + '">' +
