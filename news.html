@@ -196,6 +196,14 @@
             border: 1px dashed var(--border); border-radius: 8px;
         }
 
+        /* ---- TRANSLATE BUTTON ---- */
+        .btn-translate {
+            background: #1b5e20; color: #fff; border-color: #1b5e20; gap: 5px;
+        }
+        .btn-translate:hover { background: #2e7d32; border-color: #2e7d32; }
+        .btn-translate.active { background: #1565c0; border-color: #1565c0; }
+        .btn-translate:disabled { opacity: 0.5; cursor: not-allowed; }
+
         /* ---- ERROR BANNER ---- */
         .error-banner {
             background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3);
@@ -246,6 +254,9 @@
             <!-- renderizzato da JS -->
         </div>
         <div class="toolbar-right">
+            <button class="btn btn-translate" id="translateBtn" onclick="toggleTranslation()" title="Traduci titoli in italiano">
+                &#127470;&#127481; Traduci
+            </button>
             <span class="update-info" id="updateInfo"></span>
         </div>
     </div>
@@ -301,14 +312,32 @@ const SECTORS = [
         key: 'commodities', label: 'Materie Prime', icon: '🥇', color: '#5d4037',
         queries: ['GC=F', 'SI=F', 'CL=F', 'gold silver oil commodities']
     },
+    {
+        key: 'usa', label: 'USA', icon: '🇺🇸', color: '#1a237e',
+        queries: ['SPY', 'US economy jobs inflation', 'Fed policy economy', 'US stock market']
+    },
+    {
+        key: 'oriente', label: 'Oriente & Asia', icon: '🌏', color: '#827717',
+        queries: ['Nikkei Japan', 'India Sensex economy', 'Southeast Asia markets', 'Asian stocks']
+    },
+    {
+        key: 'cina', label: 'Cina', icon: '🇨🇳', color: '#b71c1c',
+        queries: ['9988.HK', 'BABA', 'China economy GDP', 'China stocks trade']
+    },
+    {
+        key: 'difesa', label: 'Difesa & Spazio', icon: '🚀', color: '#263238',
+        queries: ['LMT', 'RTX', 'defense aerospace', 'space industry SpaceX']
+    },
 ];
 
 // =====================================================================
 // STATE
 // =====================================================================
-let allNewsData  = {};   // key → array of news items
-let activeSector = 'all';
-let isLoading    = false;
+let allNewsData      = {};    // key → array of news items
+let activeSector     = 'all';
+let isLoading        = false;
+let translateMode    = false;
+let translationCache = {};    // originalTitle → translatedTitle
 
 // =====================================================================
 // THEME
@@ -428,7 +457,7 @@ function renderCard(item, sectorKey) {
             (sector ? '<span class="card-badge" style="background:' + color + '">' + sector.icon + ' ' + escapeHtml(sector.label) + '</span>' : '') +
             (age ? '<span class="card-time">' + escapeHtml(age) + '</span>' : '') +
         '</div>' +
-        '<div class="card-title">' + escapeHtml(item.title) + '</div>' +
+        '<div class="card-title" data-en="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</div>' +
         '<div class="card-footer">' +
             (publisher ? '<span class="card-source">' + escapeHtml(publisher) + '</span>' : '<span class="card-source"></span>') +
             '<span class="' + sentCls + '">' + sentTxt + '</span>' +
@@ -461,6 +490,7 @@ function renderPage() {
             '</div>' +
             '<div class="news-grid">' + items.map(item => renderCard(item, activeSector)).join('') + '</div>' +
             '</div>';
+        if (translateMode) applyTranslations();
         return;
     }
 
@@ -493,6 +523,8 @@ function renderPage() {
     container.innerHTML = hasAny
         ? html
         : '<div class="status-box">Nessuna notizia caricata. Clicca <strong>Aggiorna</strong> per scaricare le ultime notizie.</div>';
+
+    if (translateMode) applyTranslations();
 }
 
 // =====================================================================
@@ -579,6 +611,12 @@ async function loadAllNews() {
     if (isLoading) return;
     isLoading = true;
 
+    // Reset translate state
+    translateMode = false;
+    translationCache = {};
+    const tBtn = document.getElementById('translateBtn');
+    if (tBtn) { tBtn.innerHTML = '&#127470;&#127481; Traduci'; tBtn.classList.remove('active'); tBtn.disabled = false; }
+
     const btn = document.getElementById('refreshBtn');
     const icon = document.getElementById('refreshIcon');
     btn.disabled = true;
@@ -636,6 +674,68 @@ async function loadAllNews() {
 
     renderPills();
     renderPage();
+}
+
+// =====================================================================
+// TRANSLATION
+// =====================================================================
+async function translateText(text) {
+    if (!text) return text;
+    if (translationCache[text]) return translationCache[text];
+    try {
+        const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=' +
+            encodeURIComponent(text);
+        const res = await fetchWithTimeout(url, {}, 6000);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const translated = (data?.[0] || []).map(seg => seg?.[0] || '').join('');
+        if (translated) translationCache[text] = translated;
+        return translated || text;
+    } catch(e) {
+        return text;
+    }
+}
+
+async function applyTranslations() {
+    const btn = document.getElementById('translateBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Traduzione…'; }
+
+    const cards = document.querySelectorAll('.card-title[data-en]');
+    const unique = [...new Set([...cards].map(el => el.dataset.en).filter(Boolean))];
+    await Promise.all(unique.map(async orig => {
+        if (!translationCache[orig]) await translateText(orig);
+    }));
+
+    document.querySelectorAll('.card-title[data-en]').forEach(el => {
+        const orig = el.dataset.en;
+        if (orig && translationCache[orig]) el.textContent = translationCache[orig];
+    });
+
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '&#127470;&#127481; Originale';
+        btn.classList.add('active');
+    }
+}
+
+function revertTranslations() {
+    document.querySelectorAll('.card-title[data-en]').forEach(el => {
+        el.textContent = el.dataset.en || el.textContent;
+    });
+    const btn = document.getElementById('translateBtn');
+    if (btn) {
+        btn.innerHTML = '&#127470;&#127481; Traduci';
+        btn.classList.remove('active');
+    }
+}
+
+async function toggleTranslation() {
+    translateMode = !translateMode;
+    if (translateMode) {
+        await applyTranslations();
+    } else {
+        revertTranslations();
+    }
 }
 
 // =====================================================================
