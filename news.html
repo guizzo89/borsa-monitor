@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Mercati — Borsa</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e; --bg-secondary: #16213e; --bg-card: #0f3460;
+            --text-primary: #e0e0e0; --text-secondary: #a0a0a0;
+            --accent: #e94560; --accent-hover: #ff6b81;
+            --border: #2a2a4a; --btn-bg: #2a2a4a; --btn-hover: #3a3a5a;
+            --header-bg: #0f0f23;
+        }
+        html.light {
+            --bg-primary: #f0f2f5; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --text-primary: #1a1a2e; --text-secondary: #666666;
+            --accent: #e94560; --accent-hover: #c73650;
+            --border: #d0d0d0; --btn-bg: #e0e0e0; --btn-hover: #d0d0d0;
+            --header-bg: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;
+        }
+
+        /* ---- HEADER ---- */
+        header {
+            background: var(--header-bg); border-bottom: 1px solid var(--border);
+            padding: 8px 24px; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap; gap: 8px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        h1 { font-size: 1.3rem; font-weight: 700; white-space: nowrap; }
+        h1 span { color: var(--accent); }
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #2ecc71;
+            display: inline-block; margin-left: 4px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(0.85)} }
+        .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn {
+            background: var(--btn-bg); color: var(--text-primary);
+            border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px;
+            cursor: pointer; font-size: 0.82rem; font-weight: 500;
+            transition: all 0.15s; white-space: nowrap; text-decoration: none;
+            display: inline-flex; align-items: center;
+        }
+        .btn:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .btn-refresh {
+            background: var(--accent); color: #fff; border-color: var(--accent);
+            gap: 5px;
+        }
+        .btn-refresh:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+        .theme-icons { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+        .theme-toggle {
+            position: relative; width: 48px; height: 26px;
+            background: var(--btn-bg); border-radius: 13px;
+            cursor: pointer; border: 1px solid var(--border);
+        }
+        .theme-toggle::after {
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 18px; height: 18px; background: var(--accent);
+            border-radius: 50%; transition: transform 0.3s;
+        }
+        html.light .theme-toggle::after { transform: translateX(22px); }
+
+        /* ---- LAYOUT ---- */
+        .main-content { padding: 20px 24px; max-width: 1440px; margin: 0 auto; }
+
+        /* ---- TOOLBAR ---- */
+        .toolbar {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 18px; flex-wrap: wrap;
+        }
+        .toolbar-left { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+        .toolbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .update-info { font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; }
+
+        /* ---- SECTOR PILLS ---- */
+        .sector-pill {
+            padding: 6px 14px; border-radius: 20px;
+            border: 1px solid var(--border); background: var(--btn-bg);
+            color: var(--text-primary); cursor: pointer; font-size: 0.8rem;
+            font-weight: 500; transition: all 0.18s; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px; user-select: none;
+        }
+        .sector-pill:hover { border-color: var(--accent); background: var(--btn-hover); }
+        .sector-pill.active { color: #fff; border-color: transparent; }
+        .sector-pill .pill-count {
+            font-size: 0.68rem; opacity: 0.75; font-weight: 600;
+            background: rgba(255,255,255,0.18); padding: 1px 5px;
+            border-radius: 8px; min-width: 18px; text-align: center;
+        }
+
+        /* ---- SECTION HEADER ---- */
+        .sector-section { margin-bottom: 32px; }
+        .section-hd {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 14px; padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+        .section-hd-icon { font-size: 1.15rem; }
+        .section-hd-label {
+            font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .section-hd-count {
+            margin-left: auto; font-size: 0.72rem; color: var(--text-secondary);
+            background: var(--btn-bg); border: 1px solid var(--border);
+            padding: 2px 8px; border-radius: 10px;
+        }
+        .section-hd-bar { height: 3px; border-radius: 2px; flex-shrink: 0; width: 28px; }
+
+        /* ---- NEWS GRID ---- */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+        .news-grid.single-col { grid-template-columns: 1fr; max-width: 780px; }
+
+        /* ---- NEWS CARD ---- */
+        .news-card {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px; padding: 15px 16px;
+            display: flex; flex-direction: column; gap: 9px;
+            text-decoration: none; color: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            position: relative; overflow: hidden;
+        }
+        .news-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 3px; border-radius: 10px 0 0 10px;
+            background: var(--card-accent, var(--border));
+            transition: width 0.15s;
+        }
+        .news-card:hover { border-color: var(--card-accent, var(--accent)); box-shadow: 0 2px 14px rgba(0,0,0,0.25); }
+        .news-card:hover::before { width: 4px; }
+
+        .card-meta { display: flex; align-items: center; gap: 7px; }
+        .card-badge {
+            font-size: 0.6rem; font-weight: 700; padding: 2px 7px;
+            border-radius: 8px; color: #fff; text-transform: uppercase;
+            letter-spacing: 0.3px; white-space: nowrap; flex-shrink: 0;
+        }
+        .card-time { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; white-space: nowrap; flex-shrink: 0; }
+
+        .card-title {
+            font-size: 0.87rem; font-weight: 600; line-height: 1.47;
+            color: var(--text-primary); flex: 1;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        .card-footer { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+        .card-source { font-size: 0.7rem; color: var(--text-secondary); flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .card-sent {
+            font-size: 0.68rem; font-weight: 700; padding: 2px 7px;
+            border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+        }
+        .sent-pos { background: rgba(46,204,113,0.15); color: #2ecc71; }
+        .sent-neg { background: rgba(231,76,60,0.15);  color: #e74c3c; }
+        .sent-neu { background: rgba(160,160,160,0.1); color: var(--text-secondary); }
+        .card-link-arrow {
+            font-size: 0.8rem; color: var(--accent); opacity: 0;
+            transition: opacity 0.15s, transform 0.15s; flex-shrink: 0;
+        }
+        .news-card:hover .card-link-arrow { opacity: 1; transform: translate(2px,-1px); }
+
+        /* ---- STATUS / SPINNER ---- */
+        .status-box {
+            text-align: center; padding: 60px 20px;
+            color: var(--text-secondary); font-size: 0.9rem;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        .status-box strong { color: var(--text-primary); }
+        .spinner {
+            display: inline-block; width: 32px; height: 32px; margin-bottom: 14px;
+            border: 3px solid var(--border); border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-sectors {
+            font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;
+        }
+
+        /* ---- EMPTY ---- */
+        .empty-sector {
+            padding: 28px; text-align: center; color: var(--text-secondary);
+            font-size: 0.84rem; background: var(--bg-secondary);
+            border: 1px dashed var(--border); border-radius: 8px;
+        }
+
+        /* ---- ERROR BANNER ---- */
+        .error-banner {
+            background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3);
+            border-radius: 8px; padding: 10px 16px; font-size: 0.8rem;
+            color: #e74c3c; margin-bottom: 14px; display: none;
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 860px) {
+            .news-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+        }
+        @media (max-width: 600px) {
+            .main-content { padding: 12px; }
+            header { padding: 8px 12px; }
+            h1 { font-size: 1rem; }
+            .news-grid { grid-template-columns: 1fr; }
+            .toolbar { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <h1>&#128240; News <span>Mercati</span> <span class="live-dot" id="liveDot" style="display:none"></span></h1>
+    </div>
+    <div class="header-controls">
+        <a href="index.html" class="btn">Dashboard</a>
+        <a href="mercato.html" class="btn">Classifica &amp; Analisi</a>
+        <a href="calcolo.html" class="btn">Calcolatore</a>
+        <button class="btn btn-refresh" id="refreshBtn" onclick="loadAllNews()">
+            <span id="refreshIcon">&#8635;</span> Aggiorna
+        </button>
+        <div class="theme-icons">
+            <span>&#9790;</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+            <span>&#9788;</span>
+        </div>
+    </div>
+</header>
+
+<div class="main-content">
+
+    <div class="error-banner" id="errorBanner"></div>
+
+    <div class="toolbar">
+        <div class="toolbar-left" id="sectorPills">
+            <!-- renderizzato da JS -->
+        </div>
+        <div class="toolbar-right">
+            <span class="update-info" id="updateInfo"></span>
+        </div>
+    </div>
+
+    <div id="newsContainer">
+        <div class="status-box">
+            Caricamento notizie in corso…<br>
+            <div class="spinner" style="margin:16px auto 0"></div>
+            <div class="progress-sectors" id="progressSectors"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// =====================================================================
+// SECTORS
+// =====================================================================
+const SECTORS = [
+    {
+        key: 'mercati', label: 'Mercati Globali', icon: '📊', color: '#37474f',
+        queries: ['^GSPC', '^IXIC', 'QQQ', 'market outlook']
+    },
+    {
+        key: 'tech', label: 'Tecnologia', icon: '💻', color: '#1565c0',
+        queries: ['NVDA', 'AAPL', 'MSFT', 'semiconductor technology']
+    },
+    {
+        key: 'ai', label: 'AI & Robotica', icon: '🤖', color: '#6a1b9a',
+        queries: ['artificial intelligence', 'PLTR', 'ISRG', 'robotics AI stocks']
+    },
+    {
+        key: 'finanza', label: 'Finanza', icon: '🏦', color: '#1b5e20',
+        queries: ['JPM', 'GS', 'Fed interest rates banking']
+    },
+    {
+        key: 'energia', label: 'Energia', icon: '⚡', color: '#bf360c',
+        queries: ['XOM', 'CL=F', 'oil gas energy']
+    },
+    {
+        key: 'salute', label: 'Salute & Pharma', icon: '🏥', color: '#880e4f',
+        queries: ['LLY', 'JNJ', 'PFE', 'pharma biotech FDA']
+    },
+    {
+        key: 'crypto', label: 'Crypto', icon: '₿', color: '#e65100',
+        queries: ['BTC-USD', 'ETH-USD', 'bitcoin crypto blockchain']
+    },
+    {
+        key: 'europa', label: 'Italia & Europa', icon: '🇪🇺', color: '#0277bd',
+        queries: ['ENI.MI', 'ASML.AS', 'SAP.DE', 'european stocks ECB']
+    },
+    {
+        key: 'commodities', label: 'Materie Prime', icon: '🥇', color: '#5d4037',
+        queries: ['GC=F', 'SI=F', 'CL=F', 'gold silver oil commodities']
+    },
+];
+
+// =====================================================================
+// STATE
+// =====================================================================
+let allNewsData  = {};   // key → array of news items
+let activeSector = 'all';
+let isLoading    = false;
+
+// =====================================================================
+// THEME
+// =====================================================================
+function loadTheme() {
+    try {
+        if (localStorage.getItem('borsaTheme') === 'light')
+            document.documentElement.classList.add('light');
+    } catch(e) {}
+}
+function toggleTheme() {
+    document.documentElement.classList.toggle('light');
+    try { localStorage.setItem('borsaTheme', document.documentElement.classList.contains('light') ? 'light' : 'dark'); } catch(e) {}
+}
+
+// =====================================================================
+// API
+// =====================================================================
+async function fetchWithTimeout(url, options, ms) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms || 8000);
+    try { return await fetch(url, { ...options, signal: ctrl.signal }); }
+    finally { clearTimeout(t); }
+}
+
+async function fetchJson(url, ms) {
+    const proxies = [
+        url,
+        'https://corsproxy.io/?' + encodeURIComponent(url),
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
+    ];
+    return Promise.any(proxies.map(async u => {
+        const res = await fetchWithTimeout(u, { headers: { Accept: 'application/json' } }, ms || 8000);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const txt = await res.text();
+        return JSON.parse(txt.replace(/^\uFEFF/, '').replace(/^\)\]\}',?\s*/, '').trim());
+    }));
+}
+
+async function fetchSectorNews(queries, newsPerQuery) {
+    const seen = new Set();
+    const all  = [];
+    await Promise.all(queries.map(async q => {
+        const url = 'https://query1.finance.yahoo.com/v1/finance/search?q=' +
+            encodeURIComponent(q) + '&quotesCount=0&newsCount=' + (newsPerQuery || 8);
+        try {
+            const data = await fetchJson(url, 9000);
+            const news = Array.isArray(data?.news) ? data.news : [];
+            for (const item of news) {
+                const id = item.uuid || item.link || (item.title + item.providerPublishTime);
+                if (!id || seen.has(id)) continue;
+                seen.add(id);
+                if (!item.title || !item.link) continue;
+                all.push(item);
+            }
+        } catch(e) {}
+    }));
+    return all.sort((a, b) => (b.providerPublishTime || 0) - (a.providerPublishTime || 0));
+}
+
+// =====================================================================
+// SENTIMENT
+// =====================================================================
+const POS_TERMS = [
+    'beat','beats','upgrade','outperform','growth','record','surge','strong',
+    'raises','profit','rally','bullish','recovery','rebound','acquisition',
+    'buyback','dividend','approval','wins','exceeds','momentum','breakthrough'
+];
+const NEG_TERMS = [
+    'downgrade','miss','misses','cuts','cut','lawsuit','probe','investigation',
+    'decline','drop','warning','fraud','loss','bankruptcy','layoffs','crash',
+    'tumbles','falls','bearish','concern','halt','scandal','tariff','sanctions',
+    'writedown','impairment','below expectations'
+];
+
+function getSentiment(title) {
+    const t = String(title || '').toLowerCase();
+    let s = 0;
+    POS_TERMS.forEach(w => { if (t.includes(w)) s++; });
+    NEG_TERMS.forEach(w => { if (t.includes(w)) s--; });
+    return s > 0 ? 'pos' : s < 0 ? 'neg' : 'neu';
+}
+
+// =====================================================================
+// UTILS
+// =====================================================================
+function timeAgo(ts) {
+    if (!ts) return '';
+    const diffMin = Math.floor((Date.now() / 1000 - ts) / 60);
+    if (diffMin < 1)   return 'adesso';
+    if (diffMin < 60)  return diffMin + 'min fa';
+    const h = Math.floor(diffMin / 60);
+    if (h < 24) return h + 'h fa';
+    const d = Math.floor(h / 24);
+    return d === 1 ? 'ieri' : d + 'g fa';
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// =====================================================================
+// RENDER CARD
+// =====================================================================
+function renderCard(item, sectorKey) {
+    const sector   = SECTORS.find(s => s.key === sectorKey);
+    const color    = sector ? sector.color : '#37474f';
+    const sent     = getSentiment(item.title);
+    const sentTxt  = sent === 'pos' ? '▲ Positivo' : sent === 'neg' ? '▼ Negativo' : '— Neutro';
+    const sentCls  = 'card-sent sent-' + sent;
+    const age      = timeAgo(item.providerPublishTime);
+    const publisher = String(item.publisher || '').trim();
+
+    return '<a class="news-card" href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener noreferrer"' +
+        ' style="--card-accent:' + color + '">' +
+        '<div class="card-meta">' +
+            (sector ? '<span class="card-badge" style="background:' + color + '">' + sector.icon + ' ' + escapeHtml(sector.label) + '</span>' : '') +
+            (age ? '<span class="card-time">' + escapeHtml(age) + '</span>' : '') +
+        '</div>' +
+        '<div class="card-title">' + escapeHtml(item.title) + '</div>' +
+        '<div class="card-footer">' +
+            (publisher ? '<span class="card-source">' + escapeHtml(publisher) + '</span>' : '<span class="card-source"></span>') +
+            '<span class="' + sentCls + '">' + sentTxt + '</span>' +
+            '<span class="card-link-arrow">&#x2197;</span>' +
+        '</div>' +
+    '</a>';
+}
+
+// =====================================================================
+// RENDER PAGE
+// =====================================================================
+function renderPage() {
+    const container = document.getElementById('newsContainer');
+
+    if (activeSector !== 'all') {
+        // VISTA SETTORE SINGOLO
+        const sector = SECTORS.find(s => s.key === activeSector);
+        const items  = allNewsData[activeSector] || [];
+        if (!items.length) {
+            container.innerHTML = '<div class="empty-sector">Nessuna notizia trovata per questo settore.<br>Riprova tra qualche minuto o clicca Aggiorna.</div>';
+            return;
+        }
+        container.innerHTML =
+            '<div class="sector-section">' +
+            '<div class="section-hd">' +
+                '<div class="section-hd-bar" style="background:' + sector.color + '"></div>' +
+                '<span class="section-hd-icon">' + sector.icon + '</span>' +
+                '<span class="section-hd-label" style="color:' + sector.color + '">' + escapeHtml(sector.label) + '</span>' +
+                '<span class="section-hd-count">' + items.length + ' articoli</span>' +
+            '</div>' +
+            '<div class="news-grid">' + items.map(item => renderCard(item, activeSector)).join('') + '</div>' +
+            '</div>';
+        return;
+    }
+
+    // VISTA TUTTE — una sezione per settore
+    let html = '';
+    let hasAny = false;
+
+    for (const sector of SECTORS) {
+        const items = allNewsData[sector.key] || [];
+        if (!items.length) continue;
+        hasAny = true;
+        const preview = items.slice(0, 6); // max 6 card per settore nella vista globale
+        html +=
+            '<div class="sector-section" id="sec-' + sector.key + '">' +
+            '<div class="section-hd">' +
+                '<div class="section-hd-bar" style="background:' + sector.color + '"></div>' +
+                '<span class="section-hd-icon">' + sector.icon + '</span>' +
+                '<span class="section-hd-label" style="color:' + sector.color + '">' + escapeHtml(sector.label) + '</span>' +
+                '<span class="section-hd-count">' + items.length + ' articoli</span>' +
+            '</div>' +
+            '<div class="news-grid">' + preview.map(item => renderCard(item, sector.key)).join('') + '</div>' +
+            (items.length > 6 ?
+                '<div style="margin-top:8px;text-align:right">' +
+                '<button class="btn" style="font-size:0.75rem;padding:4px 12px" onclick="filterSector(\'' + sector.key + '\')">' +
+                    'Vedi tutti i ' + items.length + ' articoli &rsaquo;' +
+                '</button></div>' : '') +
+            '</div>';
+    }
+
+    container.innerHTML = hasAny
+        ? html
+        : '<div class="status-box">Nessuna notizia caricata. Clicca <strong>Aggiorna</strong> per scaricare le ultime notizie.</div>';
+}
+
+// =====================================================================
+// SECTOR FILTER
+// =====================================================================
+function filterSector(key) {
+    activeSector = key;
+
+    document.querySelectorAll('.sector-pill').forEach(pill => {
+        const isActive = pill.dataset.sector === key;
+        pill.classList.toggle('active', isActive);
+        if (isActive) {
+            if (key === 'all') {
+                pill.style.background = 'var(--accent)';
+                pill.style.borderColor = 'var(--accent)';
+            } else {
+                const sector = SECTORS.find(s => s.key === key);
+                pill.style.background = sector ? sector.color : 'var(--accent)';
+                pill.style.borderColor = sector ? sector.color : 'var(--accent)';
+            }
+            pill.style.color = '#fff';
+        } else {
+            pill.style.background = '';
+            pill.style.borderColor = '';
+            pill.style.color = '';
+        }
+    });
+
+    renderPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =====================================================================
+// RENDER SECTOR PILLS
+// =====================================================================
+function renderPills() {
+    const container = document.getElementById('sectorPills');
+    container.innerHTML = '';
+
+    // "Tutte" pill
+    const allPill = document.createElement('button');
+    allPill.className = 'sector-pill active';
+    allPill.dataset.sector = 'all';
+    allPill.innerHTML = '&#127760; Tutte';
+    allPill.style.cssText = 'background:var(--accent);border-color:var(--accent);color:#fff';
+    allPill.onclick = () => filterSector('all');
+    container.appendChild(allPill);
+
+    // Sector pills
+    for (const sector of SECTORS) {
+        const pill = document.createElement('button');
+        pill.className = 'sector-pill';
+        pill.dataset.sector = sector.key;
+        const count = (allNewsData[sector.key] || []).length;
+        pill.innerHTML =
+            '<span>' + sector.icon + '</span>' +
+            escapeHtml(sector.label) +
+            (count ? '<span class="pill-count">' + count + '</span>' : '');
+        pill.onclick = () => filterSector(sector.key);
+        container.appendChild(pill);
+    }
+}
+
+function updatePillCounts() {
+    document.querySelectorAll('.sector-pill[data-sector]').forEach(pill => {
+        const key = pill.dataset.sector;
+        if (key === 'all') return;
+        const sector = SECTORS.find(s => s.key === key);
+        if (!sector) return;
+        const count = (allNewsData[key] || []).length;
+        // rebuild inner HTML preserving active state
+        const isActive = pill.classList.contains('active');
+        pill.innerHTML =
+            '<span>' + sector.icon + '</span>' +
+            escapeHtml(sector.label) +
+            (count ? '<span class="pill-count">' + count + '</span>' : '');
+    });
+}
+
+// =====================================================================
+// MAIN LOAD
+// =====================================================================
+async function loadAllNews() {
+    if (isLoading) return;
+    isLoading = true;
+
+    const btn = document.getElementById('refreshBtn');
+    const icon = document.getElementById('refreshIcon');
+    btn.disabled = true;
+    icon.textContent = '⏳';
+    document.getElementById('liveDot').style.display = 'none';
+
+    let loaded = 0;
+    document.getElementById('newsContainer').innerHTML =
+        '<div class="status-box">' +
+        '<div class="spinner"></div><br>' +
+        '<strong>Recupero notizie in corso…</strong>' +
+        '<div class="progress-sectors" id="progressSectors">0 / ' + SECTORS.length + ' settori</div>' +
+        '</div>';
+
+    // Fetch all sectors in parallel, update progress as each completes
+    allNewsData = {};
+    const promises = SECTORS.map(async sector => {
+        const news = await fetchSectorNews(sector.queries, 8);
+        allNewsData[sector.key] = news;
+        loaded++;
+        const pg = document.getElementById('progressSectors');
+        if (pg) pg.textContent = loaded + ' / ' + SECTORS.length + ' settori · ' + sector.icon + ' ' + sector.label + ' ✓';
+    });
+    await Promise.all(promises);
+
+    isLoading = false;
+    btn.disabled = false;
+    icon.textContent = '↻';
+
+    // Timestamp
+    const now = new Date();
+    const hh  = now.getHours().toString().padStart(2, '0');
+    const mm  = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('updateInfo').textContent = 'Aggiornato alle ' + hh + ':' + mm;
+
+    // Live dot
+    const dot = document.getElementById('liveDot');
+    dot.style.display = 'inline-block';
+    setTimeout(() => { dot.style.display = 'none'; }, 5 * 60 * 1000); // nasconde dopo 5 min
+
+    // Error check
+    const errBanner = document.getElementById('errorBanner');
+    const emptySectors = SECTORS.filter(s => !(allNewsData[s.key] || []).length);
+    if (emptySectors.length === SECTORS.length) {
+        errBanner.style.display = 'block';
+        errBanner.textContent = '⚠ Impossibile recuperare le notizie. Controlla la connessione e riprova.';
+    } else {
+        errBanner.style.display = 'none';
+        if (emptySectors.length > 0) {
+            errBanner.style.display = 'block';
+            errBanner.textContent = '⚠ ' + emptySectors.length + ' settori senza dati: ' +
+                emptySectors.map(s => s.label).join(', ');
+        }
+    }
+
+    renderPills();
+    renderPage();
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+loadTheme();
+renderPills(); // renders empty pills first
+loadAllNews();
+</script>
+</body>
+</html>

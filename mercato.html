@@ -301,9 +301,14 @@
             font-size: 0.7rem; font-weight: 700; letter-spacing: 0.4px;
             white-space: nowrap; text-transform: uppercase;
         }
-        .signal-buy     { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.4); }
-        .signal-neutral { background: rgba(241,196,15,0.15); color: #f1c40f; border: 1px solid rgba(241,196,15,0.4); }
-        .signal-caution { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.4); }
+        .signal-buy         { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.4); }
+        .signal-neutral     { background: rgba(241,196,15,0.15); color: #f1c40f; border: 1px solid rgba(241,196,15,0.4); }
+        .signal-caution     { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.4); }
+        /* Analisi 3 — segnale 5 livelli */
+        .signal-strong-buy  { background: rgba(39,174,96,0.22); color: #1e8449; border: 1px solid rgba(39,174,96,0.55); font-weight: 800; }
+        .signal-warn        { background: rgba(230,126,34,0.18); color: #d35400; border: 1px solid rgba(230,126,34,0.5); }
+        html.light .signal-strong-buy { color: #145a32; }
+        html.light .signal-warn       { color: #a04000; }
 
         /* ---- SCORE CELL ---- */
         .td-score { min-width: 95px; }
@@ -518,6 +523,7 @@
     </div>
     <div class="header-controls">
         <a href="index.html" class="btn">Dashboard</a>
+        <a href="news.html" class="btn">News</a>
         <a href="calcolo.html" class="btn">Calcolatore</a>
         <button class="btn" onclick="exportShareLink()" title="Copia link per sincronizzare le impostazioni su un altro dispositivo">Condividi</button>
         <div class="theme-icons">
@@ -636,6 +642,7 @@
             <button class="btn-load" id="loadRankingBtn" onclick="loadRanking()">Carica Classifica</button>
             <button class="btn-load" id="loadAnalysisBtn" onclick="runAnalysis()">Analizza</button>
             <button class="btn-load" id="loadAnalysis2Btn" onclick="runAnalysis2()">Analisi 2</button>
+            <button class="btn-load" id="loadAnalysis3Btn" onclick="runAnalysis3()">Analisi 3</button>
             <span class="progress-text" id="progressText"></span>
             <button class="legend-toggle" onclick="toggleLegend()">&#9432; Come funziona</button>
         </div>
@@ -676,6 +683,19 @@
                 <span class="rsi-neutral">&#9679;</span> 40–60 &nbsp;
                 <span class="rsi-high">&#9679;</span> 60–70 &nbsp;
                 <span class="rsi-overbought">&#9679;</span> &gt;70
+            </div>
+            <div class="legend-section">
+                <strong>Analisi 3 — Multi-fattore avanzata</strong>
+                Pesi azioni: Tecnico 25% · Fondamentale 27% · Rischio 22% · Momentum 16% · News 10%<br>
+                Pesi altri: Tecnico 42% · Rischio 26% · Momentum 22% · News 10%<br>
+                <b>Tecnico+</b>: RSI · EMA · MACD · Bollinger · <em>Trend Consistency</em> (% giorni al rialzo)<br>
+                <b>Fondamentale+</b>: Debito 20% (doppio vs A1/A2) · PEG/PE · ROE · Crescita · Margine · P/B<br>
+                <b>Momentum 3TF</b>: 1 mese · 3 mesi · 6 mesi (strutturale)<br>
+                <b>Segnale 5 livelli</b>: <span class="signal signal-strong-buy" style="font-size:0.65rem;padding:1px 6px">Forte Acquisto</span> ≥72 &nbsp;
+                <span class="signal signal-buy" style="font-size:0.65rem;padding:1px 6px">Acquisto</span> ≥58 &nbsp;
+                <span class="signal signal-neutral" style="font-size:0.65rem;padding:1px 6px">Neutro</span> ≥44 &nbsp;
+                <span class="signal signal-warn" style="font-size:0.65rem;padding:1px 6px">Attenzione</span> ≥30 &nbsp;
+                <span class="signal signal-caution" style="font-size:0.65rem;padding:1px 6px">Forte Attenzione</span> &lt;30
             </div>
             <div class="legend-section">
                 <strong>Trend &amp; Badge avviso</strong>
@@ -731,6 +751,15 @@
                 <button class="sort-btn" data-sort2="news" onclick="setSort2('news')">News</button>
                 <button class="sort-btn" data-sort2="conf" onclick="setSort2('conf')">Affidabilità</button>
                 <span class="results-info" id="resultsInfo2"></span>
+            </div>
+            <div id="resultsHeader3" class="results-header" style="display:none">
+                <span class="sort-label">Analisi 3 ordina per:</span>
+                <button class="sort-btn active" data-sort3="score3" onclick="setSort3('score3')">Score 3 &#8595;</button>
+                <button class="sort-btn" data-sort3="risk"   onclick="setSort3('risk')">Rischio</button>
+                <button class="sort-btn" data-sort3="mom"    onclick="setSort3('mom')">Momentum</button>
+                <button class="sort-btn" data-sort3="news"   onclick="setSort3('news')">News</button>
+                <button class="sort-btn" data-sort3="conf"   onclick="setSort3('conf')">Affidabilità</button>
+                <span class="results-info" id="resultsInfo3"></span>
             </div>
             <div id="qsArea" style="display:none"></div>
             <div id="resultsArea">
@@ -1039,6 +1068,8 @@ let analysisData = [];
 let analysisSort = 'score';
 let analysis2Data = [];
 let analysis2Sort = 'score2';
+let analysis3Data = [];
+let analysis3Sort = 'score3';
 let rankingData = [];
 let rankingSort = 'desc';
 let customCats = {};
@@ -2246,10 +2277,13 @@ async function runAnalysis() {
     let done = 0;
     const loadBtn = document.getElementById('loadAnalysisBtn');
     const loadBtn2 = document.getElementById('loadAnalysis2Btn');
+    const loadBtn3 = document.getElementById('loadAnalysis3Btn');
     loadBtn.disabled = true; loadBtn.textContent = 'Analisi in corso…';
     if (loadBtn2) loadBtn2.disabled = true;
+    if (loadBtn3) loadBtn3.disabled = true;
     document.getElementById('resultsHeader').style.display = 'none';
     document.getElementById('resultsHeader2').style.display = 'none';
+    document.getElementById('resultsHeader3').style.display = 'none';
     document.getElementById('progressText').textContent = '0 / ' + total;
     document.getElementById('resultsArea').innerHTML =
         '<div class="status-box"><div class="spinner"></div><div>Recupero dati tecnici e fondamentali per <strong>' + total + ' asset</strong>…<br><span style="font-size:0.78rem">Possono volerci alcuni secondi</span></div></div>';
@@ -2285,6 +2319,7 @@ async function runAnalysis() {
     const results = (await Promise.all(promises)).filter(Boolean);
     loadBtn.disabled = false; loadBtn.textContent = 'Analizza';
     if (loadBtn2) loadBtn2.disabled = false;
+    if (loadBtn3) loadBtn3.disabled = false;
 
     if (!results.length) {
         document.getElementById('resultsArea').innerHTML = '<div class="status-box">Nessun dato disponibile. Controlla la connessione e riprova.</div>';
@@ -2335,10 +2370,13 @@ async function runAnalysis2() {
     let done = 0;
     const loadBtn = document.getElementById('loadAnalysisBtn');
     const loadBtn2 = document.getElementById('loadAnalysis2Btn');
+    const loadBtn3 = document.getElementById('loadAnalysis3Btn');
     if (loadBtn) loadBtn.disabled = true;
     if (loadBtn2) { loadBtn2.disabled = true; loadBtn2.textContent = 'Analisi 2 in corso…'; }
+    if (loadBtn3) loadBtn3.disabled = true;
     document.getElementById('resultsHeader').style.display = 'none';
     document.getElementById('resultsHeader2').style.display = 'none';
+    document.getElementById('resultsHeader3').style.display = 'none';
     document.getElementById('progressText').textContent = '0 / ' + total;
     document.getElementById('resultsArea').innerHTML =
         '<div class="status-box"><div class="spinner"></div><div>Analisi 2 multi-fattore su <strong>' + total + ' asset</strong>…<br><span style="font-size:0.78rem">Tecnico, fondamentale, rischio, momentum e news</span></div></div>';
@@ -2381,6 +2419,7 @@ async function runAnalysis2() {
     const results = (await Promise.all(promises)).filter(Boolean);
     if (loadBtn) loadBtn.disabled = false;
     if (loadBtn2) { loadBtn2.disabled = false; loadBtn2.textContent = 'Analisi 2'; }
+    if (loadBtn3) loadBtn3.disabled = false;
 
     if (!results.length) {
         document.getElementById('resultsArea').innerHTML = '<div class="status-box">Nessun dato disponibile. Controlla la connessione e riprova.</div>';
@@ -2687,6 +2726,450 @@ function renderAnalysis() {
         '<th class="th-cat">Categoria</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody></table>';
+}
+
+// =====================================================================
+// ANALISI 3 — MULTI-FATTORE AVANZATA
+// Miglioramenti rispetto ad A1/A2:
+//  · Tecnico+: aggiunge Trend Consistency (% giorni al rialzo su 20g)
+//  · Fondamentale+: peso Debito raddoppiato (20% vs 10%)
+//  · Momentum 3 timeframe: 1m · 3m · 6m
+//  · News+: keyword list estesa + ponderazione recency più forte (10 articoli)
+//  · Segnale a 5 livelli: Forte Acquisto / Acquisto / Neutro / Attenzione / Forte Attenzione
+//  · Pesi bilanciati: Tech 25% · Fund 27% · Rischio 22% · Momentum 16% · News 10%
+// =====================================================================
+
+// --- Trend Consistency: % giorni al rialzo negli ultimi N ---
+function calcTrendConsistency(closes, n) {
+    n = n || 20;
+    if (!Array.isArray(closes) || closes.length < n + 1) return null;
+    const slice = closes.slice(-n - 1);
+    let upDays = 0;
+    for (let i = 1; i < slice.length; i++) {
+        if (slice[i] > slice[i - 1]) upDays++;
+    }
+    return upDays / n; // ratio 0–1
+}
+function scoreTrendConsistency(ratio) {
+    if (ratio === null || !isFinite(ratio)) return null;
+    if (ratio > 0.68) return 8.5;
+    if (ratio > 0.58) return 7.5;
+    if (ratio > 0.50) return 6.2;
+    if (ratio > 0.42) return 5.0;
+    if (ratio > 0.32) return 3.5;
+    return 2.0;
+}
+
+// --- Tech Score A3: aggiunge Trend Consistency come 5° componente ---
+function calcTechScore3(closes, currentPrice) {
+    const rsi        = calcRSI(closes);
+    const ma20       = calcEMA(closes, 20);
+    const ma50       = calcEMA(closes, 50);
+    const macd       = calcMACD(closes);
+    const boll       = calcBollinger(closes);
+    const trendRatio = calcTrendConsistency(closes, 20);
+    const sRSI   = scoreRSI(rsi);
+    const sMA    = scoreMA(currentPrice, ma20, ma50);
+    const sMACD  = scoreMACD(macd);
+    const sBoll  = scoreBollinger(boll ? boll.percentB : null);
+    const sTrend = scoreTrendConsistency(trendRatio);
+    // Pesi: RSI 28% · EMA 22% · MACD 22% · Bollinger 18% · TrendConsistency 10%
+    const score = weightedAvg([
+        [sRSI,   0.28],
+        [sMA,    0.22],
+        [sMACD,  0.22],
+        [sBoll,  0.18],
+        [sTrend, 0.10]
+    ]) ?? 5;
+    return { score, rsi, ma20, ma50, currentPrice, macd, boll, trendRatio, sTrend };
+}
+
+// --- Fund Score A3: debito pesato al 20% (vs 10% in A1/A2) ---
+function calcFundScore3(fund) {
+    if (!fund) return null;
+    const growth = fund.revenueGrowth ?? fund.earningsGrowth;
+    let peg = null;
+    if (fund.pe !== null && fund.pe > 0 && fund.earningsGrowth !== null && fund.earningsGrowth > 0) {
+        peg = fund.pe / (fund.earningsGrowth * 100);
+    }
+    const sValuation = peg !== null ? scorePEG(peg) : scorePE(fund.pe);
+    const score = weightedAvg([
+        [sValuation,                            0.25],
+        [scoreROE(fund.roe),                    0.20],
+        [scoreGrowth(growth),                   0.15],
+        [scoreProfitMargin(fund.profitMargins),  0.12],
+        [scorePB(fund.pb),                      0.08],
+        [scoreDebt(fund.debtToEquity),          0.20]  // raddoppiato: sostenibilità finanziaria critica
+    ]);
+    return score !== null ? { score, data: fund, peg } : null;
+}
+
+// --- Momentum A3: 3 timeframe (1m · 3m · 6m) ---
+function scoreMomentum3(mom1m, mom3m, mom6m) {
+    let s = 5;
+    // 6m — trend strutturale (più impattante)
+    if (mom6m !== null && isFinite(mom6m)) {
+        if      (mom6m >  30) s += 1.0;
+        else if (mom6m >  15) s += 0.7;
+        else if (mom6m >   0) s += 0.3;
+        else if (mom6m > -15) s -= 0.5;
+        else                  s -= 1.2;
+    }
+    // 3m — trend medio termine
+    if (mom3m !== null && isFinite(mom3m)) {
+        if      (mom3m >  20) s += 0.6;
+        else if (mom3m >  10) s += 1.0;
+        else if (mom3m >   0) s += 0.4;
+        else if (mom3m > -10) s -= 0.4;
+        else                  s -= 1.0;
+    }
+    // 1m — breve termine (logica contrarian sui dip significativi)
+    if (mom1m !== null && isFinite(mom1m)) {
+        if      (mom1m < -20) s += 0.4;   // dip forte = potenziale opportunità
+        else if (mom1m <  -5) s += 0.1;
+        else if (mom1m <   0) s -= 0.1;
+        else if (mom1m <  10) s += 0.3;
+        else if (mom1m <  25) s += 0.1;
+        else                  s -= 0.4;   // breve termine ipercomprato
+    }
+    return Math.max(0, Math.min(10, s));
+}
+
+// --- News A3: keyword list estesa, 10 articoli, recency più forte ---
+const NEWS3_POSITIVE_TERMS = [
+    'beat', 'beats', 'upgrade', 'outperform', 'growth', 'record',
+    'partnership', 'contract', 'surge', 'strong', 'raises', 'expands',
+    'profit', 'breakthrough', 'acquisition', 'buyback', 'dividend',
+    'approval', 'launch', 'wins', 'rally', 'positive', 'bullish',
+    'recovery', 'rebound', 'revenue', 'momentum', 'exceeds', 'guidance raised'
+];
+const NEWS3_NEGATIVE_TERMS = [
+    'downgrade', 'miss', 'misses', 'cuts', 'cut', 'lawsuit', 'probe',
+    'investigation', 'decline', 'drop', 'warning', 'fraud', 'loss',
+    'bankruptcy', 'layoffs', 'recall', 'fine', 'penalty', 'crash',
+    'tumbles', 'falls', 'bearish', 'sell-off', 'concern', 'halt',
+    'suspension', 'scandal', 'collapse', 'tariff', 'sanctions',
+    'below expectations', 'guidance cut', 'writedown', 'impairment'
+];
+function scoreNewsFromTitles3(news) {
+    if (!Array.isArray(news) || !news.length) return { score: 5, sentiment: 0 };
+    const nowSec = Date.now() / 1000;
+    let sentiment = 0;
+    for (const item of news) {
+        const title = String(item?.title || '').toLowerCase();
+        if (!title) continue;
+        let raw = 0;
+        NEWS3_POSITIVE_TERMS.forEach(w => { if (title.includes(w)) raw += 1; });
+        NEWS3_NEGATIVE_TERMS.forEach(w => { if (title.includes(w)) raw -= 1; });
+        if (raw === 0) continue;
+        const ageDays = Math.max(0, (nowSec - (item?.providerPublishTime || nowSec)) / 86400);
+        const weight = ageDays < 1 ? 1.3 : ageDays < 3 ? 1.0 : ageDays < 7 ? 0.65 : 0.35;
+        sentiment += raw * weight;
+    }
+    const normalized = sentiment / Math.max(2, news.length);
+    const score = clamp(5 + normalized * 2.0, 1.5, 9.0);
+    return { score, sentiment };
+}
+async function fetchAssetNewsSignal3(symbol, name) {
+    const query = encodeURIComponent(symbol + ' ' + (name || ''));
+    const url = 'https://query1.finance.yahoo.com/v1/finance/search?q=' + query + '&quotesCount=0&newsCount=10';
+    try {
+        const data = await fetchJson(url, 7000);
+        const news = Array.isArray(data?.news) ? data.news.slice(0, 10) : [];
+        const ns = scoreNewsFromTitles3(news);
+        return { count: news.length, score: ns.score, sentiment: ns.sentiment, topTitle: news[0]?.title || '', topLink: news[0]?.link || '' };
+    } catch (e) {
+        return { count: 0, score: 5, sentiment: 0, topTitle: '', topLink: '' };
+    }
+}
+
+// --- Score complessivo A3 ---
+function calcAnalysis3Score(tech3, fund3, equity, closes, beta, news) {
+    const vol           = calcAnnualVolatility(closes, 63);
+    const drawdown      = calcMaxDrawdownPct(closes);
+    const mom1m         = calcMomentumPct(closes, 22);
+    const mom3m         = calcMomentumPct(closes, 66);
+    const mom6m         = calcMomentumPct(closes, 126);
+    const avgAbsRet     = avgAbsDailyReturn(closes, 63);
+    const volScore      = scoreVolatility(vol);
+    const ddScore       = scoreDrawdown(drawdown);
+    const liqScore      = scoreLiquidity(avgAbsRet, beta);
+    const riskScore     = weightedAvg([[volScore, 0.45], [ddScore, 0.35], [liqScore, 0.20]]) ?? 5;
+    const momentumScore = scoreMomentum3(mom1m, mom3m, mom6m);
+    const newsScore     = news?.score ?? 5;
+    // Azioni: Tech 25% · Fund 27% · Rischio 22% · Momentum 16% · News 10%
+    // Non-azioni: Tech 42% · Rischio 26% · Momentum 22% · News 10%
+    const basePairs = equity
+        ? [
+            [tech3?.score ?? null, 0.25],
+            [fund3?.score ?? null, 0.27],
+            [riskScore,            0.22],
+            [momentumScore,        0.16],
+            [newsScore,            0.10]
+          ]
+        : [
+            [tech3?.score ?? null, 0.42],
+            [riskScore,            0.26],
+            [momentumScore,        0.22],
+            [newsScore,            0.10]
+          ];
+    const score10 = weightedAvg(basePairs) ?? 5;
+    const overall = clamp(score10 * 10, 0, 100);
+    const availableSignals = basePairs.filter(([v]) => v !== null).length;
+    const confidence = Math.round((availableSignals / basePairs.length) * 100);
+    return { overall, riskScore, momentumScore, newsScore, vol, drawdown, mom1m, mom3m, mom6m, confidence };
+}
+
+// --- Segnale 5 livelli A3 ---
+function getSignal3(sc) {
+    if (sc >= 72) return { cls: 'signal-strong-buy', txt: 'Forte Acquisto' };
+    if (sc >= 58) return { cls: 'signal-buy',        txt: 'Acquisto' };
+    if (sc >= 44) return { cls: 'signal-neutral',    txt: 'Neutro' };
+    if (sc >= 30) return { cls: 'signal-warn',       txt: 'Attenzione' };
+    return              { cls: 'signal-caution',     txt: 'Forte Attenzione' };
+}
+
+// --- Runner principale A3 ---
+async function runAnalysis3() {
+    setResultsTab('analysis');
+    const selectedKeys = [...document.querySelectorAll('#catBtns .cat-btn.active')].map(b => b.dataset.cat);
+    if (!selectedKeys.length) { alert('Seleziona almeno una categoria'); return; }
+
+    const customVal = parseInt(document.getElementById('limitCustom').value) || 0;
+    const limitBtn  = document.querySelector('.limit-btn.active');
+    const limit = customVal > 0 ? customVal : (limitBtn ? parseInt(limitBtn.dataset.limit) || 0 : 0);
+
+    const allCats = getAllCats();
+    const toAnalyze = [];
+    const seen = new Set();
+    selectedKeys.forEach(cat => {
+        const def = allCats[cat]; if (!def) return;
+        const items = limit > 0 ? def.items.slice(0, limit) : def.items;
+        items.forEach(item => {
+            if (seen.has(item.symbol)) return;
+            seen.add(item.symbol);
+            toAnalyze.push({ symbol: item.symbol, name: item.name, cat, catLabel: def.label, pillClass: def.pillClass || '', pillStyle: def.pillStyle || null });
+        });
+    });
+
+    const total = toAnalyze.length;
+    let done = 0;
+    const loadBtn  = document.getElementById('loadAnalysisBtn');
+    const loadBtn2 = document.getElementById('loadAnalysis2Btn');
+    const loadBtn3 = document.getElementById('loadAnalysis3Btn');
+    if (loadBtn)  loadBtn.disabled  = true;
+    if (loadBtn2) loadBtn2.disabled = true;
+    if (loadBtn3) { loadBtn3.disabled = true; loadBtn3.textContent = 'Analisi 3 in corso…'; }
+    document.getElementById('resultsHeader').style.display  = 'none';
+    document.getElementById('resultsHeader2').style.display = 'none';
+    document.getElementById('resultsHeader3').style.display = 'none';
+    document.getElementById('progressText').textContent = '0 / ' + total;
+    document.getElementById('resultsArea').innerHTML =
+        '<div class="status-box"><div class="spinner"></div><div>Analisi 3 su <strong>' + total + ' asset</strong>…<br>' +
+        '<span style="font-size:0.78rem">Tecnico+ · Fondamentale+ · Rischio · Momentum 3TF · News+</span></div></div>';
+
+    const promises = toAnalyze.map(async asset => {
+        const equity = isEquity(asset.symbol);
+        try {
+            const [priceData, fundData, news] = await Promise.all([
+                fetchPriceHistory(asset.symbol),
+                equity ? fetchFundamentals(asset.symbol) : Promise.resolve(null),
+                fetchAssetNewsSignal3(asset.symbol, asset.name)
+            ]);
+            done++;
+            document.getElementById('progressText').textContent = done + ' / ' + total;
+            if (!priceData) return null;
+            const tech3 = calcTechScore3(priceData.closes, priceData.currentPrice);
+            const fund3 = calcFundScore3(fundData);
+            const adv3  = calcAnalysis3Score(tech3, fund3, equity, priceData.closes, fundData?.beta ?? null, news);
+            return {
+                ...asset, equity, tech3, fund3, news, adv3,
+                overall3:      adv3.overall,
+                currentPrice:  priceData.currentPrice,
+                high52w:       priceData.high52w,
+                low52w:        priceData.low52w,
+                beta:          fundData?.beta          ?? null,
+                dividendYield: fundData?.dividendYield ?? null
+            };
+        } catch (e) {
+            done++;
+            document.getElementById('progressText').textContent = done + ' / ' + total;
+            return null;
+        }
+    });
+
+    const results = (await Promise.all(promises)).filter(Boolean);
+    if (loadBtn)  loadBtn.disabled  = false;
+    if (loadBtn2) loadBtn2.disabled = false;
+    if (loadBtn3) { loadBtn3.disabled = false; loadBtn3.textContent = 'Analisi 3'; }
+
+    if (!results.length) {
+        document.getElementById('resultsArea').innerHTML = '<div class="status-box">Nessun dato disponibile. Controlla la connessione e riprova.</div>';
+        document.getElementById('progressText').textContent = '';
+        return;
+    }
+    const failed = total - results.length;
+    document.getElementById('progressText').textContent =
+        results.length + ' / ' + total + ' analizzati con Analisi 3' + (failed > 0 ? ' (' + failed + ' non disponibili)' : '');
+
+    analysis3Data = results;
+    analysis3Sort = 'score3';
+    document.querySelectorAll('#resultsHeader3 .sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort3 === 'score3'));
+    document.getElementById('resultsHeader3').style.display = 'flex';
+    renderAnalysis3();
+}
+
+function setSort3(key) {
+    analysis3Sort = key;
+    document.querySelectorAll('#resultsHeader3 .sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort3 === key));
+    renderAnalysis3();
+}
+
+function renderAnalysis3() {
+    const sorted = [...analysis3Data].sort((a, b) => {
+        if (analysis3Sort === 'score3') return (b.overall3 ?? 0) - (a.overall3 ?? 0);
+        if (analysis3Sort === 'risk')   return (b.adv3?.riskScore    ?? 0) - (a.adv3?.riskScore    ?? 0);
+        if (analysis3Sort === 'mom')    return (b.adv3?.momentumScore ?? 0) - (a.adv3?.momentumScore ?? 0);
+        if (analysis3Sort === 'news')   return (b.news?.score        ?? 0) - (a.news?.score        ?? 0);
+        if (analysis3Sort === 'conf')   return (b.adv3?.confidence   ?? 0) - (a.adv3?.confidence   ?? 0);
+        return (b.overall3 ?? 0) - (a.overall3 ?? 0);
+    });
+
+    const cFA  = sorted.filter(r => (r.overall3 ?? 0) >= 72).length;
+    const cAC  = sorted.filter(r => (r.overall3 ?? 0) >= 58 && (r.overall3 ?? 0) < 72).length;
+    const cNE  = sorted.filter(r => (r.overall3 ?? 0) >= 44 && (r.overall3 ?? 0) < 58).length;
+    const cAT  = sorted.filter(r => (r.overall3 ?? 0) >= 30 && (r.overall3 ?? 0) < 44).length;
+    const cFC  = sorted.filter(r => (r.overall3 ?? 0) < 30).length;
+    document.getElementById('resultsInfo3').innerHTML =
+        '<span style="color:#1e8449">&#9679; ' + cFA + ' forte acq.</span> &nbsp;' +
+        '<span style="color:#2ecc71">&#9679; ' + cAC + ' acquisto</span> &nbsp;' +
+        '<span style="color:#f1c40f">&#9679; ' + cNE + ' neutro</span> &nbsp;' +
+        '<span style="color:#d35400">&#9679; ' + cAT + ' attenzione</span> &nbsp;' +
+        '<span style="color:#e74c3c">&#9679; ' + cFC + ' forte att.</span>';
+
+    const rows = sorted.map((item, idx) => {
+        const rank      = idx + 1;
+        const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+        const sc        = item.overall3 ?? 0;
+        const sig       = getSignal3(sc);
+        const barCls    = sc >= 72 ? 'bar-buy' : sc >= 44 ? 'bar-neutral' : 'bar-caution';
+        const tech3     = item.tech3;
+        const fund3     = item.fund3;
+        const riskScore = item.adv3?.riskScore     ?? null;
+        const momScore  = item.adv3?.momentumScore ?? null;
+        const newsScore = item.news?.score         ?? null;
+        const vol       = item.adv3?.vol           ?? null;
+        const dd        = item.adv3?.drawdown      ?? null;
+        const mom1m     = item.adv3?.mom1m         ?? null;
+        const mom3m     = item.adv3?.mom3m         ?? null;
+        const mom6m     = item.adv3?.mom6m         ?? null;
+        const conf      = item.adv3?.confidence    ?? 0;
+        const trendR    = tech3?.trendRatio        ?? null;
+
+        // Score cell
+        const scoreHtml =
+            '<div class="score-bar-wrap"><div class="score-bar ' + barCls + '" style="width:' + sc.toFixed(0) + '%"></div></div>' +
+            '<div class="score-row"><span class="score-main">' + sc.toFixed(0) + '</span>' +
+            '<span class="score-sub">Conf ' + conf + '%</span></div>';
+
+        // Tech cell: score + % up-days in sub-label
+        const trendPct  = trendR !== null ? (trendR * 100).toFixed(0) + '% up' : '';
+        const techTitle = 'Score Tecnico A3: RSI · EMA · MACD · Bollinger · TrendConsistency' + (trendPct ? ' | ' + trendPct + ' giorni rialzisti (20g)' : '');
+        const rTech = tech3?.score != null
+            ? '<span title="' + escapeHtml(techTitle) + '">' + tech3.score.toFixed(1) + (trendPct ? '<div style="font-size:0.6rem;color:var(--text-secondary);line-height:1.2">' + trendPct + '</div>' : '') + '</span>'
+            : '<span class="val-na">—</span>';
+
+        // Fund cell: score + P/E con PEG sub
+        let rFund  = '<span class="val-na">—</span>';
+        let peHtml = '<span class="val-na">—</span>';
+        if (fund3) {
+            rFund = fund3.score.toFixed(1);
+            const d = fund3.data;
+            if (d.pe !== null && d.pe > 0) {
+                const peCls = d.pe < 15 ? 'val-good' : d.pe < 30 ? 'val-ok' : d.pe < 50 ? 'val-warn' : 'val-bad';
+                peHtml = '<span class="' + peCls + '">' + d.pe.toFixed(1) + '</span>';
+                if (fund3.peg !== null) {
+                    const pegCls = fund3.peg < 1 ? 'val-good' : fund3.peg < 2 ? 'val-ok' : 'val-warn';
+                    peHtml += '<div style="font-size:0.63rem;margin-top:1px;line-height:1.2"><span style="color:var(--text-secondary)">PEG </span><span class="' + pegCls + '">' + fund3.peg.toFixed(2) + '</span></div>';
+                }
+            }
+        } else if (!item.equity) {
+            rFund = '<span class="only-tech">solo tec.</span>';
+        }
+
+        // Risk cell: score + vol% in sub-label, dd in tooltip
+        const rRisk = riskScore !== null
+            ? '<span title="Volatilità ann: ' + (vol !== null ? vol.toFixed(1) + '%' : '—') + ' | DD Max: ' + (dd !== null ? dd.toFixed(1) + '%' : '—') + '">' +
+              riskScore.toFixed(1) +
+              (vol !== null ? '<div style="font-size:0.6rem;color:var(--text-secondary);line-height:1.2">' + vol.toFixed(0) + '% vol</div>' : '') + '</span>'
+            : '<span class="val-na">—</span>';
+
+        // Momentum cell: score + mom3m in sub-label, tutti e 3 in tooltip
+        const momTitle = '1m: ' + (mom1m !== null ? (mom1m >= 0 ? '+' : '') + mom1m.toFixed(1) + '%' : '—') +
+                         ' | 3m: ' + (mom3m !== null ? (mom3m >= 0 ? '+' : '') + mom3m.toFixed(1) + '%' : '—') +
+                         ' | 6m: ' + (mom6m !== null ? (mom6m >= 0 ? '+' : '') + mom6m.toFixed(1) + '%' : '—');
+        const rMom = momScore !== null
+            ? '<span title="' + escapeHtml(momTitle) + '">' +
+              momScore.toFixed(1) +
+              (mom3m !== null ? '<div style="font-size:0.6rem;color:var(--text-secondary);line-height:1.2">' + (mom3m >= 0 ? '+' : '') + mom3m.toFixed(0) + '% 3m</div>' : '') + '</span>'
+            : '<span class="val-na">—</span>';
+
+        // News cell: score + conteggio, primo titolo in tooltip
+        const newsCount = item.news?.count ?? 0;
+        let newsTitle = item.news?.topTitle || 'Nessuna notizia recente';
+        if (newsTitle.length > 180) newsTitle = newsTitle.slice(0, 177) + '...';
+        const rNews = newsScore !== null
+            ? '<span title="' + escapeHtml(newsTitle) + '">' + newsScore.toFixed(1) + ' (' + newsCount + ')</span>'
+            : '<span class="val-na">—</span>';
+
+        // RSI colorato
+        const rsi    = tech3?.rsi ?? null;
+        const rsiCls = rsi === null ? '' : rsi < 30 ? 'rsi-oversold' : rsi < 40 ? 'rsi-low' : rsi < 60 ? 'rsi-neutral' : rsi < 70 ? 'rsi-high' : 'rsi-overbought';
+        const rsiHtml = rsi !== null ? '<span class="rsi-val ' + rsiCls + '" title="RSI 14">' + rsi.toFixed(0) + '</span>' : '<span class="val-na">—</span>';
+
+        // Warning badges (riusa getWarnings adattando la struttura item)
+        const fakeItem = { tech: { rsi: tech3?.rsi }, currentPrice: item.currentPrice, high52w: item.high52w, low52w: item.low52w, beta: item.beta, dividendYield: item.dividendYield };
+        const warnings = getWarnings(fakeItem);
+        const warningsHtml = warnings.length
+            ? '<div class="warn-badges">' + warnings.map(w => '<span class="warn-badge ' + w.cls + '" title="' + escapeHtml(w.title) + '">' + escapeHtml(w.text) + '</span>').join('') + '</div>'
+            : '';
+
+        // Categoria pill
+        const pill = item.pillStyle
+            ? '<span class="cat-pill" style="background:' + escapeHtml(item.pillStyle) + '">' + escapeHtml(item.catLabel) + '</span>'
+            : '<span class="cat-pill ' + escapeHtml(item.pillClass) + '">' + escapeHtml(item.catLabel) + '</span>';
+
+        // Links
+        const tvSym = toTvSymbol(item.symbol);
+        const nameCell =
+            '<div class="chart-links">' +
+            '<a class="asset-link" href="https://finance.yahoo.com/chart/' + encodeURIComponent(item.symbol) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.name) + '<span class="link-arrow">&#x2197;</span></a>' +
+            '<a class="tv-link" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(tvSym) + '" target="_blank" rel="noopener noreferrer">TV</a>' +
+            '</div>';
+
+        return '<tr>' +
+            '<td class="td-rank ' + rankClass + '">' + rank + '</td>' +
+            '<td class="td-name">' + nameCell + '</td>' +
+            '<td class="td-symbol th-sym">' + escapeHtml(item.symbol) + '</td>' +
+            '<td><span class="signal ' + sig.cls + '">' + sig.txt + '</span>' + warningsHtml + '</td>' +
+            '<td class="td-score">' + scoreHtml + '</td>' +
+            '<td class="td-rsi">' + rsiHtml + '</td>' +
+            '<td>' + rTech + '</td>' +
+            '<td class="th-pe">' + (fund3 ? rFund : '<span class="val-na">—</span>') + '</td>' +
+            '<td class="th-pe">' + peHtml + '</td>' +
+            '<td>' + rRisk + '</td>' +
+            '<td>' + rMom + '</td>' +
+            '<td>' + rNews + '</td>' +
+            '<td class="th-cat">' + pill + '</td>' +
+            '</tr>';
+    }).join('');
+
+    document.getElementById('resultsArea').innerHTML =
+        '<table class="rank-table"><thead><tr>' +
+        '<th>#</th><th>Nome</th><th class="th-sym">Simbolo</th><th>Segnale</th><th>Score 3</th>' +
+        '<th>RSI</th><th>Tec+</th><th class="th-pe">Fund</th><th class="th-pe">P/E</th>' +
+        '<th>Rischio</th><th>Mom 3TF</th><th>News</th><th class="th-cat">Categoria</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
 // =====================================================================
