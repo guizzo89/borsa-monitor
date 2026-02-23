@@ -126,6 +126,10 @@
         .chart-grid.cols-1 { grid-template-columns: 1fr; }
         .chart-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
         .chart-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .chart-grid.focus-mode {
+            grid-template-columns: 1fr !important;
+            grid-auto-rows: 1fr;
+        }
         .chart-cell {
             background: var(--bg-card); border: 1px solid var(--border);
             border-radius: 8px; overflow: hidden; position: relative; min-height: 0;
@@ -144,7 +148,24 @@
         .chart-cell:hover .chart-close-btn { opacity: 1; }
         .chart-close-btn:hover { background: var(--accent); }
         html.light .chart-close-btn { background: rgba(0,0,0,0.4); color: #fff; }
-        @media (hover: none) { .chart-close-btn { opacity: 1; } }
+        .chart-expand-btn {
+            position: absolute; top: 6px; right: 38px; z-index: 12;
+            height: 26px; border: none; border-radius: 999px;
+            background: rgba(0,0,0,0.55); color: #fff; cursor: pointer;
+            font-size: 0.68rem; line-height: 1;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 9px;
+            opacity: 0; transition: opacity 0.15s, background 0.15s;
+            pointer-events: auto;
+        }
+        .chart-cell:hover .chart-expand-btn { opacity: 1; }
+        .chart-expand-btn:hover { background: var(--accent); }
+        .chart-expand-btn.active { background: var(--accent); color: #fff; }
+        html.light .chart-expand-btn { background: rgba(0,0,0,0.4); color: #fff; }
+        @media (hover: none) {
+            .chart-close-btn { opacity: 1; }
+            .chart-expand-btn { opacity: 1; }
+        }
 
         /* Chart search */
         .chart-search-box {
@@ -515,6 +536,7 @@
         const chartWidgets = new Map();
         const frameIndexByWindow = new WeakMap();
         let widgetSyncIntervalId = null;
+        let expandedChartIndex = null;
         const assetSearchTimers = new WeakMap();
         const assetSearchReqIds = new WeakMap();
         const ASSET_SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -1346,17 +1368,63 @@
             reloadChart(i);
         }
 
+        function normalizeExpandedChartIndex() {
+            if (currentCharts.length <= 1) {
+                expandedChartIndex = null;
+                return;
+            }
+            if (expandedChartIndex === null) return;
+            if (expandedChartIndex < 0 || expandedChartIndex >= currentCharts.length) {
+                expandedChartIndex = null;
+            }
+        }
+
+        function applyChartGridClass() {
+            const grid = document.getElementById('chartGrid');
+            if (!grid) return;
+            normalizeExpandedChartIndex();
+            const focusMode = expandedChartIndex !== null;
+            grid.className = 'chart-grid cols-' + currentCols + (focusMode ? ' focus-mode' : '');
+        }
+
+        function toggleChartExpand(i) {
+            if (expandedChartIndex === i) expandedChartIndex = null;
+            else if (currentCharts.length > 1) expandedChartIndex = i;
+            renderCharts();
+        }
+
         // --- Render charts ---
         function renderCharts() {
             const grid = document.getElementById('chartGrid');
+            normalizeExpandedChartIndex();
+            applyChartGridClass();
             grid.innerHTML = '';
             chartWidgets.clear();
+            const focusMode = expandedChartIndex !== null;
+            const chartsToRender = [];
             currentCharts.forEach((chart, i) => {
+                if (focusMode && i !== expandedChartIndex) return;
                 if (!chart.interval) chart.interval = 'D';
                 if (!chart.style) chart.style = '1';
                 if (!chart.studies) chart.studies = [];
 
                 const cell = document.createElement('div'); cell.className = 'chart-cell';
+                const canToggleExpand = currentCharts.length > 1 || expandedChartIndex === i;
+                if (canToggleExpand) {
+                    const exp = document.createElement('button');
+                    const isExpanded = expandedChartIndex === i;
+                    exp.className = 'chart-expand-btn' + (isExpanded ? ' active' : '');
+                    exp.textContent = isExpanded ? 'Torna' : 'Espandi';
+                    exp.title = isExpanded
+                        ? 'Ritorna alla visualizzazione con piu grafici'
+                        : 'Mostra questo grafico a schermo interno';
+                    exp.onclick = function(e) {
+                        e.stopPropagation();
+                        toggleChartExpand(i);
+                    };
+                    cell.appendChild(exp);
+                }
+
                 const rm = document.createElement('button');
                 rm.className = 'chart-close-btn';
                 rm.innerHTML = '&times;';
@@ -1396,10 +1464,11 @@
                 const wc = document.createElement('div'); wc.id = 'tv_chart_' + i;
                 wc.style.cssText = 'height:100%;width:100%';
                 cell.appendChild(wc); grid.appendChild(cell);
+                chartsToRender.push({ index: i, chart });
             });
 
-            currentCharts.forEach((c, i) => {
-                setTimeout(() => createChartWidget('tv_chart_' + i, c, i), i * 300);
+            chartsToRender.forEach((item, pos) => {
+                setTimeout(() => createChartWidget('tv_chart_' + item.index, item.chart, item.index), pos * 300);
             });
             document.getElementById('chartCount').value = currentCharts.length;
         }
@@ -1471,9 +1540,10 @@
             const src = presets[key].charts;
             currentCharts = src.map(c => cloneChart(c));
             currentCols = presets[key].cols || 3;
+            expandedChartIndex = null;
             document.getElementById('chartCount').value = currentCharts.length;
             document.getElementById('colCount').value = currentCols;
-            document.getElementById('chartGrid').className = 'chart-grid cols-' + currentCols;
+            applyChartGridClass();
             renderPresetBar(); renderCharts(); autoSave();
         }
 
@@ -1602,12 +1672,13 @@
                 presets[currentPreset].charts = currentChartsSnapshot();
                 savePresets();
             }
+            normalizeExpandedChartIndex();
             renderCharts(); autoSave();
         }
 
         function updateColumns(cols) {
             currentCols = parseInt(cols);
-            document.getElementById('chartGrid').className = 'chart-grid cols-' + currentCols;
+            applyChartGridClass();
             // Salva colonne anche nel preset corrente
             if (presets[currentPreset]) {
                 presets[currentPreset].cols = currentCols;
@@ -1628,6 +1699,9 @@
         function removeChart(i) {
             if (currentCharts.length <= 1) return;
             currentCharts.splice(i, 1);
+            if (expandedChartIndex === i) expandedChartIndex = null;
+            else if (expandedChartIndex !== null && i < expandedChartIndex) expandedChartIndex -= 1;
+            normalizeExpandedChartIndex();
             document.getElementById('chartCount').value = currentCharts.length;
             syncCurrentToPreset();
             renderCharts(); autoSave();
@@ -1685,7 +1759,7 @@
 
             document.documentElement.classList.toggle('light', !isDark);
             document.getElementById('colCount').value = currentCols;
-            document.getElementById('chartGrid').className = 'chart-grid cols-' + currentCols;
+            applyChartGridClass();
 
             renderPresetBar();
             renderCharts();
