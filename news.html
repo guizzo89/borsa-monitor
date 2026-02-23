@@ -196,6 +196,43 @@
             border: 1px dashed var(--border); border-radius: 8px;
         }
 
+        /* ---- TOP NEWS SECTION ---- */
+        .top-news-section { margin-bottom: 36px; }
+        .top-news-hd {
+            display: flex; align-items: baseline; gap: 12px;
+            margin-bottom: 16px; padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent);
+        }
+        .top-news-hd-title { font-size: 1.08rem; font-weight: 800; }
+        .top-news-hd-sub { font-size: 0.78rem; color: var(--text-secondary); }
+        .top-news-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 12px;
+        }
+        .news-card.hero {
+            grid-column: 1;
+            grid-row: 1 / 3;
+            background: var(--bg-secondary);
+        }
+        .news-card.hero .card-title {
+            font-size: 1.05rem; line-height: 1.5;
+            -webkit-line-clamp: 6;
+        }
+        .news-card.hero::before { width: 4px; }
+        .hero-rank {
+            font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
+            color: var(--accent); text-transform: uppercase; margin-bottom: 2px;
+        }
+        @media (max-width: 900px) {
+            .top-news-grid { grid-template-columns: 1fr 1fr; }
+            .news-card.hero { grid-column: 1 / -1; grid-row: auto; }
+        }
+        @media (max-width: 600px) {
+            .top-news-grid { grid-template-columns: 1fr; }
+        }
+
         /* ---- TRANSLATE BUTTON ---- */
         .btn-translate {
             background: #1b5e20; color: #fff; border-color: #1b5e20; gap: 5px;
@@ -442,7 +479,7 @@ function escapeHtml(s) {
 // =====================================================================
 // RENDER CARD
 // =====================================================================
-function renderCard(item, sectorKey) {
+function renderCard(item, sectorKey, isHero) {
     const sector   = SECTORS.find(s => s.key === sectorKey);
     const color    = sector ? sector.color : '#37474f';
     const sent     = getSentiment(item.title);
@@ -450,9 +487,11 @@ function renderCard(item, sectorKey) {
     const sentCls  = 'card-sent sent-' + sent;
     const age      = timeAgo(item.providerPublishTime);
     const publisher = String(item.publisher || '').trim();
+    const cls      = 'news-card' + (isHero ? ' hero' : '');
 
-    return '<a class="news-card" href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener noreferrer"' +
+    return '<a class="' + cls + '" href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener noreferrer"' +
         ' style="--card-accent:' + color + '">' +
+        (isHero ? '<div class="hero-rank">&#11088; Notizia principale</div>' : '') +
         '<div class="card-meta">' +
             (sector ? '<span class="card-badge" style="background:' + color + '">' + sector.icon + ' ' + escapeHtml(sector.label) + '</span>' : '') +
             (age ? '<span class="card-time">' + escapeHtml(age) + '</span>' : '') +
@@ -464,6 +503,75 @@ function renderCard(item, sectorKey) {
             '<span class="card-link-arrow">&#x2197;</span>' +
         '</div>' +
     '</a>';
+}
+
+// =====================================================================
+// TOP NEWS SCORING
+// =====================================================================
+const IMPACT_WORDS = [
+    'fed','rate','gdp','earnings','inflation','recession','crash','record','ban',
+    'war','crisis','emergency','historic','billion','trillion','major','collapse',
+    'default','merger','acquisition','ipo','bubble','sanctions','nuclear','deal',
+    'breakthrough','regulation','parliament','election','president','ceo','resign'
+];
+
+function scoreImportance(item) {
+    let score = 0;
+    const nowSec = Date.now() / 1000;
+    const ageH   = (nowSec - (item.providerPublishTime || 0)) / 3600;
+
+    // Recency (max +5)
+    if      (ageH < 1)  score += 5;
+    else if (ageH < 3)  score += 4;
+    else if (ageH < 6)  score += 3;
+    else if (ageH < 12) score += 2;
+    else if (ageH < 24) score += 1;
+
+    // Sentiment strength: non-neutral is more newsworthy
+    const t = String(item.title || '').toLowerCase();
+    let ss = 0;
+    POS_TERMS.forEach(w => { if (t.includes(w)) ss++; });
+    NEG_TERMS.forEach(w => { if (t.includes(w)) ss--; });
+    score += Math.min(Math.abs(ss), 3);
+
+    // High-impact keywords
+    IMPACT_WORDS.forEach(w => { if (t.includes(w)) score += 0.6; });
+
+    return score;
+}
+
+function getTopNews(n) {
+    const seen = new Set();
+    const pool = [];
+    for (const sector of SECTORS) {
+        for (const item of (allNewsData[sector.key] || [])) {
+            const id = item.uuid || item.link || item.title;
+            if (seen.has(id)) continue;
+            seen.add(id);
+            pool.push({ ...item, _sectorKey: sector.key });
+        }
+    }
+    return pool
+        .map(item => ({ item, score: scoreImportance(item) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, n || 7)
+        .map(x => x.item);
+}
+
+function renderTopNews() {
+    const top = getTopNews(7);
+    if (!top.length) return '';
+    const [hero, ...rest] = top;
+    return '<div class="top-news-section">' +
+        '<div class="top-news-hd">' +
+            '<span class="top-news-hd-title">&#128293; Notizie in evidenza</span>' +
+            '<span class="top-news-hd-sub">Le pi&ugrave; importanti di oggi, selezionate da tutti i settori</span>' +
+        '</div>' +
+        '<div class="top-news-grid">' +
+            renderCard(hero, hero._sectorKey, true) +
+            rest.map(item => renderCard(item, item._sectorKey, false)).join('') +
+        '</div>' +
+    '</div>';
 }
 
 // =====================================================================
@@ -494,8 +602,8 @@ function renderPage() {
         return;
     }
 
-    // VISTA TUTTE — una sezione per settore
-    let html = '';
+    // VISTA TUTTE — top news + una sezione per settore
+    let html = renderTopNews();
     let hasAny = false;
 
     for (const sector of SECTORS) {
@@ -572,6 +680,20 @@ function renderPills() {
     allPill.style.cssText = 'background:var(--accent);border-color:var(--accent);color:#fff';
     allPill.onclick = () => filterSector('all');
     container.appendChild(allPill);
+
+    // "In evidenza" pill
+    const topPill = document.createElement('button');
+    topPill.className = 'sector-pill';
+    topPill.dataset.sector = 'top';
+    topPill.innerHTML = '&#128293; In evidenza';
+    topPill.onclick = () => {
+        if (activeSector !== 'all') filterSector('all');
+        setTimeout(() => {
+            const el = document.querySelector('.top-news-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+    };
+    container.appendChild(topPill);
 
     // Sector pills
     for (const sector of SECTORS) {
