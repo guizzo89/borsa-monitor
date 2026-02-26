@@ -246,6 +246,7 @@
         }
         .asset-dropdown-item:last-child { border-bottom: none; }
         .asset-dropdown-item:hover, .asset-dropdown-item.kbd-active { background: var(--btn-hover); }
+        .asset-dropdown-item.custom-add { color: var(--accent); font-size: 0.8rem; }
         .adi-symbol { font-family: monospace; font-size: 0.75rem; color: var(--accent); min-width: 84px; flex-shrink: 0; }
         .adi-name { flex: 1; }
         .adi-cat { font-size: 0.62rem; color: var(--text-secondary); flex-shrink: 0; }
@@ -385,72 +386,189 @@
 
 <script>
 // =====================================================================
-// ASSET LIST per autocomplete
+// ASSET LIST completo (stesso di ranking.html)
 // =====================================================================
-const ASSETS_FLAT = [
-    {symbol:'AAPL',name:'Apple',cat:'nasdaq'},{symbol:'MSFT',name:'Microsoft',cat:'nasdaq'},
-    {symbol:'NVDA',name:'NVIDIA',cat:'nasdaq'},{symbol:'AMZN',name:'Amazon',cat:'nasdaq'},
-    {symbol:'META',name:'Meta',cat:'nasdaq'},{symbol:'GOOGL',name:'Alphabet',cat:'nasdaq'},
-    {symbol:'TSLA',name:'Tesla',cat:'nasdaq'},{symbol:'AVGO',name:'Broadcom',cat:'nasdaq'},
-    {symbol:'NFLX',name:'Netflix',cat:'nasdaq'},{symbol:'AMD',name:'AMD',cat:'nasdaq'},
-    {symbol:'INTC',name:'Intel',cat:'nasdaq'},{symbol:'QCOM',name:'Qualcomm',cat:'nasdaq'},
-    {symbol:'CSCO',name:'Cisco',cat:'nasdaq'},{symbol:'PYPL',name:'PayPal',cat:'nasdaq'},
-    {symbol:'ADBE',name:'Adobe',cat:'nasdaq'},{symbol:'ORCL',name:'Oracle',cat:'nasdaq'},
-    {symbol:'SBUX',name:'Starbucks',cat:'nasdaq'},{symbol:'COST',name:'Costco',cat:'nasdaq'},
-    {symbol:'PLTR',name:'Palantir',cat:'nasdaq'},{symbol:'ARM',name:'ARM Holdings',cat:'nasdaq'},
-    {symbol:'CRWD',name:'CrowdStrike',cat:'nasdaq'},{symbol:'PANW',name:'Palo Alto Networks',cat:'nasdaq'},
-    {symbol:'MRVL',name:'Marvell Technology',cat:'nasdaq'},{symbol:'COIN',name:'Coinbase',cat:'nasdaq'},
-    {symbol:'DDOG',name:'Datadog',cat:'nasdaq'},{symbol:'SNOW',name:'Snowflake',cat:'nasdaq'},
-    {symbol:'SHOP',name:'Shopify',cat:'nasdaq'},{symbol:'ZS',name:'Zscaler',cat:'nasdaq'},
-    {symbol:'MDB',name:'MongoDB',cat:'nasdaq'},{symbol:'TEAM',name:'Atlassian',cat:'nasdaq'},
-    {symbol:'JPM',name:'JPMorgan Chase',cat:'sp500'},{symbol:'V',name:'Visa',cat:'sp500'},
-    {symbol:'WMT',name:'Walmart',cat:'sp500'},{symbol:'MA',name:'Mastercard',cat:'sp500'},
-    {symbol:'XOM',name:'ExxonMobil',cat:'sp500'},{symbol:'JNJ',name:'Johnson & Johnson',cat:'sp500'},
-    {symbol:'UNH',name:'UnitedHealth',cat:'sp500'},{symbol:'HD',name:'Home Depot',cat:'sp500'},
-    {symbol:'BAC',name:'Bank of America',cat:'sp500'},{symbol:'KO',name:'Coca-Cola',cat:'sp500'},
-    {symbol:'LLY',name:'Eli Lilly',cat:'sp500'},{symbol:'DIS',name:'Walt Disney',cat:'sp500'},
-    {symbol:'MCD',name:"McDonald's",cat:'sp500'},{symbol:'GS',name:'Goldman Sachs',cat:'sp500'},
-    {symbol:'BRK-B',name:'Berkshire Hathaway',cat:'sp500'},{symbol:'GE',name:'GE Aerospace',cat:'sp500'},
-    {symbol:'IBM',name:'IBM',cat:'sp500'},{symbol:'CRM',name:'Salesforce',cat:'sp500'},
-    {symbol:'LMT',name:'Lockheed Martin',cat:'sp500'},{symbol:'NOC',name:'Northrop Grumman',cat:'sp500'},
-    {symbol:'RTX',name:'RTX',cat:'sp500'},{symbol:'BA',name:'Boeing',cat:'sp500'},
-    {symbol:'CAT',name:'Caterpillar',cat:'sp500'},{symbol:'WFC',name:'Wells Fargo',cat:'sp500'},
-    {symbol:'ENI.MI',name:'Eni',cat:'italia'},{symbol:'ENEL.MI',name:'Enel',cat:'italia'},
-    {symbol:'ISP.MI',name:'Intesa Sanpaolo',cat:'italia'},{symbol:'UCG.MI',name:'UniCredit',cat:'italia'},
-    {symbol:'STM.MI',name:'STMicroelectronics',cat:'italia'},{symbol:'RACE.MI',name:'Ferrari',cat:'italia'},
-    {symbol:'MONC.MI',name:'Moncler',cat:'italia'},{symbol:'LDO.MI',name:'Leonardo',cat:'italia'},
-    {symbol:'G.MI',name:'Generali',cat:'italia'},{symbol:'PRY.MI',name:'Prysmian',cat:'italia'},
-    {symbol:'FBK.MI',name:'FinecoBank',cat:'italia'},{symbol:'MB.MI',name:'Mediobanca',cat:'italia'},
-    {symbol:'BAMI.MI',name:'Banco BPM',cat:'italia'},{symbol:'BMPS.MI',name:'Monte dei Paschi',cat:'italia'},
-    {symbol:'TIT.MI',name:'Telecom Italia',cat:'italia'},{symbol:'STLAM.MI',name:'Stellantis',cat:'italia'},
-    {symbol:'NEXI.MI',name:'Nexi',cat:'italia'},{symbol:'A2A.MI',name:'A2A',cat:'italia'},
-    {symbol:'ASML.AS',name:'ASML',cat:'europee'},{symbol:'SAP.DE',name:'SAP',cat:'europee'},
-    {symbol:'MC.PA',name:'LVMH',cat:'europee'},{symbol:'NESN.SW',name:'Nestlé',cat:'europee'},
-    {symbol:'RMS.PA',name:'Hermès',cat:'europee'},{symbol:'SIE.DE',name:'Siemens',cat:'europee'},
-    {symbol:'AZN.L',name:'AstraZeneca',cat:'europee'},{symbol:'AIR.PA',name:'Airbus',cat:'europee'},
-    {symbol:'VOW3.DE',name:'Volkswagen',cat:'europee'},{symbol:'BMW.DE',name:'BMW',cat:'europee'},
-    {symbol:'ROG.SW',name:'Roche',cat:'europee'},{symbol:'NOVN.SW',name:'Novartis',cat:'europee'},
-    {symbol:'OR.PA',name:"L'Oréal",cat:'europee'},{symbol:'TTE.PA',name:'TotalEnergies',cat:'europee'},
-    {symbol:'BABA',name:'Alibaba',cat:'cinesi'},{symbol:'JD',name:'JD.com',cat:'cinesi'},
-    {symbol:'BIDU',name:'Baidu',cat:'cinesi'},{symbol:'PDD',name:'PDD (Temu)',cat:'cinesi'},
-    {symbol:'NIO',name:'NIO',cat:'cinesi'},{symbol:'XPEV',name:'XPeng',cat:'cinesi'},
-    {symbol:'LI',name:'Li Auto',cat:'cinesi'},{symbol:'NTES',name:'NetEase',cat:'cinesi'},
-    {symbol:'BTC-USD',name:'Bitcoin',cat:'crypto'},{symbol:'ETH-USD',name:'Ethereum',cat:'crypto'},
-    {symbol:'BNB-USD',name:'BNB',cat:'crypto'},{symbol:'SOL-USD',name:'Solana',cat:'crypto'},
-    {symbol:'XRP-USD',name:'XRP',cat:'crypto'},{symbol:'ADA-USD',name:'Cardano',cat:'crypto'},
-    {symbol:'DOGE-USD',name:'Dogecoin',cat:'crypto'},{symbol:'AVAX-USD',name:'Avalanche',cat:'crypto'},
-    {symbol:'DOT-USD',name:'Polkadot',cat:'crypto'},{symbol:'LINK-USD',name:'Chainlink',cat:'crypto'},
-    {symbol:'MATIC-USD',name:'Polygon',cat:'crypto'},{symbol:'LTC-USD',name:'Litecoin',cat:'crypto'},
-    {symbol:'GC=F',name:'Oro Futures',cat:'commodities'},{symbol:'SI=F',name:'Argento Futures',cat:'commodities'},
-    {symbol:'CL=F',name:'Petrolio WTI',cat:'commodities'},{symbol:'NG=F',name:'Gas Naturale',cat:'commodities'},
-    {symbol:'GLD',name:'Oro ETF (GLD)',cat:'commodities'},{symbol:'SLV',name:'Argento ETF (SLV)',cat:'commodities'},
-    {symbol:'EURUSD=X',name:'EUR/USD',cat:'forex'},{symbol:'GBPUSD=X',name:'GBP/USD',cat:'forex'},
-    {symbol:'USDJPY=X',name:'USD/JPY',cat:'forex'},{symbol:'USDCHF=X',name:'USD/CHF',cat:'forex'},
-    {symbol:'^GSPC',name:'S&P 500',cat:'indici'},{symbol:'^IXIC',name:'NASDAQ Composite',cat:'indici'},
-    {symbol:'^DJI',name:'Dow Jones',cat:'indici'},{symbol:'^FTSE',name:'FTSE 100',cat:'indici'},
-    {symbol:'^FTSEMIB',name:'FTSE MIB',cat:'indici'},{symbol:'^DAX',name:'DAX',cat:'indici'},
-    {symbol:'SPY',name:'S&P 500 ETF',cat:'indici'},{symbol:'QQQ',name:'NASDAQ 100 ETF',cat:'indici'},
-];
+const ASSETS = {
+    nasdaq: { label:'NASDAQ', items:[
+        {symbol:'AAPL',name:'Apple'},{symbol:'MSFT',name:'Microsoft'},
+        {symbol:'NVDA',name:'NVIDIA'},{symbol:'AMZN',name:'Amazon'},
+        {symbol:'META',name:'Meta'},{symbol:'GOOGL',name:'Alphabet'},
+        {symbol:'TSLA',name:'Tesla'},{symbol:'AVGO',name:'Broadcom'},
+        {symbol:'NFLX',name:'Netflix'},{symbol:'AMD',name:'AMD'},
+        {symbol:'ADBE',name:'Adobe'},{symbol:'QCOM',name:'Qualcomm'},
+        {symbol:'COST',name:'Costco'},{symbol:'INTC',name:'Intel'},
+        {symbol:'CSCO',name:'Cisco'},{symbol:'PYPL',name:'PayPal'},
+        {symbol:'SBUX',name:'Starbucks'},{symbol:'ORCL',name:'Oracle'},
+        {symbol:'INTU',name:'Intuit'},{symbol:'AMAT',name:'Applied Materials'},
+        {symbol:'PANW',name:'Palo Alto Networks'},{symbol:'MRVL',name:'Marvell Technology'},
+        {symbol:'KLAC',name:'KLA Corporation'},{symbol:'LRCX',name:'Lam Research'},
+        {symbol:'SNPS',name:'Synopsys'},{symbol:'CDNS',name:'Cadence Design'},
+        {symbol:'MELI',name:'MercadoLibre'},{symbol:'ABNB',name:'Airbnb'},
+        {symbol:'BKNG',name:'Booking Holdings'},{symbol:'CRWD',name:'CrowdStrike'},
+        {symbol:'DDOG',name:'Datadog'},{symbol:'MDB',name:'MongoDB'},
+        {symbol:'SNOW',name:'Snowflake'},{symbol:'TEAM',name:'Atlassian'},
+        {symbol:'WDAY',name:'Workday'},{symbol:'SHOP',name:'Shopify'},
+        {symbol:'COIN',name:'Coinbase'},{symbol:'ZS',name:'Zscaler'},
+        {symbol:'ON',name:'ON Semiconductor'},{symbol:'ARM',name:'ARM Holdings'},
+        {symbol:'SMCI',name:'Super Micro Computer'},{symbol:'FAST',name:'Fastenal'},
+        {symbol:'PAYX',name:'Paychex'},{symbol:'REGN',name:'Regeneron'},
+        {symbol:'VRTX',name:'Vertex Pharmaceuticals'},{symbol:'PCAR',name:'PACCAR'},
+        {symbol:'ROST',name:'Ross Stores'},{symbol:'CSGP',name:'CoStar Group'},
+        {symbol:'NXPI',name:'NXP Semiconductors'},{symbol:'PLTR',name:'Palantir'}
+    ]},
+    sp500: { label:'S&P 500', items:[
+        {symbol:'JPM',name:'JPMorgan Chase'},{symbol:'V',name:'Visa'},
+        {symbol:'WMT',name:'Walmart'},{symbol:'MA',name:'Mastercard'},
+        {symbol:'XOM',name:'ExxonMobil'},{symbol:'JNJ',name:'Johnson & Johnson'},
+        {symbol:'PG',name:'Procter & Gamble'},{symbol:'UNH',name:'UnitedHealth'},
+        {symbol:'HD',name:'Home Depot'},{symbol:'CVX',name:'Chevron'},
+        {symbol:'MRK',name:'Merck'},{symbol:'BAC',name:'Bank of America'},
+        {symbol:'KO',name:'Coca-Cola'},{symbol:'LLY',name:'Eli Lilly'},
+        {symbol:'ABBV',name:'AbbVie'},{symbol:'PFE',name:'Pfizer'},
+        {symbol:'DIS',name:'Walt Disney'},{symbol:'MCD',name:"McDonald's"},
+        {symbol:'WFC',name:'Wells Fargo'},{symbol:'GS',name:'Goldman Sachs'},
+        {symbol:'BRK-B',name:'Berkshire Hathaway'},{symbol:'RTX',name:'RTX'},
+        {symbol:'HON',name:'Honeywell'},{symbol:'CAT',name:'Caterpillar'},
+        {symbol:'BA',name:'Boeing'},{symbol:'GE',name:'GE Aerospace'},
+        {symbol:'IBM',name:'IBM'},{symbol:'CRM',name:'Salesforce'},
+        {symbol:'NEE',name:'NextEra Energy'},{symbol:'T',name:'AT&T'},
+        {symbol:'VZ',name:'Verizon'},{symbol:'CMCSA',name:'Comcast'},
+        {symbol:'BMY',name:'Bristol-Myers Squibb'},{symbol:'AMGN',name:'Amgen'},
+        {symbol:'MDT',name:'Medtronic'},{symbol:'ABT',name:'Abbott'},
+        {symbol:'TMO',name:'Thermo Fisher'},{symbol:'LMT',name:'Lockheed Martin'},
+        {symbol:'COP',name:'ConocoPhillips'},{symbol:'USB',name:'US Bancorp'},
+        {symbol:'MS',name:'Morgan Stanley'},{symbol:'AXP',name:'American Express'},
+        {symbol:'BLK',name:'BlackRock'},{symbol:'SPGI',name:'S&P Global'},
+        {symbol:'SO',name:'Southern Company'},{symbol:'DUK',name:'Duke Energy'},
+        {symbol:'SLB',name:'SLB'},{symbol:'MMM',name:'3M'},
+        {symbol:'DHR',name:'Danaher'},{symbol:'NOC',name:'Northrop Grumman'}
+    ]},
+    italia: { label:'Borsa IT', items:[
+        {symbol:'ENI.MI',name:'Eni'},{symbol:'ENEL.MI',name:'Enel'},
+        {symbol:'ISP.MI',name:'Intesa Sanpaolo'},{symbol:'UCG.MI',name:'UniCredit'},
+        {symbol:'STM.MI',name:'STMicroelectronics'},{symbol:'G.MI',name:'Generali'},
+        {symbol:'STLAM.MI',name:'Stellantis'},{symbol:'TIT.MI',name:'Telecom Italia'},
+        {symbol:'MB.MI',name:'Mediobanca'},{symbol:'FBK.MI',name:'FinecoBank'},
+        {symbol:'LDO.MI',name:'Leonardo'},{symbol:'MONC.MI',name:'Moncler'},
+        {symbol:'RACE.MI',name:'Ferrari'},{symbol:'BMED.MI',name:'Banca Mediolanum'},
+        {symbol:'CNHI.MI',name:'CNH Industrial'},{symbol:'HER.MI',name:'Hera'},
+        {symbol:'INW.MI',name:'Inwit'},{symbol:'AMP.MI',name:'Amplifon'},
+        {symbol:'PRY.MI',name:'Prysmian'},{symbol:'CPR.MI',name:'Azimut'},
+        {symbol:'PST.MI',name:'Poste Italiane'},{symbol:'REC.MI',name:'Recordati'},
+        {symbol:'DIA.MI',name:'DiaSorin'},{symbol:'BAMI.MI',name:'Banco BPM'},
+        {symbol:'BMPS.MI',name:'Monte dei Paschi'},{symbol:'A2A.MI',name:'A2A'},
+        {symbol:'SRG.MI',name:'Snam'},{symbol:'ERG.MI',name:'ERG'},
+        {symbol:'BPER.MI',name:'BPER Banca'},{symbol:'BGN.MI',name:'Banca Generali'},
+        {symbol:'TEN.MI',name:'Tenaris'},{symbol:'SPM.MI',name:'Saipem'},
+        {symbol:'PIRC.MI',name:'Pirelli'},{symbol:'DLG.MI',name:"De'Longhi"},
+        {symbol:'IP.MI',name:'Interpump'},{symbol:'IG.MI',name:'Italgas'},
+        {symbol:'IRE.MI',name:'IREN'},{symbol:'BZU.MI',name:'Buzzi'},
+        {symbol:'NEXI.MI',name:'Nexi'},{symbol:'EXO.MI',name:'Exor'}
+    ]},
+    cinesi: { label:'Cinesi', items:[
+        {symbol:'BABA',name:'Alibaba'},{symbol:'JD',name:'JD.com'},
+        {symbol:'BIDU',name:'Baidu'},{symbol:'PDD',name:'PDD (Temu)'},
+        {symbol:'NIO',name:'NIO'},{symbol:'XPEV',name:'XPeng'},
+        {symbol:'LI',name:'Li Auto'},{symbol:'TME',name:'Tencent Music'},
+        {symbol:'NTES',name:'NetEase'},{symbol:'YUMC',name:'Yum China'},
+        {symbol:'EDU',name:'New Oriental'},{symbol:'FUTU',name:'Futu Holdings'},
+        {symbol:'IQ',name:'iQIYI'},{symbol:'MNSO',name:'MINISO'},{symbol:'ZH',name:'Zhihu'},
+        {symbol:'TCOM',name:'Trip.com'},{symbol:'BILI',name:'Bilibili'},
+        {symbol:'VIPS',name:'Vipshop'},{symbol:'WB',name:'Weibo'},
+        {symbol:'TAL',name:'TAL Education'},{symbol:'BEKE',name:'KE Holdings'},
+        {symbol:'GDS',name:'GDS Holdings'},{symbol:'HTHT',name:'H World Group'},
+        {symbol:'DQ',name:'Daqo New Energy'},{symbol:'BGNE',name:'BeiGene'},
+        {symbol:'LU',name:'Lufax'},{symbol:'KC',name:'Kingsoft Cloud'},
+        {symbol:'TIGR',name:'UP Fintech'},{symbol:'CAN',name:'Canaan'}
+    ]},
+    europee: { label:'Europee', items:[
+        {symbol:'ASML.AS',name:'ASML'},{symbol:'SAP.DE',name:'SAP'},
+        {symbol:'NESN.SW',name:'Nestlé'},{symbol:'MC.PA',name:'LVMH'},
+        {symbol:'OR.PA',name:"L'Oréal"},{symbol:'SIE.DE',name:'Siemens'},
+        {symbol:'TTE.PA',name:'TotalEnergies'},{symbol:'NOVN.SW',name:'Novartis'},
+        {symbol:'ALV.DE',name:'Allianz'},{symbol:'BNP.PA',name:'BNP Paribas'},
+        {symbol:'AZN.L',name:'AstraZeneca'},{symbol:'AIR.PA',name:'Airbus'},
+        {symbol:'VOW3.DE',name:'Volkswagen'},{symbol:'BMW.DE',name:'BMW'},
+        {symbol:'ROG.SW',name:'Roche'},{symbol:'HSBA.L',name:'HSBC'},
+        {symbol:'GSK.L',name:'GSK'},{symbol:'BP.L',name:'BP'},
+        {symbol:'SHEL.L',name:'Shell'},{symbol:'ULVR.L',name:'Unilever'},
+        {symbol:'DGE.L',name:'Diageo'},{symbol:'BARC.L',name:'Barclays'},
+        {symbol:'RIO.L',name:'Rio Tinto'},{symbol:'BAS.DE',name:'BASF'},
+        {symbol:'DBK.DE',name:'Deutsche Bank'},{symbol:'MUV2.DE',name:'Munich Re'},
+        {symbol:'DTE.DE',name:'Deutsche Telekom'},{symbol:'ADS.DE',name:'Adidas'},
+        {symbol:'BAYN.DE',name:'Bayer'},{symbol:'MBG.DE',name:'Mercedes-Benz'},
+        {symbol:'PAH3.DE',name:'Porsche'},{symbol:'SAN.PA',name:'Sanofi'},
+        {symbol:'KER.PA',name:'Kering'},{symbol:'RMS.PA',name:'Hermès'},
+        {symbol:'AXA.PA',name:'AXA'},{symbol:'DSY.PA',name:'Dassault Systèmes'},
+        {symbol:'SU.PA',name:'Schneider Electric'},{symbol:'ORA.PA',name:'Orange'},
+        {symbol:'CAP.PA',name:'Capgemini'},{symbol:'INGA.AS',name:'ING'},
+        {symbol:'HEIA.AS',name:'Heineken'},{symbol:'AD.AS',name:'Ahold Delhaize'},
+        {symbol:'ABBN.SW',name:'ABB'},{symbol:'ZURN.SW',name:'Zurich Insurance'},
+        {symbol:'CFR.SW',name:'Richemont'},{symbol:'LONN.SW',name:'Lonza'},
+        {symbol:'SAN.MC',name:'Santander'},{symbol:'BBVA.MC',name:'BBVA'},
+        {symbol:'TEF.MC',name:'Telefonica'},{symbol:'UCB.BR',name:'UCB'}
+    ]},
+    crypto: { label:'Crypto', items:[
+        {symbol:'BTC-USD',name:'Bitcoin'},{symbol:'ETH-USD',name:'Ethereum'},
+        {symbol:'BNB-USD',name:'BNB'},{symbol:'SOL-USD',name:'Solana'},
+        {symbol:'XRP-USD',name:'XRP'},{symbol:'ADA-USD',name:'Cardano'},
+        {symbol:'DOGE-USD',name:'Dogecoin'},{symbol:'AVAX-USD',name:'Avalanche'},
+        {symbol:'DOT-USD',name:'Polkadot'},{symbol:'LINK-USD',name:'Chainlink'},
+        {symbol:'LTC-USD',name:'Litecoin'},{symbol:'BCH-USD',name:'Bitcoin Cash'},
+        {symbol:'ATOM-USD',name:'Cosmos'},{symbol:'UNI-USD',name:'Uniswap'},
+        {symbol:'MATIC-USD',name:'Polygon'},{symbol:'SHIB-USD',name:'Shiba Inu'},
+        {symbol:'TRX-USD',name:'TRON'},{symbol:'ICP-USD',name:'Internet Computer'},
+        {symbol:'FIL-USD',name:'Filecoin'},{symbol:'NEAR-USD',name:'NEAR Protocol'},
+        {symbol:'ALGO-USD',name:'Algorand'},{symbol:'HBAR-USD',name:'Hedera'},
+        {symbol:'SAND-USD',name:'The Sandbox'},{symbol:'MANA-USD',name:'Decentraland'},
+        {symbol:'AXS-USD',name:'Axie Infinity'},{symbol:'AAVE-USD',name:'Aave'},
+        {symbol:'MKR-USD',name:'Maker'},{symbol:'VET-USD',name:'VeChain'},
+        {symbol:'XLM-USD',name:'Stellar'},{symbol:'GRT-USD',name:'The Graph'},
+        {symbol:'APT-USD',name:'Aptos'},{symbol:'SUI-USD',name:'Sui'},
+        {symbol:'XMR-USD',name:'Monero'},{symbol:'CRV-USD',name:'Curve'},
+        {symbol:'LDO-USD',name:'Lido DAO'},{symbol:'IMX-USD',name:'Immutable X'}
+    ]},
+    commodities: { label:'Mat. Prime', items:[
+        {symbol:'GC=F',name:'Oro'},{symbol:'SI=F',name:'Argento'},
+        {symbol:'CL=F',name:'Petrolio WTI'},{symbol:'BZ=F',name:'Petrolio Brent'},
+        {symbol:'NG=F',name:'Gas Naturale'},{symbol:'HG=F',name:'Rame'},
+        {symbol:'ZW=F',name:'Grano'},{symbol:'ZC=F',name:'Mais'},
+        {symbol:'PL=F',name:'Platino'},{symbol:'PA=F',name:'Palladio'},
+        {symbol:'ZS=F',name:'Soia'},{symbol:'KC=F',name:'Caffè'},
+        {symbol:'CT=F',name:'Cotone'},{symbol:'SB=F',name:'Zucchero'},
+        {symbol:'CC=F',name:'Cacao'},{symbol:'RB=F',name:'Benzina RBOB'}
+    ]},
+    forex: { label:'Forex', items:[
+        {symbol:'EURUSD=X',name:'EUR/USD'},{symbol:'GBPUSD=X',name:'GBP/USD'},
+        {symbol:'USDJPY=X',name:'USD/JPY'},{symbol:'USDCHF=X',name:'USD/CHF'},
+        {symbol:'AUDUSD=X',name:'AUD/USD'},{symbol:'USDCAD=X',name:'USD/CAD'},
+        {symbol:'EURGBP=X',name:'EUR/GBP'},{symbol:'EURJPY=X',name:'EUR/JPY'},
+        {symbol:'NZDUSD=X',name:'NZD/USD'},{symbol:'GBPJPY=X',name:'GBP/JPY'},
+        {symbol:'USDCNY=X',name:'USD/CNY'},{symbol:'USDINR=X',name:'USD/INR'},
+        {symbol:'EURAUD=X',name:'EUR/AUD'},{symbol:'EURCAD=X',name:'EUR/CAD'}
+    ]},
+    indici: { label:'Indici', items:[
+        {symbol:'^GSPC',name:'S&P 500'},{symbol:'^IXIC',name:'NASDAQ Composite'},
+        {symbol:'^DJI',name:'Dow Jones'},{symbol:'^FTSE',name:'FTSE 100'},
+        {symbol:'^GDAXI',name:'DAX 40'},{symbol:'^FCHI',name:'CAC 40'},
+        {symbol:'^N225',name:'Nikkei 225'},{symbol:'^HSI',name:'Hang Seng'},
+        {symbol:'^STOXX50E',name:'Euro Stoxx 50'},{symbol:'^RUT',name:'Russell 2000'},
+        {symbol:'^FTSEMIB',name:'FTSE MIB'},{symbol:'^AEX',name:'AEX Amsterdam'},
+        {symbol:'^IBEX',name:'IBEX 35'},{symbol:'^SSMI',name:'SMI Svizzera'},
+        {symbol:'SPY',name:'S&P 500 ETF'},{symbol:'QQQ',name:'NASDAQ 100 ETF'},
+        {symbol:'DIA',name:'Dow Jones ETF'},{symbol:'IWM',name:'Russell 2000 ETF'}
+    ]}
+};
+
+let allAssetsFlat = [];
+function buildAllAssetsFlat() {
+    allAssetsFlat = [];
+    for (const k in ASSETS) {
+        for (const item of ASSETS[k].items) {
+            allAssetsFlat.push({ symbol: item.symbol, name: item.name, cat: k, catLabel: ASSETS[k].label });
+        }
+    }
+}
 
 const CAT_LABELS = {
     nasdaq:'NASDAQ', sp500:'S&P 500', italia:'Borsa IT', europee:'Europee',
@@ -928,22 +1046,28 @@ function deletePosition(id) {
 function symbolSearchInput() {
     const q = document.getElementById('modalSymbol').value.trim().toLowerCase();
     if (q.length < 1) { closeSymbolDropdown(); return; }
-    dropdownItems = ASSETS_FLAT.filter(a =>
+    dropdownItems = allAssetsFlat.filter(a =>
         a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q)
-    ).slice(0, 8);
+    ).slice(0, 10);
     dropdownIdx = -1;
     renderSymbolDropdown();
 }
 function renderSymbolDropdown() {
-    const dd = document.getElementById('symbolDropdown');
-    if (!dropdownItems.length) { dd.classList.remove('open'); return; }
-    dd.innerHTML = dropdownItems.map((a, i) =>
+    const dd  = document.getElementById('symbolDropdown');
+    const raw = document.getElementById('modalSymbol').value.trim();
+    const sym = raw.split(/\s+/)[0].toUpperCase();
+    let html = dropdownItems.map((a, i) =>
         `<div class="asset-dropdown-item${i === dropdownIdx ? ' kbd-active' : ''}" onclick="selectSymbol(${i})">
             <span class="adi-symbol">${escH(a.symbol)}</span>
             <span class="adi-name">${escH(a.name)}</span>
-            <span class="adi-cat">${escH(CAT_LABELS[a.cat] || a.cat)}</span>
+            <span class="adi-cat">${escH(a.catLabel || CAT_LABELS[a.cat] || a.cat)}</span>
         </div>`
     ).join('');
+    if (sym) {
+        html += `<div class="asset-dropdown-item custom-add" onclick="selectCustomSymbol()">+ Aggiungi <strong>${escH(sym)}</strong> come simbolo personalizzato</div>`;
+    }
+    if (!html) { dd.classList.remove('open'); return; }
+    dd.innerHTML = html;
     dd.classList.add('open');
 }
 async function selectSymbol(idx) {
@@ -953,13 +1077,24 @@ async function selectSymbol(idx) {
     if (!document.getElementById('modalName').value) document.getElementById('modalName').value = a.name;
     document.getElementById('modalCat').value = a.cat || 'other';
     closeSymbolDropdown();
-
-    // Fetch prezzo attuale e pre-compila il campo
-    const statusEl  = document.getElementById('modalPriceStatus');
-    const priceEl   = document.getElementById('modalBuyPrice');
+    await fetchAndFillPrice(a.symbol);
+}
+function selectCustomSymbol() {
+    const raw   = document.getElementById('modalSymbol').value.trim();
+    const parts = raw.split(/\s+/);
+    const sym   = parts[0].toUpperCase();
+    const name  = parts.slice(1).join(' ').trim();
+    document.getElementById('modalSymbol').value = sym;
+    if (name && !document.getElementById('modalName').value) document.getElementById('modalName').value = name;
+    closeSymbolDropdown();
+    fetchAndFillPrice(sym);
+}
+async function fetchAndFillPrice(symbol) {
+    const statusEl = document.getElementById('modalPriceStatus');
+    const priceEl  = document.getElementById('modalBuyPrice');
     statusEl.textContent = '⏳ caricamento…';
     priceEl.value = '';
-    const q = await fetchQuote(a.symbol);
+    const q = await fetchQuote(symbol);
     if (q && q.price) {
         priceEl.value = q.price;
         statusEl.textContent = `(${q.currency} – prezzo attuale)`;
@@ -1038,6 +1173,7 @@ function exportCsv() {
 // INIT
 // =====================================================================
 loadTheme();
+buildAllAssetsFlat();
 loadPositions();
 renderTable();
 renderSummary();
