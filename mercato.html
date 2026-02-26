@@ -1545,6 +1545,20 @@ async function fetchWithTimeout(url, options, ms) {
     try { return await fetch(url, { ...options, signal: ctrl.signal }); }
     finally { clearTimeout(t); }
 }
+
+// Esegue un array di funzioni async con max N in parallelo
+async function runWithConcurrency(tasks, limit) {
+    const results = new Array(tasks.length).fill(null);
+    let idx = 0;
+    async function worker() {
+        while (idx < tasks.length) {
+            const i = idx++;
+            results[i] = await tasks[i]();
+        }
+    }
+    await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
+    return results;
+}
 async function fetchJson(url, ms) {
     const proxies = [
         url,
@@ -2175,14 +2189,14 @@ async function loadRanking() {
     document.getElementById('rankingResultsArea').innerHTML =
         '<div class="status-box"><div class="spinner"></div><div>Recupero dati per <strong>' + total + ' asset</strong>...</div></div>';
 
-    const promises = toFetch.map(async asset => {
+    const tasks = toFetch.map(asset => async () => {
         const perf = await fetchPerf(asset.symbol, range, interval);
         done++;
         document.getElementById('progressText').textContent = done + ' / ' + total;
         if (!perf) return null;
         return Object.assign({}, asset, perf);
     });
-    const results = (await Promise.all(promises)).filter(Boolean);
+    const results = (await runWithConcurrency(tasks, 8)).filter(Boolean);
 
     btn.disabled = false;
     btn.textContent = 'Carica Classifica';
@@ -2289,7 +2303,7 @@ async function runAnalysis() {
     document.getElementById('resultsArea').innerHTML =
         '<div class="status-box"><div class="spinner"></div><div>Recupero dati tecnici e fondamentali per <strong>' + total + ' asset</strong>…<br><span style="font-size:0.78rem">Possono volerci alcuni secondi</span></div></div>';
 
-    const promises = toAnalyze.map(async asset => {
+    const tasks = toAnalyze.map(asset => async () => {
         const equity = isEquity(asset.symbol);
         try {
             const [priceData, fundData] = await Promise.all([
@@ -2317,7 +2331,7 @@ async function runAnalysis() {
         }
     });
 
-    const results = (await Promise.all(promises)).filter(Boolean);
+    const results = (await runWithConcurrency(tasks, 8)).filter(Boolean);
     loadBtn.disabled = false; loadBtn.textContent = 'Analizza';
     if (loadBtn2) loadBtn2.disabled = false;
     if (loadBtn3) loadBtn3.disabled = false;
@@ -2382,7 +2396,7 @@ async function runAnalysis2() {
     document.getElementById('resultsArea').innerHTML =
         '<div class="status-box"><div class="spinner"></div><div>Analisi 2 multi-fattore su <strong>' + total + ' asset</strong>…<br><span style="font-size:0.78rem">Tecnico, fondamentale, rischio, momentum e news</span></div></div>';
 
-    const promises = toAnalyze.map(async asset => {
+    const tasks = toAnalyze.map(asset => async () => {
         const equity = isEquity(asset.symbol);
         try {
             const [priceData, fundData, news] = await Promise.all([
@@ -2417,7 +2431,7 @@ async function runAnalysis2() {
         }
     });
 
-    const results = (await Promise.all(promises)).filter(Boolean);
+    const results = (await runWithConcurrency(tasks, 8)).filter(Boolean);
     if (loadBtn) loadBtn.disabled = false;
     if (loadBtn2) { loadBtn2.disabled = false; loadBtn2.textContent = 'Analisi 2'; }
     if (loadBtn3) loadBtn3.disabled = false;
@@ -2969,7 +2983,7 @@ async function runAnalysis3() {
         '<div class="status-box"><div class="spinner"></div><div>Analisi 3 su <strong>' + total + ' asset</strong>…<br>' +
         '<span style="font-size:0.78rem">Tecnico+ · Fondamentale+ · Rischio · Momentum 3TF · News+</span></div></div>';
 
-    const promises = toAnalyze.map(async asset => {
+    const tasks = toAnalyze.map(asset => async () => {
         const equity = isEquity(asset.symbol);
         try {
             const [priceData, fundData, news] = await Promise.all([
@@ -2999,7 +3013,7 @@ async function runAnalysis3() {
         }
     });
 
-    const results = (await Promise.all(promises)).filter(Boolean);
+    const results = (await runWithConcurrency(tasks, 8)).filter(Boolean);
     if (loadBtn)  loadBtn.disabled  = false;
     if (loadBtn2) loadBtn2.disabled = false;
     if (loadBtn3) { loadBtn3.disabled = false; loadBtn3.textContent = 'Analisi 3'; }
