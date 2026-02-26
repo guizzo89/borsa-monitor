@@ -363,12 +363,13 @@
                 </select>
             </div>
             <div class="modal-field">
-                <label>Quantità</label>
-                <input type="number" id="modalQty" placeholder="0" min="0" step="any">
+                <label>Importo Investito</label>
+                <input type="number" id="modalImporto" placeholder="0.00" min="0" step="any" oninput="updateQtyPreview()">
+                <span id="qtyPreview" style="font-size:0.72rem;color:var(--text-secondary);margin-top:2px"></span>
             </div>
             <div class="modal-field">
-                <label>Prezzo Acquisto</label>
-                <input type="number" id="modalBuyPrice" placeholder="0.00" min="0" step="any">
+                <label>Prezzo Acquisto <span id="modalPriceStatus" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--accent)"></span></label>
+                <input type="number" id="modalBuyPrice" placeholder="0.00" min="0" step="any" oninput="updateQtyPreview()">
             </div>
             <div class="modal-field full">
                 <label>Note (opzionale)</label>
@@ -853,10 +854,12 @@ function openAddModal() {
     document.getElementById('modalTitle').textContent = 'Aggiungi Posizione';
     document.getElementById('modalSymbol').value   = '';
     document.getElementById('modalName').value     = '';
-    document.getElementById('modalQty').value      = '';
+    document.getElementById('modalImporto').value  = '';
     document.getElementById('modalBuyPrice').value = '';
     document.getElementById('modalNotes').value    = '';
     document.getElementById('modalCat').value      = 'nasdaq';
+    document.getElementById('modalPriceStatus').textContent = '';
+    document.getElementById('qtyPreview').textContent = '';
     closeSymbolDropdown();
     document.getElementById('posModal').classList.add('open');
     setTimeout(() => document.getElementById('modalSymbol').focus(), 60);
@@ -868,10 +871,12 @@ function openEditModal(id) {
     document.getElementById('modalTitle').textContent = 'Modifica Posizione';
     document.getElementById('modalSymbol').value   = pos.symbol;
     document.getElementById('modalName').value     = pos.name || '';
-    document.getElementById('modalQty').value      = pos.qty;
+    document.getElementById('modalImporto').value  = (pos.qty * pos.buyPrice).toFixed(2);
     document.getElementById('modalBuyPrice').value = pos.buyPrice;
     document.getElementById('modalNotes').value    = pos.notes || '';
     document.getElementById('modalCat').value      = pos.cat || 'other';
+    document.getElementById('modalPriceStatus').textContent = '';
+    updateQtyPreview();
     closeSymbolDropdown();
     document.getElementById('posModal').classList.add('open');
 }
@@ -882,14 +887,15 @@ function closeModal() {
 function savePosition() {
     const symbol   = document.getElementById('modalSymbol').value.trim().toUpperCase();
     const name     = document.getElementById('modalName').value.trim();
-    const qty      = parseFloat(document.getElementById('modalQty').value);
+    const importo  = parseFloat(document.getElementById('modalImporto').value);
     const buyPrice = parseFloat(document.getElementById('modalBuyPrice').value);
     const notes    = document.getElementById('modalNotes').value.trim();
     const cat      = document.getElementById('modalCat').value;
+    const qty      = importo / buyPrice;
 
-    if (!symbol)               { alert('Inserisci un simbolo.');            return; }
-    if (!qty || qty <= 0)      { alert('Inserisci una quantità valida.');   return; }
-    if (!buyPrice || buyPrice <= 0) { alert('Inserisci un prezzo valido.'); return; }
+    if (!symbol)                    { alert('Inserisci un simbolo.');          return; }
+    if (!importo || importo <= 0)   { alert('Inserisci un importo valido.');   return; }
+    if (!buyPrice || buyPrice <= 0) { alert('Inserisci un prezzo valido.');    return; }
 
     if (editingId) {
         const idx = positions.findIndex(p => p.id === editingId);
@@ -937,13 +943,40 @@ function renderSymbolDropdown() {
     ).join('');
     dd.classList.add('open');
 }
-function selectSymbol(idx) {
+async function selectSymbol(idx) {
     const a = dropdownItems[idx];
     if (!a) return;
     document.getElementById('modalSymbol').value = a.symbol;
     if (!document.getElementById('modalName').value) document.getElementById('modalName').value = a.name;
     document.getElementById('modalCat').value = a.cat || 'other';
     closeSymbolDropdown();
+
+    // Fetch prezzo attuale e pre-compila il campo
+    const statusEl  = document.getElementById('modalPriceStatus');
+    const priceEl   = document.getElementById('modalBuyPrice');
+    statusEl.textContent = '⏳ caricamento…';
+    priceEl.value = '';
+    const q = await fetchQuote(a.symbol);
+    if (q && q.price) {
+        priceEl.value = q.price;
+        statusEl.textContent = `(${q.currency} – prezzo attuale)`;
+    } else {
+        statusEl.textContent = '– inserisci manualmente';
+    }
+    updateQtyPreview();
+}
+
+function updateQtyPreview() {
+    const importo  = parseFloat(document.getElementById('modalImporto').value);
+    const buyPrice = parseFloat(document.getElementById('modalBuyPrice').value);
+    const el       = document.getElementById('qtyPreview');
+    if (importo > 0 && buyPrice > 0) {
+        const qty = importo / buyPrice;
+        const dec = qty < 1 ? 6 : qty < 100 ? 4 : 2;
+        el.textContent = `≈ ${qty.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec })} unità`;
+    } else {
+        el.textContent = '';
+    }
 }
 function symbolSearchKeyDown(e) {
     const dd = document.getElementById('symbolDropdown');
