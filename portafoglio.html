@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portafoglio — Borsa</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e; --bg-secondary: #16213e; --bg-card: #0f3460;
+            --text-primary: #e0e0e0; --text-secondary: #a0a0a0;
+            --accent: #e94560; --accent-hover: #ff6b81;
+            --border: #2a2a4a; --btn-bg: #2a2a4a; --btn-hover: #3a3a5a;
+            --header-bg: #0f0f23; --green: #1b7a3d; --green-hover: #22994d;
+        }
+        html.light {
+            --bg-primary: #f0f2f5; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --text-primary: #1a1a2e; --text-secondary: #666666;
+            --accent: #e94560; --accent-hover: #c73650;
+            --border: #d0d0d0; --btn-bg: #e0e0e0; --btn-hover: #d0d0d0;
+            --header-bg: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary); color: var(--text-primary);
+            min-height: 100vh; display: flex; flex-direction: column;
+        }
+        header {
+            background: var(--header-bg); border-bottom: 1px solid var(--border);
+            padding: 8px 24px; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap; gap: 8px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        h1 { font-size: 1.3rem; font-weight: 700; white-space: nowrap; }
+        h1 span { color: var(--accent); }
+        .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn {
+            background: var(--btn-bg); color: var(--text-primary); border: 1px solid var(--border);
+            padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;
+            font-weight: 500; transition: all 0.15s; white-space: nowrap;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .btn:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-green { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
+        .btn-green:hover { background: var(--green-hover); border-color: var(--green-hover); }
+        .theme-icons { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+        .theme-toggle {
+            position: relative; width: 48px; height: 26px;
+            background: var(--btn-bg); border-radius: 13px; cursor: pointer;
+            border: 1px solid var(--border);
+        }
+        .theme-toggle::after {
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 18px; height: 18px; background: var(--accent);
+            border-radius: 50%; transition: transform 0.3s;
+        }
+        html.light .theme-toggle::after { transform: translateX(22px); }
+
+        .main-content { flex: 1; padding: 20px 24px; max-width: 1300px; margin: 0 auto; width: 100%; }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: rgba(233,69,96,0.08); border: 1px solid rgba(233,69,96,0.3);
+            border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;
+            font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;
+            display: flex; gap: 8px; align-items: flex-start;
+        }
+        .disclaimer strong { color: var(--accent); }
+
+        /* Summary + Pie */
+        .summary-wrap {
+            display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-start;
+        }
+        .summary-cards {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; flex: 1; min-width: 280px;
+        }
+        .stat-card {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px 18px;
+        }
+        .stat-label {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 6px;
+        }
+        .stat-value { font-size: 1.45rem; font-weight: 700; line-height: 1; }
+        .stat-sub { font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px; }
+        .stat-value.pos { color: #2ecc71; }
+        .stat-value.neg { color: #e74c3c; }
+        .stat-value.neutral { color: var(--text-primary); }
+
+        /* Pie */
+        .chart-wrap {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px 18px;
+            display: flex; gap: 16px; align-items: center; min-width: 260px;
+        }
+        #pieChart { flex-shrink: 0; }
+        .pie-legend { display: flex; flex-direction: column; gap: 5px; max-height: 200px; overflow-y: auto; }
+        .pie-legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.74rem; }
+        .pie-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .pie-legend-pct { color: var(--text-secondary); font-size: 0.7rem; margin-left: auto; padding-left: 8px; }
+
+        /* Controls bar */
+        .controls-bar {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .controls-bar .spacer { flex: 1; }
+        .update-info { font-size: 0.75rem; color: var(--text-secondary); }
+        #refreshSpinner {
+            display: none; width: 13px; height: 13px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Table */
+        .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+        .rank-table { width: 100%; border-collapse: collapse; min-width: 780px; }
+        .rank-table thead th {
+            background: var(--bg-card); padding: 10px 12px;
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--text-secondary);
+            border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap;
+            cursor: pointer; user-select: none;
+        }
+        .rank-table thead th:hover { color: var(--text-primary); }
+        .rank-table thead th.active-sort { color: var(--accent); }
+        .sort-icon { opacity: 0.4; font-size: 0.6rem; margin-left: 3px; }
+        .rank-table thead th.active-sort .sort-icon { opacity: 1; }
+        .rank-table tbody td {
+            padding: 9px 12px; border-bottom: 1px solid var(--border);
+            font-size: 0.83rem; background: var(--bg-secondary); vertical-align: middle;
+        }
+        .rank-table tbody tr:last-child td { border-bottom: none; }
+        .rank-table tbody tr:hover td { filter: brightness(1.07); }
+        html.light .rank-table tbody tr:hover td { filter: brightness(0.97); }
+        .td-symbol { font-family: monospace; font-size: 0.72rem; color: var(--text-secondary); }
+        .td-num { font-family: monospace; white-space: nowrap; text-align: right; }
+        .pos { color: #2ecc71; } .neg { color: #e74c3c; }
+        .val-na { color: var(--text-secondary); font-style: italic; }
+
+        .pnl-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 3px; min-width: 50px; }
+        .pnl-bar { height: 100%; border-radius: 2px; }
+        .bar-pos { background: #2ecc71; } .bar-neg { background: #e74c3c; }
+
+        /* Action buttons */
+        .action-btns { display: flex; gap: 5px; justify-content: flex-end; }
+        .btn-icon-sm {
+            background: none; border: 1px solid var(--border); color: var(--text-secondary);
+            width: 28px; height: 28px; border-radius: 5px; cursor: pointer;
+            font-size: 0.82rem; display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .btn-icon-sm:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-icon-sm.danger:hover { border-color: #e74c3c; color: #e74c3c; }
+
+        /* Cat pill */
+        .cat-pill {
+            display: inline-block; font-size: 0.6rem; font-weight: 700;
+            padding: 2px 6px; border-radius: 10px; color: #fff;
+            text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
+        }
+        .pill-nasdaq { background: #2962ff; } .pill-sp500 { background: #1565c0; }
+        .pill-italia { background: #1e7a2e; } .pill-cinesi { background: #c62828; }
+        .pill-europee { background: #0277bd; } .pill-crypto { background: #e65100; }
+        .pill-commodities { background: #5d4037; } .pill-forex { background: #00695c; }
+        .pill-indici { background: #37474f; } .pill-other { background: #546e7a; }
+
+        /* Notes */
+        .notes-text {
+            font-size: 0.72rem; color: var(--text-secondary); font-style: italic;
+            max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--text-secondary);
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
+        }
+        .empty-state strong { color: var(--text-primary); display: block; font-size: 1.1rem; margin-bottom: 8px; }
+        .empty-state p { margin-bottom: 20px; font-size: 0.88rem; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 24px; width: min(520px, 95vw);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .modal-field { display: flex; flex-direction: column; gap: 5px; }
+        .modal-field.full { grid-column: 1 / -1; }
+        .modal-field label {
+            font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .modal-field input, .modal-field textarea, .modal-field select {
+            background: var(--btn-bg); color: var(--text-primary);
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 8px 10px; font-size: 0.88rem; font-family: inherit;
+            transition: border-color 0.15s;
+        }
+        .modal-field input:focus, .modal-field textarea:focus, .modal-field select:focus {
+            outline: none; border-color: var(--accent);
+        }
+        .modal-field textarea { resize: vertical; min-height: 58px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+        .btn-cancel {
+            background: var(--btn-bg); color: var(--text-primary); border: 1px solid var(--border);
+            padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 0.84rem;
+        }
+        .btn-cancel:hover { border-color: var(--accent); }
+        .btn-save {
+            background: var(--accent); color: #fff; border: none;
+            padding: 7px 20px; border-radius: 6px; cursor: pointer; font-size: 0.84rem; font-weight: 600;
+        }
+        .btn-save:hover { background: var(--accent-hover); }
+
+        /* Symbol autocomplete */
+        .asset-search-wrap { position: relative; }
+        .asset-search-input {
+            width: 100%; background: var(--btn-bg); color: var(--text-primary);
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 9px 12px; font-size: 0.88rem; font-family: inherit; transition: border-color 0.15s;
+        }
+        .asset-search-input:focus { outline: none; border-color: var(--accent); }
+        .asset-dropdown {
+            display: none; position: absolute; top: calc(100% + 3px); left: 0; right: 0;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 7px; z-index: 310; max-height: 210px; overflow-y: auto;
+            box-shadow: 0 6px 28px rgba(0,0,0,0.45);
+        }
+        .asset-dropdown.open { display: block; }
+        .asset-dropdown-item {
+            padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border); font-size: 0.83rem; transition: background 0.1s;
+        }
+        .asset-dropdown-item:last-child { border-bottom: none; }
+        .asset-dropdown-item:hover, .asset-dropdown-item.kbd-active { background: var(--btn-hover); }
+        .adi-symbol { font-family: monospace; font-size: 0.75rem; color: var(--accent); min-width: 84px; flex-shrink: 0; }
+        .adi-name { flex: 1; }
+        .adi-cat { font-size: 0.62rem; color: var(--text-secondary); flex-shrink: 0; }
+
+        @media (max-width: 760px) {
+            .main-content { padding: 12px; }
+            header { padding: 8px 12px; }
+            h1 { font-size: 1rem; }
+            .summary-cards { grid-template-columns: repeat(2, 1fr); }
+            .chart-wrap { display: none; }
+            .modal-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <h1>Porta<span>foglio</span></h1>
+    </div>
+    <div class="header-controls">
+        <a href="index.html" class="btn">Dashboard</a>
+        <a href="ranking.html" class="btn">Classifica</a>
+        <a href="analisi.html" class="btn">Analisi</a>
+        <a href="news.html" class="btn">News</a>
+        <a href="calcolo.html" class="btn">Calcolatore</a>
+        <div class="theme-icons">
+            <span>&#9790;</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+            <span>&#9788;</span>
+        </div>
+    </div>
+</header>
+
+<div class="main-content">
+    <div class="disclaimer">
+        <span style="flex-shrink:0">⚠️</span>
+        <span><strong>Solo uso informativo.</strong> I valori mostrati sono indicativi e non costituiscono consulenza finanziaria. I prezzi sono forniti da Yahoo Finance con possibili ritardi.</span>
+    </div>
+
+    <!-- Summary cards + Pie -->
+    <div class="summary-wrap" id="summaryWrap" style="display:none">
+        <div class="summary-cards">
+            <div class="stat-card">
+                <div class="stat-label">Valore Totale</div>
+                <div class="stat-value neutral" id="statTotal">—</div>
+                <div class="stat-sub" id="statTotalSub"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Investito</div>
+                <div class="stat-value neutral" id="statInvested">—</div>
+                <div class="stat-sub" id="statInvestedSub">costo base</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">P&amp;L Totale</div>
+                <div class="stat-value neutral" id="statPnl">—</div>
+                <div class="stat-sub" id="statPnlSub"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Variazione Oggi</div>
+                <div class="stat-value neutral" id="statToday">—</div>
+                <div class="stat-sub" id="statTodaySub">variazione giornaliera</div>
+            </div>
+        </div>
+        <div class="chart-wrap">
+            <canvas id="pieChart" width="180" height="180"></canvas>
+            <div class="pie-legend" id="pieLegend"></div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+        <button class="btn btn-green" onclick="openAddModal()">+ Aggiungi Posizione</button>
+        <button class="btn btn-accent" id="refreshBtn" onclick="refreshPrices()">
+            <span id="refreshSpinner"></span>&#x21BB; Aggiorna Prezzi
+        </button>
+        <button class="btn" onclick="exportCsv()">&#x2193; Esporta CSV</button>
+        <div class="spacer"></div>
+        <span class="update-info" id="updateInfo"></span>
+    </div>
+
+    <div id="tableArea"></div>
+</div>
+
+<!-- Modal aggiungi/modifica -->
+<div class="modal-overlay" id="posModal">
+    <div class="modal">
+        <h2 id="modalTitle">Aggiungi Posizione</h2>
+        <div class="modal-field full" style="margin-bottom:14px">
+            <label>Simbolo / Asset</label>
+            <div class="asset-search-wrap">
+                <input type="text" id="modalSymbol" class="asset-search-input"
+                    placeholder="es. AAPL, BTC-USD, ENI.MI, ETH-USD…"
+                    autocomplete="off" oninput="symbolSearchInput()" onkeydown="symbolSearchKeyDown(event)">
+                <div class="asset-dropdown" id="symbolDropdown"></div>
+            </div>
+        </div>
+        <div class="modal-grid">
+            <div class="modal-field">
+                <label>Nome (opzionale)</label>
+                <input type="text" id="modalName" placeholder="es. Apple Inc.">
+            </div>
+            <div class="modal-field">
+                <label>Categoria</label>
+                <select id="modalCat">
+                    <option value="nasdaq">NASDAQ</option>
+                    <option value="sp500">S&amp;P 500</option>
+                    <option value="italia">Borsa Italiana</option>
+                    <option value="europee">Europee</option>
+                    <option value="cinesi">Cinesi</option>
+                    <option value="crypto">Crypto</option>
+                    <option value="commodities">Materie Prime</option>
+                    <option value="forex">Forex</option>
+                    <option value="indici">Indici</option>
+                    <option value="other">Altro</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>Quantità</label>
+                <input type="number" id="modalQty" placeholder="0" min="0" step="any">
+            </div>
+            <div class="modal-field">
+                <label>Prezzo Acquisto</label>
+                <input type="number" id="modalBuyPrice" placeholder="0.00" min="0" step="any">
+            </div>
+            <div class="modal-field full">
+                <label>Note (opzionale)</label>
+                <textarea id="modalNotes" placeholder="Motivo acquisto, target price, scadenza…"></textarea>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Annulla</button>
+            <button class="btn-save" onclick="savePosition()">Salva</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// =====================================================================
+// ASSET LIST per autocomplete
+// =====================================================================
+const ASSETS_FLAT = [
+    {symbol:'AAPL',name:'Apple',cat:'nasdaq'},{symbol:'MSFT',name:'Microsoft',cat:'nasdaq'},
+    {symbol:'NVDA',name:'NVIDIA',cat:'nasdaq'},{symbol:'AMZN',name:'Amazon',cat:'nasdaq'},
+    {symbol:'META',name:'Meta',cat:'nasdaq'},{symbol:'GOOGL',name:'Alphabet',cat:'nasdaq'},
+    {symbol:'TSLA',name:'Tesla',cat:'nasdaq'},{symbol:'AVGO',name:'Broadcom',cat:'nasdaq'},
+    {symbol:'NFLX',name:'Netflix',cat:'nasdaq'},{symbol:'AMD',name:'AMD',cat:'nasdaq'},
+    {symbol:'INTC',name:'Intel',cat:'nasdaq'},{symbol:'QCOM',name:'Qualcomm',cat:'nasdaq'},
+    {symbol:'CSCO',name:'Cisco',cat:'nasdaq'},{symbol:'PYPL',name:'PayPal',cat:'nasdaq'},
+    {symbol:'ADBE',name:'Adobe',cat:'nasdaq'},{symbol:'ORCL',name:'Oracle',cat:'nasdaq'},
+    {symbol:'SBUX',name:'Starbucks',cat:'nasdaq'},{symbol:'COST',name:'Costco',cat:'nasdaq'},
+    {symbol:'PLTR',name:'Palantir',cat:'nasdaq'},{symbol:'ARM',name:'ARM Holdings',cat:'nasdaq'},
+    {symbol:'CRWD',name:'CrowdStrike',cat:'nasdaq'},{symbol:'PANW',name:'Palo Alto Networks',cat:'nasdaq'},
+    {symbol:'MRVL',name:'Marvell Technology',cat:'nasdaq'},{symbol:'COIN',name:'Coinbase',cat:'nasdaq'},
+    {symbol:'DDOG',name:'Datadog',cat:'nasdaq'},{symbol:'SNOW',name:'Snowflake',cat:'nasdaq'},
+    {symbol:'SHOP',name:'Shopify',cat:'nasdaq'},{symbol:'ZS',name:'Zscaler',cat:'nasdaq'},
+    {symbol:'MDB',name:'MongoDB',cat:'nasdaq'},{symbol:'TEAM',name:'Atlassian',cat:'nasdaq'},
+    {symbol:'JPM',name:'JPMorgan Chase',cat:'sp500'},{symbol:'V',name:'Visa',cat:'sp500'},
+    {symbol:'WMT',name:'Walmart',cat:'sp500'},{symbol:'MA',name:'Mastercard',cat:'sp500'},
+    {symbol:'XOM',name:'ExxonMobil',cat:'sp500'},{symbol:'JNJ',name:'Johnson & Johnson',cat:'sp500'},
+    {symbol:'UNH',name:'UnitedHealth',cat:'sp500'},{symbol:'HD',name:'Home Depot',cat:'sp500'},
+    {symbol:'BAC',name:'Bank of America',cat:'sp500'},{symbol:'KO',name:'Coca-Cola',cat:'sp500'},
+    {symbol:'LLY',name:'Eli Lilly',cat:'sp500'},{symbol:'DIS',name:'Walt Disney',cat:'sp500'},
+    {symbol:'MCD',name:"McDonald's",cat:'sp500'},{symbol:'GS',name:'Goldman Sachs',cat:'sp500'},
+    {symbol:'BRK-B',name:'Berkshire Hathaway',cat:'sp500'},{symbol:'GE',name:'GE Aerospace',cat:'sp500'},
+    {symbol:'IBM',name:'IBM',cat:'sp500'},{symbol:'CRM',name:'Salesforce',cat:'sp500'},
+    {symbol:'LMT',name:'Lockheed Martin',cat:'sp500'},{symbol:'NOC',name:'Northrop Grumman',cat:'sp500'},
+    {symbol:'RTX',name:'RTX',cat:'sp500'},{symbol:'BA',name:'Boeing',cat:'sp500'},
+    {symbol:'CAT',name:'Caterpillar',cat:'sp500'},{symbol:'WFC',name:'Wells Fargo',cat:'sp500'},
+    {symbol:'ENI.MI',name:'Eni',cat:'italia'},{symbol:'ENEL.MI',name:'Enel',cat:'italia'},
+    {symbol:'ISP.MI',name:'Intesa Sanpaolo',cat:'italia'},{symbol:'UCG.MI',name:'UniCredit',cat:'italia'},
+    {symbol:'STM.MI',name:'STMicroelectronics',cat:'italia'},{symbol:'RACE.MI',name:'Ferrari',cat:'italia'},
+    {symbol:'MONC.MI',name:'Moncler',cat:'italia'},{symbol:'LDO.MI',name:'Leonardo',cat:'italia'},
+    {symbol:'G.MI',name:'Generali',cat:'italia'},{symbol:'PRY.MI',name:'Prysmian',cat:'italia'},
+    {symbol:'FBK.MI',name:'FinecoBank',cat:'italia'},{symbol:'MB.MI',name:'Mediobanca',cat:'italia'},
+    {symbol:'BAMI.MI',name:'Banco BPM',cat:'italia'},{symbol:'BMPS.MI',name:'Monte dei Paschi',cat:'italia'},
+    {symbol:'TIT.MI',name:'Telecom Italia',cat:'italia'},{symbol:'STLAM.MI',name:'Stellantis',cat:'italia'},
+    {symbol:'NEXI.MI',name:'Nexi',cat:'italia'},{symbol:'A2A.MI',name:'A2A',cat:'italia'},
+    {symbol:'ASML.AS',name:'ASML',cat:'europee'},{symbol:'SAP.DE',name:'SAP',cat:'europee'},
+    {symbol:'MC.PA',name:'LVMH',cat:'europee'},{symbol:'NESN.SW',name:'Nestlé',cat:'europee'},
+    {symbol:'RMS.PA',name:'Hermès',cat:'europee'},{symbol:'SIE.DE',name:'Siemens',cat:'europee'},
+    {symbol:'AZN.L',name:'AstraZeneca',cat:'europee'},{symbol:'AIR.PA',name:'Airbus',cat:'europee'},
+    {symbol:'VOW3.DE',name:'Volkswagen',cat:'europee'},{symbol:'BMW.DE',name:'BMW',cat:'europee'},
+    {symbol:'ROG.SW',name:'Roche',cat:'europee'},{symbol:'NOVN.SW',name:'Novartis',cat:'europee'},
+    {symbol:'OR.PA',name:"L'Oréal",cat:'europee'},{symbol:'TTE.PA',name:'TotalEnergies',cat:'europee'},
+    {symbol:'BABA',name:'Alibaba',cat:'cinesi'},{symbol:'JD',name:'JD.com',cat:'cinesi'},
+    {symbol:'BIDU',name:'Baidu',cat:'cinesi'},{symbol:'PDD',name:'PDD (Temu)',cat:'cinesi'},
+    {symbol:'NIO',name:'NIO',cat:'cinesi'},{symbol:'XPEV',name:'XPeng',cat:'cinesi'},
+    {symbol:'LI',name:'Li Auto',cat:'cinesi'},{symbol:'NTES',name:'NetEase',cat:'cinesi'},
+    {symbol:'BTC-USD',name:'Bitcoin',cat:'crypto'},{symbol:'ETH-USD',name:'Ethereum',cat:'crypto'},
+    {symbol:'BNB-USD',name:'BNB',cat:'crypto'},{symbol:'SOL-USD',name:'Solana',cat:'crypto'},
+    {symbol:'XRP-USD',name:'XRP',cat:'crypto'},{symbol:'ADA-USD',name:'Cardano',cat:'crypto'},
+    {symbol:'DOGE-USD',name:'Dogecoin',cat:'crypto'},{symbol:'AVAX-USD',name:'Avalanche',cat:'crypto'},
+    {symbol:'DOT-USD',name:'Polkadot',cat:'crypto'},{symbol:'LINK-USD',name:'Chainlink',cat:'crypto'},
+    {symbol:'MATIC-USD',name:'Polygon',cat:'crypto'},{symbol:'LTC-USD',name:'Litecoin',cat:'crypto'},
+    {symbol:'GC=F',name:'Oro Futures',cat:'commodities'},{symbol:'SI=F',name:'Argento Futures',cat:'commodities'},
+    {symbol:'CL=F',name:'Petrolio WTI',cat:'commodities'},{symbol:'NG=F',name:'Gas Naturale',cat:'commodities'},
+    {symbol:'GLD',name:'Oro ETF (GLD)',cat:'commodities'},{symbol:'SLV',name:'Argento ETF (SLV)',cat:'commodities'},
+    {symbol:'EURUSD=X',name:'EUR/USD',cat:'forex'},{symbol:'GBPUSD=X',name:'GBP/USD',cat:'forex'},
+    {symbol:'USDJPY=X',name:'USD/JPY',cat:'forex'},{symbol:'USDCHF=X',name:'USD/CHF',cat:'forex'},
+    {symbol:'^GSPC',name:'S&P 500',cat:'indici'},{symbol:'^IXIC',name:'NASDAQ Composite',cat:'indici'},
+    {symbol:'^DJI',name:'Dow Jones',cat:'indici'},{symbol:'^FTSE',name:'FTSE 100',cat:'indici'},
+    {symbol:'^FTSEMIB',name:'FTSE MIB',cat:'indici'},{symbol:'^DAX',name:'DAX',cat:'indici'},
+    {symbol:'SPY',name:'S&P 500 ETF',cat:'indici'},{symbol:'QQQ',name:'NASDAQ 100 ETF',cat:'indici'},
+];
+
+const CAT_LABELS = {
+    nasdaq:'NASDAQ', sp500:'S&P 500', italia:'Borsa IT', europee:'Europee',
+    cinesi:'Cinesi', crypto:'Crypto', commodities:'Mat. Prime',
+    forex:'Forex', indici:'Indici', other:'Altro'
+};
+const CAT_PILLS = {
+    nasdaq:'pill-nasdaq', sp500:'pill-sp500', italia:'pill-italia', europee:'pill-europee',
+    cinesi:'pill-cinesi', crypto:'pill-crypto', commodities:'pill-commodities',
+    forex:'pill-forex', indici:'pill-indici', other:'pill-other'
+};
+const PIE_COLORS = [
+    '#e94560','#2962ff','#2ecc71','#f1c40f','#e67e22','#9b59b6',
+    '#1abc9c','#3498db','#e74c3c','#27ae60','#f39c12','#8e44ad',
+    '#16a085','#c0392b','#2980b9','#d35400','#7f8c8d','#6c3483'
+];
+
+// =====================================================================
+// STATE
+// =====================================================================
+const PORTFOLIO_KEY = 'portfolioBorsa';
+let positions = [];
+let quotes    = {};
+let editingId = null;
+let sortCol   = 'pnl_pct';
+let sortDir   = -1;
+let isDark    = true;
+let dropdownItems = [];
+let dropdownIdx   = -1;
+
+// =====================================================================
+// THEME
+// =====================================================================
+function toggleTheme() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('light', !isDark);
+    try {
+        const d = localStorage.getItem('dashboardBorsa');
+        const p = d ? JSON.parse(d) : {};
+        p.dark = isDark;
+        localStorage.setItem('dashboardBorsa', JSON.stringify(p));
+    } catch(e) {}
+}
+function loadTheme() {
+    try {
+        const d = localStorage.getItem('dashboardBorsa');
+        if (d) { const p = JSON.parse(d); if (p.dark !== undefined) isDark = p.dark; }
+    } catch(e) {}
+    document.documentElement.classList.toggle('light', !isDark);
+}
+
+// =====================================================================
+// LOCALSTORAGE
+// =====================================================================
+function loadPositions() {
+    try { positions = JSON.parse(localStorage.getItem(PORTFOLIO_KEY) || '[]'); }
+    catch(e) { positions = []; }
+}
+function savePositions() {
+    try { localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(positions)); }
+    catch(e) {}
+}
+
+// =====================================================================
+// YAHOO FINANCE
+// =====================================================================
+async function fetchWithTimeout(url, options, ms) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms || 5000);
+    try { return await fetch(url, { ...options, signal: ctrl.signal }); }
+    finally { clearTimeout(t); }
+}
+async function fetchJson(url, ms) {
+    const proxies = [
+        url,
+        'https://corsproxy.io/?' + encodeURIComponent(url),
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
+    ];
+    const attempts = proxies.map(async u => {
+        const res = await fetchWithTimeout(u, { headers: { Accept: 'application/json' } }, ms || 6000);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const txt = await res.text();
+        return JSON.parse(txt.replace(/^\uFEFF/, '').replace(/^\)\]\}',?\s*/, '').trim());
+    });
+    return Promise.any(attempts);
+}
+async function fetchQuote(symbol) {
+    const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' +
+        encodeURIComponent(symbol) + '?interval=1d&range=2d';
+    try {
+        const data = await fetchJson(url, 7000);
+        const res = data && data.chart && data.chart.result && data.chart.result[0];
+        if (!res) return null;
+        const meta = res.meta || {};
+        return {
+            price:     meta.regularMarketPrice || null,
+            changePct: meta.regularMarketChangePercent || 0,
+            currency:  meta.currency || 'USD'
+        };
+    } catch(e) { return null; }
+}
+
+// =====================================================================
+// REFRESH PRICES
+// =====================================================================
+async function refreshPrices() {
+    if (!positions.length) { alert('Aggiungi prima almeno una posizione.'); return; }
+    const btn     = document.getElementById('refreshBtn');
+    const spinner = document.getElementById('refreshSpinner');
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    const symbols = [...new Set(positions.map(p => p.symbol))];
+    await Promise.allSettled(symbols.map(async sym => {
+        const q = await fetchQuote(sym);
+        if (q) quotes[sym] = q;
+    }));
+
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    const now = new Date();
+    document.getElementById('updateInfo').textContent =
+        'Aggiornato: ' + now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    renderTable();
+    renderSummary();
+    renderPie();
+}
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+function fmtNum(n, dec) {
+    if (n == null || !isFinite(n)) return '—';
+    return n.toLocaleString('it-IT', { minimumFractionDigits: dec ?? 2, maximumFractionDigits: dec ?? 2 });
+}
+function fmtCur(n, currency) {
+    if (n == null || !isFinite(n)) return '—';
+    const sym = currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+    return sym + fmtNum(Math.abs(n));
+}
+function escH(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function getCalc(pos) {
+    const q = quotes[pos.symbol];
+    const cur  = (q && q.currency) || 'USD';
+    const price = q ? q.price : null;
+    const inv   = pos.qty * pos.buyPrice;
+    const val   = price != null ? pos.qty * price : null;
+    const pnl   = val != null ? val - inv : null;
+    const pnlPct = (pnl != null && inv > 0) ? (pnl / inv) * 100 : null;
+    const dayPct = q ? q.changePct : null;
+    const dayAbs = (dayPct != null && val != null) ? val * dayPct / 100 : null;
+    return { cur, price, inv, val, pnl, pnlPct, dayPct, dayAbs };
+}
+
+// =====================================================================
+// SORT
+// =====================================================================
+function setSort(col) {
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = -1; }
+    renderTable();
+}
+function getSorted() {
+    return [...positions].sort((a, b) => {
+        const da = getCalc(a), db = getCalc(b);
+        let va, vb;
+        switch (sortCol) {
+            case 'name':    va = (a.name||a.symbol).toLowerCase(); vb = (b.name||b.symbol).toLowerCase(); break;
+            case 'qty':     va = a.qty;       vb = b.qty; break;
+            case 'buy':     va = a.buyPrice;  vb = b.buyPrice; break;
+            case 'price':   va = da.price??0; vb = db.price??0; break;
+            case 'value':   va = da.val??0;   vb = db.val??0; break;
+            case 'day':     va = da.dayPct??-Infinity; vb = db.dayPct??-Infinity; break;
+            case 'pnl':     va = da.pnl??-Infinity;    vb = db.pnl??-Infinity; break;
+            case 'pnl_pct': va = da.pnlPct??-Infinity; vb = db.pnlPct??-Infinity; break;
+            default:        va = 0; vb = 0;
+        }
+        if (typeof va === 'string') return sortDir * va.localeCompare(vb);
+        return sortDir * (va - vb);
+    });
+}
+
+// =====================================================================
+// RENDER TABLE
+// =====================================================================
+function renderTable() {
+    const area = document.getElementById('tableArea');
+    if (!positions.length) {
+        area.innerHTML = `<div class="empty-state">
+            <strong>Nessuna posizione nel portafoglio</strong>
+            <p>Aggiungi il tuo primo asset per iniziare a tracciare i tuoi investimenti.</p>
+            <button class="btn btn-green" onclick="openAddModal()">+ Aggiungi Posizione</button>
+        </div>`;
+        document.getElementById('summaryWrap').style.display = 'none';
+        return;
+    }
+    document.getElementById('summaryWrap').style.display = 'flex';
+
+    const th = (col, lbl) => {
+        const active = sortCol === col;
+        const icon = active ? (sortDir === -1 ? '↓' : '↑') : '⇅';
+        return `<th class="${active ? 'active-sort' : ''}" onclick="setSort('${col}')">${escH(lbl)}<span class="sort-icon">${icon}</span></th>`;
+    };
+
+    let html = `<div class="table-wrap"><table class="rank-table"><thead><tr>
+        ${th('name','Asset')}
+        ${th('qty','Quantità')}
+        ${th('buy','P. Acquisto')}
+        ${th('price','P. Attuale')}
+        ${th('day','Oggi %')}
+        ${th('value','Valore')}
+        ${th('pnl','P&L')}
+        ${th('pnl_pct','P&L %')}
+        <th>Note</th>
+        <th></th>
+    </tr></thead><tbody>`;
+
+    for (const pos of getSorted()) {
+        const d   = getCalc(pos);
+        const cat = pos.cat || 'other';
+        const pill = `<span class="cat-pill ${CAT_PILLS[cat]||'pill-other'}">${escH(CAT_LABELS[cat]||cat)}</span>`;
+
+        const priceStr = d.price != null
+            ? fmtNum(d.price, d.price < 1 ? 4 : 2)
+            : '<span class="val-na">—</span>';
+
+        const dayStr = d.dayPct != null
+            ? `<span class="${d.dayPct >= 0 ? 'pos' : 'neg'}">${d.dayPct >= 0 ? '+' : ''}${fmtNum(d.dayPct)}%</span>`
+            : '<span class="val-na">—</span>';
+
+        const valStr = d.val != null ? fmtCur(d.val, d.cur) : '<span class="val-na">—</span>';
+
+        let pnlStr = '<span class="val-na">—</span>';
+        let pnlPctStr = '<span class="val-na">—</span>';
+        if (d.pnl != null) {
+            const cls  = d.pnl >= 0 ? 'pos' : 'neg';
+            const bCls = d.pnl >= 0 ? 'bar-pos' : 'bar-neg';
+            const bW   = Math.min(100, Math.abs(d.pnlPct || 0) * 1.5);
+            pnlStr = `<span class="${cls}">${d.pnl >= 0 ? '+' : ''}${fmtCur(d.pnl, d.cur)}</span>`;
+            pnlPctStr = `<span class="${cls}">${d.pnlPct >= 0 ? '+' : ''}${fmtNum(d.pnlPct)}%</span>
+                <div class="pnl-bar-wrap"><div class="pnl-bar ${bCls}" style="width:${bW}%"></div></div>`;
+        }
+
+        const notesTxt = pos.notes
+            ? `<span class="notes-text" title="${escH(pos.notes)}">${escH(pos.notes)}</span>`
+            : '<span class="val-na">—</span>';
+
+        const qtyDec = pos.qty % 1 === 0 ? 0 : 4;
+
+        html += `<tr>
+            <td>
+                <div style="font-weight:500">${escH(pos.name || pos.symbol)}</div>
+                <div style="display:flex;gap:6px;margin-top:2px;align-items:center">
+                    <span class="td-symbol">${escH(pos.symbol)}</span>${pill}
+                </div>
+            </td>
+            <td class="td-num">${fmtNum(pos.qty, qtyDec)}</td>
+            <td class="td-num">${fmtCur(pos.buyPrice, d.cur)}</td>
+            <td class="td-num">${priceStr}</td>
+            <td class="td-num">${dayStr}</td>
+            <td class="td-num">${valStr}</td>
+            <td class="td-num">${pnlStr}</td>
+            <td class="td-num">${pnlPctStr}</td>
+            <td>${notesTxt}</td>
+            <td>
+                <div class="action-btns">
+                    <button class="btn-icon-sm" onclick="openEditModal('${escH(pos.id)}')" title="Modifica">✎</button>
+                    <button class="btn-icon-sm danger" onclick="deletePosition('${escH(pos.id)}')" title="Elimina">✕</button>
+                </div>
+            </td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+    area.innerHTML = html;
+}
+
+// =====================================================================
+// SUMMARY CARDS
+// =====================================================================
+function renderSummary() {
+    if (!positions.length) return;
+    // raggruppa per valuta
+    const byCur = {};
+    for (const pos of positions) {
+        const d   = getCalc(pos);
+        const cur = d.cur;
+        if (!byCur[cur]) byCur[cur] = { inv: 0, val: 0, pnl: 0, dayAbs: 0, hasQuote: false };
+        byCur[cur].inv += d.inv;
+        if (d.val != null) {
+            byCur[cur].val    += d.val;
+            byCur[cur].pnl    += d.pnl || 0;
+            byCur[cur].dayAbs += d.dayAbs || 0;
+            byCur[cur].hasQuote = true;
+        }
+    }
+    const currencies = Object.keys(byCur);
+    const mainCur  = currencies[0] || 'USD';
+    const m        = byCur[mainCur];
+
+    const setVal = (id, val, cur, cls) => {
+        const el = document.getElementById(id);
+        el.textContent = fmtCur(val, cur);
+        el.className = 'stat-value ' + (cls || 'neutral');
+    };
+    const setSub = (id, txt) => { document.getElementById(id).textContent = txt; };
+
+    // Valore totale
+    if (m.hasQuote) setVal('statTotal', m.val, mainCur, 'neutral');
+    else document.getElementById('statTotal').textContent = '—';
+    setSub('statTotalSub', `${positions.length} posizion${positions.length === 1 ? 'e' : 'i'}`);
+
+    // Investito
+    setVal('statInvested', m.inv, mainCur, 'neutral');
+    setSub('statInvestedSub', 'costo base');
+
+    // P&L
+    if (m.hasQuote) {
+        const pct = m.inv > 0 ? (m.pnl / m.inv) * 100 : 0;
+        setVal('statPnl', m.pnl, mainCur, m.pnl >= 0 ? 'pos' : 'neg');
+        setSub('statPnlSub', (pct >= 0 ? '+' : '') + fmtNum(pct) + '% dal costo base');
+    } else {
+        document.getElementById('statPnl').textContent = '—';
+        setSub('statPnlSub', '');
+    }
+
+    // Variazione oggi
+    if (m.hasQuote) {
+        setVal('statToday', m.dayAbs, mainCur, m.dayAbs >= 0 ? 'pos' : 'neg');
+        setSub('statTodaySub', 'variazione giornaliera');
+    } else {
+        document.getElementById('statToday').textContent = '—';
+        setSub('statTodaySub', '');
+    }
+}
+
+// =====================================================================
+// PIE CHART
+// =====================================================================
+function renderPie() {
+    const canvas = document.getElementById('pieChart');
+    const ctx    = canvas.getContext('2d');
+    const legend = document.getElementById('pieLegend');
+
+    const slices = positions
+        .filter(p => quotes[p.symbol] && quotes[p.symbol].price)
+        .map(p => ({ label: p.name || p.symbol, value: p.qty * quotes[p.symbol].price }))
+        .filter(s => s.value > 0)
+        .sort((a, b) => b.value - a.value);
+
+    const total = slices.reduce((s, d) => s + d.value, 0);
+    if (!total) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        legend.innerHTML = '<span style="color:var(--text-secondary);font-size:0.74rem">Clicca "Aggiorna Prezzi"<br>per vedere l\'allocazione</span>';
+        return;
+    }
+
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const r  = Math.min(cx, cy) - 3;
+    let angle = -Math.PI / 2;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    slices.forEach((s, i) => {
+        const sweep = (s.value / total) * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, angle, angle + sweep);
+        ctx.closePath();
+        ctx.fillStyle = PIE_COLORS[i % PIE_COLORS.length];
+        ctx.fill();
+        angle += sweep;
+    });
+
+    // cerchio interno (donut)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.52, 0, 2 * Math.PI);
+    ctx.fillStyle = document.documentElement.classList.contains('light') ? '#ffffff' : '#16213e';
+    ctx.fill();
+
+    legend.innerHTML = slices.slice(0, 9).map((s, i) => {
+        const pct  = (s.value / total * 100).toFixed(1);
+        const lbl  = s.label.length > 15 ? s.label.slice(0, 14) + '…' : s.label;
+        return `<div class="pie-legend-item">
+            <div class="pie-legend-dot" style="background:${PIE_COLORS[i % PIE_COLORS.length]}"></div>
+            <span>${escH(lbl)}</span>
+            <span class="pie-legend-pct">${pct}%</span>
+        </div>`;
+    }).join('') + (slices.length > 9
+        ? `<div style="font-size:0.68rem;color:var(--text-secondary);margin-top:3px">+${slices.length - 9} altri</div>`
+        : '');
+}
+
+// =====================================================================
+// MODAL
+// =====================================================================
+function openAddModal() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = 'Aggiungi Posizione';
+    document.getElementById('modalSymbol').value   = '';
+    document.getElementById('modalName').value     = '';
+    document.getElementById('modalQty').value      = '';
+    document.getElementById('modalBuyPrice').value = '';
+    document.getElementById('modalNotes').value    = '';
+    document.getElementById('modalCat').value      = 'nasdaq';
+    closeSymbolDropdown();
+    document.getElementById('posModal').classList.add('open');
+    setTimeout(() => document.getElementById('modalSymbol').focus(), 60);
+}
+function openEditModal(id) {
+    const pos = positions.find(p => p.id === id);
+    if (!pos) return;
+    editingId = id;
+    document.getElementById('modalTitle').textContent = 'Modifica Posizione';
+    document.getElementById('modalSymbol').value   = pos.symbol;
+    document.getElementById('modalName').value     = pos.name || '';
+    document.getElementById('modalQty').value      = pos.qty;
+    document.getElementById('modalBuyPrice').value = pos.buyPrice;
+    document.getElementById('modalNotes').value    = pos.notes || '';
+    document.getElementById('modalCat').value      = pos.cat || 'other';
+    closeSymbolDropdown();
+    document.getElementById('posModal').classList.add('open');
+}
+function closeModal() {
+    document.getElementById('posModal').classList.remove('open');
+    closeSymbolDropdown();
+}
+function savePosition() {
+    const symbol   = document.getElementById('modalSymbol').value.trim().toUpperCase();
+    const name     = document.getElementById('modalName').value.trim();
+    const qty      = parseFloat(document.getElementById('modalQty').value);
+    const buyPrice = parseFloat(document.getElementById('modalBuyPrice').value);
+    const notes    = document.getElementById('modalNotes').value.trim();
+    const cat      = document.getElementById('modalCat').value;
+
+    if (!symbol)               { alert('Inserisci un simbolo.');            return; }
+    if (!qty || qty <= 0)      { alert('Inserisci una quantità valida.');   return; }
+    if (!buyPrice || buyPrice <= 0) { alert('Inserisci un prezzo valido.'); return; }
+
+    if (editingId) {
+        const idx = positions.findIndex(p => p.id === editingId);
+        if (idx !== -1) positions[idx] = { ...positions[idx], symbol, name: name || symbol, qty, buyPrice, notes, cat };
+    } else {
+        positions.push({ id: genId(), symbol, name: name || symbol, qty, buyPrice, notes, cat });
+    }
+    savePositions();
+    closeModal();
+    renderTable();
+    renderSummary();
+    renderPie();
+}
+function deletePosition(id) {
+    const pos = positions.find(p => p.id === id);
+    if (!pos || !confirm(`Eliminare "${pos.name || pos.symbol}"?`)) return;
+    positions = positions.filter(p => p.id !== id);
+    savePositions();
+    renderTable();
+    renderSummary();
+    renderPie();
+}
+
+// =====================================================================
+// SYMBOL AUTOCOMPLETE
+// =====================================================================
+function symbolSearchInput() {
+    const q = document.getElementById('modalSymbol').value.trim().toLowerCase();
+    if (q.length < 1) { closeSymbolDropdown(); return; }
+    dropdownItems = ASSETS_FLAT.filter(a =>
+        a.symbol.toLowerCase().includes(q) || a.name.toLowerCase().includes(q)
+    ).slice(0, 8);
+    dropdownIdx = -1;
+    renderSymbolDropdown();
+}
+function renderSymbolDropdown() {
+    const dd = document.getElementById('symbolDropdown');
+    if (!dropdownItems.length) { dd.classList.remove('open'); return; }
+    dd.innerHTML = dropdownItems.map((a, i) =>
+        `<div class="asset-dropdown-item${i === dropdownIdx ? ' kbd-active' : ''}" onclick="selectSymbol(${i})">
+            <span class="adi-symbol">${escH(a.symbol)}</span>
+            <span class="adi-name">${escH(a.name)}</span>
+            <span class="adi-cat">${escH(CAT_LABELS[a.cat] || a.cat)}</span>
+        </div>`
+    ).join('');
+    dd.classList.add('open');
+}
+function selectSymbol(idx) {
+    const a = dropdownItems[idx];
+    if (!a) return;
+    document.getElementById('modalSymbol').value = a.symbol;
+    if (!document.getElementById('modalName').value) document.getElementById('modalName').value = a.name;
+    document.getElementById('modalCat').value = a.cat || 'other';
+    closeSymbolDropdown();
+}
+function symbolSearchKeyDown(e) {
+    const dd = document.getElementById('symbolDropdown');
+    if (!dd.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        dropdownIdx = Math.min(dropdownIdx + 1, dropdownItems.length - 1);
+        renderSymbolDropdown();
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        dropdownIdx = Math.max(dropdownIdx - 1, -1);
+        renderSymbolDropdown();
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (dropdownIdx >= 0) selectSymbol(dropdownIdx);
+        else closeSymbolDropdown();
+    } else if (e.key === 'Escape') {
+        closeSymbolDropdown();
+    }
+}
+function closeSymbolDropdown() {
+    document.getElementById('symbolDropdown').classList.remove('open');
+    dropdownItems = [];
+    dropdownIdx   = -1;
+}
+
+// =====================================================================
+// EXPORT CSV
+// =====================================================================
+function exportCsv() {
+    if (!positions.length) { alert('Nessuna posizione da esportare.'); return; }
+    const rows = [['Simbolo','Nome','Categoria','Quantità','Prezzo Acquisto','Prezzo Attuale','Valuta','Valore','P&L','P&L %','Variazione Oggi %','Note']];
+    for (const pos of positions) {
+        const d = getCalc(pos);
+        rows.push([
+            pos.symbol, pos.name || '', CAT_LABELS[pos.cat] || pos.cat,
+            pos.qty, pos.buyPrice,
+            d.price != null ? d.price : '',
+            d.cur,
+            d.val  != null ? d.val.toFixed(2)    : '',
+            d.pnl  != null ? d.pnl.toFixed(2)    : '',
+            d.pnlPct != null ? d.pnlPct.toFixed(2) : '',
+            d.dayPct != null ? d.dayPct.toFixed(2) : '',
+            pos.notes || ''
+        ]);
+    }
+    const csv  = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'portafoglio_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+loadTheme();
+loadPositions();
+renderTable();
+renderSummary();
+
+document.getElementById('posModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#symbolDropdown') && !e.target.closest('#modalSymbol')) {
+        closeSymbolDropdown();
+    }
+});
+</script>
+</body>
+</html>
