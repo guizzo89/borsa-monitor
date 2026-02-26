@@ -625,6 +625,7 @@ function getSorted() {
             case 'name':    va = (a.name||a.symbol).toLowerCase(); vb = (b.name||b.symbol).toLowerCase(); break;
             case 'qty':     va = a.qty;       vb = b.qty; break;
             case 'buy':     va = a.buyPrice;  vb = b.buyPrice; break;
+            case 'inv':     va = da.inv??0;   vb = db.inv??0; break;
             case 'price':   va = da.price??0; vb = db.price??0; break;
             case 'value':   va = da.val??0;   vb = db.val??0; break;
             case 'day':     va = da.dayPct??-Infinity; vb = db.dayPct??-Infinity; break;
@@ -663,6 +664,7 @@ function renderTable() {
         ${th('name','Asset')}
         ${th('qty','Quantità')}
         ${th('buy','P. Acquisto')}
+        ${th('inv','Importo Inv.')}
         ${th('price','P. Attuale')}
         ${th('day','Oggi %')}
         ${th('value','Valore')}
@@ -713,6 +715,7 @@ function renderTable() {
             </td>
             <td class="td-num">${fmtNum(pos.qty, qtyDec)}</td>
             <td class="td-num">${fmtCur(pos.buyPrice, d.cur)}</td>
+            <td class="td-num">${fmtCur(d.inv, d.cur)}</td>
             <td class="td-num">${priceStr}</td>
             <td class="td-num">${dayStr}</td>
             <td class="td-num">${valStr}</td>
