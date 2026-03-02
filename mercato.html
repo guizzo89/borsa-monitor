@@ -604,6 +604,7 @@
         <div class="filter-row">
             <span class="filter-label">Periodo class.</span>
             <div class="filter-btns">
+                <button class="period-btn" data-period="today" data-interval="5m">Oggi</button>
                 <button class="period-btn" data-period="2d" data-interval="1d">1 Giorno</button>
                 <button class="period-btn" data-period="5d" data-interval="1d">1 Settimana</button>
                 <button class="period-btn active" data-period="1mo" data-interval="1d">1 Mese</button>
@@ -611,6 +612,16 @@
                 <button class="period-btn" data-period="6mo" data-interval="1wk">6 Mesi</button>
                 <button class="period-btn" data-period="1y" data-interval="1wk">1 Anno</button>
                 <button class="period-btn" data-period="ytd" data-interval="1d">YTD</button>
+                <button class="period-btn" data-period="custom" data-interval="1d">Personalizzato</button>
+            </div>
+        </div>
+        <div class="filter-row" id="customRangeRow" style="display:none">
+            <span class="filter-label">Arco di tempo</span>
+            <div class="filter-btns" style="align-items:center;gap:8px">
+                <span style="font-size:0.82rem;color:var(--text-secondary)">Da</span>
+                <input type="date" id="customDateFrom" class="limit-input" style="width:140px;text-align:left">
+                <span style="font-size:0.82rem;color:var(--text-secondary)">A</span>
+                <input type="date" id="customDateTo" class="limit-input" style="width:140px;text-align:left">
             </div>
         </div>
 
@@ -1429,6 +1440,20 @@ document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        const customRow = document.getElementById('customRangeRow');
+        if (btn.dataset.period === 'custom') {
+            customRow.style.display = '';
+            // Default: from 30 days ago to today
+            const today = new Date();
+            const from = new Date(today); from.setDate(from.getDate() - 30);
+            const fmt = d => d.toISOString().slice(0, 10);
+            const fromEl = document.getElementById('customDateFrom');
+            const toEl = document.getElementById('customDateTo');
+            if (!fromEl.value) fromEl.value = fmt(from);
+            if (!toEl.value) toEl.value = fmt(today);
+        } else {
+            customRow.style.display = 'none';
+        }
     });
 });
 document.querySelectorAll('.limit-btn').forEach(btn => {
@@ -1573,9 +1598,18 @@ async function fetchJson(url, ms) {
     }));
 }
 
-async function fetchPerf(symbol, range, interval) {
-    const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' +
-        encodeURIComponent(symbol) + '?interval=' + interval + '&range=' + range;
+async function fetchPerf(symbol, range, interval, opts) {
+    let url;
+    if (range === 'today') {
+        url = 'https://query2.finance.yahoo.com/v8/finance/chart/' +
+            encodeURIComponent(symbol) + '?interval=5m&range=1d';
+    } else if (range === 'custom' && opts && opts.period1 && opts.period2) {
+        url = 'https://query2.finance.yahoo.com/v8/finance/chart/' +
+            encodeURIComponent(symbol) + '?interval=1d&period1=' + opts.period1 + '&period2=' + opts.period2;
+    } else {
+        url = 'https://query2.finance.yahoo.com/v8/finance/chart/' +
+            encodeURIComponent(symbol) + '?interval=' + interval + '&range=' + range;
+    }
     try {
         const data = await fetchJson(url, 7000);
         const res = data?.chart?.result?.[0];
@@ -1583,14 +1617,14 @@ async function fetchPerf(symbol, range, interval) {
         const meta = res.meta || {};
         const rawCloses = res?.indicators?.quote?.[0]?.close || [];
         const closes = rawCloses.filter(c => c != null && isFinite(c) && c > 0);
-        if (range === '2d' && meta.regularMarketChangePercent != null) {
+        if ((range === '2d' || range === 'today') && meta.regularMarketChangePercent != null) {
             return {
                 changePct: meta.regularMarketChangePercent,
                 currentPrice: meta.regularMarketPrice || null,
                 currency: meta.currency || ''
             };
         }
-        const curPrice = (meta.regularMarketPrice && isFinite(meta.regularMarketPrice) && meta.regularMarketPrice > 0)
+        const curPrice = (range !== 'custom' && meta.regularMarketPrice && isFinite(meta.regularMarketPrice) && meta.regularMarketPrice > 0)
             ? meta.regularMarketPrice : null;
         if (closes.length < 1) return null;
         const startPrice = closes[0];
@@ -2155,6 +2189,18 @@ async function loadRanking() {
 
     const range = periodBtn.dataset.period;
     const interval = periodBtn.dataset.interval;
+
+    let perfOpts = null;
+    if (range === 'custom') {
+        const fromVal = document.getElementById('customDateFrom').value;
+        const toVal = document.getElementById('customDateTo').value;
+        if (!fromVal || !toVal) { alert('Seleziona le date Da e A per il periodo personalizzato'); return; }
+        const p1 = Math.floor(new Date(fromVal).getTime() / 1000);
+        const p2 = Math.floor(new Date(toVal + 'T23:59:59').getTime() / 1000);
+        if (p1 >= p2) { alert('La data "Da" deve essere precedente alla data "A"'); return; }
+        perfOpts = { period1: p1, period2: p2 };
+    }
+
     const customVal = parseInt(document.getElementById('limitCustom').value) || 0;
     const limitBtn = document.querySelector('.limit-btn.active');
     const limit = customVal > 0 ? customVal : (limitBtn ? parseInt(limitBtn.dataset.limit) || 0 : 0);
@@ -2190,7 +2236,7 @@ async function loadRanking() {
         '<div class="status-box"><div class="spinner"></div><div>Recupero dati per <strong>' + total + ' asset</strong>...</div></div>';
 
     const tasks = toFetch.map(asset => async () => {
-        const perf = await fetchPerf(asset.symbol, range, interval);
+        const perf = await fetchPerf(asset.symbol, range, interval, perfOpts);
         done++;
         document.getElementById('progressText').textContent = done + ' / ' + total;
         if (!perf) return null;
@@ -3324,12 +3370,23 @@ async function runQuickRankingSearch() {
     const periodBtn = document.querySelector('.period-btn.active');
     const range = periodBtn ? periodBtn.dataset.period : '1mo';
     const interval = periodBtn ? periodBtn.dataset.interval : '1d';
+    let qsPerfOpts = null;
+    if (range === 'custom') {
+        const fromVal = document.getElementById('customDateFrom').value;
+        const toVal = document.getElementById('customDateTo').value;
+        if (fromVal && toVal) {
+            qsPerfOpts = {
+                period1: Math.floor(new Date(fromVal).getTime() / 1000),
+                period2: Math.floor(new Date(toVal + 'T23:59:59').getTime() / 1000)
+            };
+        }
+    }
     const btn = document.getElementById('qsRankBtn');
     btn.disabled = true; btn.textContent = '...';
     const area = document.getElementById('qsRankArea');
     area.style.display = 'block';
     area.innerHTML = '<div class="status-box" style="padding:14px 20px"><div class="spinner" style="width:18px;height:18px;border-width:2px;margin-bottom:0;vertical-align:middle;margin-right:8px;display:inline-block"></div>Classifica di <strong>' + escapeHtml(symbol) + '</strong>...</div>';
-    const perf = await fetchPerf(symbol, range, interval);
+    const perf = await fetchPerf(symbol, range, interval, qsPerfOpts);
     btn.disabled = false; btn.textContent = 'Classifica';
     if (!perf) {
         area.innerHTML = '<div class="status-box" style="padding:12px 16px;background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.3)">Nessun dato trovato per <strong>' + escapeHtml(symbol) + '</strong>. Verifica il simbolo (es. AAPL, ENI.MI, BTC-USD, EURUSD=X).</div>';
