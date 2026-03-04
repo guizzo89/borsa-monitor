@@ -1578,7 +1578,7 @@ async function runWithConcurrency(tasks, limit) {
     async function worker() {
         while (idx < tasks.length) {
             const i = idx++;
-            results[i] = await tasks[i]();
+            try { results[i] = await tasks[i](); } catch (e) { results[i] = null; }
         }
     }
     await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
@@ -3030,8 +3030,8 @@ async function runAnalysis3() {
         '<span style="font-size:0.78rem">Tecnico+ · Fondamentale+ · Rischio · Momentum 3TF · News+</span></div></div>';
 
     const tasks = toAnalyze.map(asset => async () => {
-        const equity = isEquity(asset.symbol);
         try {
+            const equity = isEquity(asset.symbol);
             const [priceData, fundData, news] = await Promise.all([
                 fetchPriceHistory(asset.symbol),
                 equity ? fetchFundamentals(asset.symbol) : Promise.resolve(null),
