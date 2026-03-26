@@ -459,7 +459,9 @@
     </div>
 </div>
 
+<script src="assets/js/borso-storage.js"></script>
 <script>
+const appStorage = window.BorsaStorage;
 // ==================== ASSET DEFINITIONS ====================
 const ASSETS = {
     nasdaq: {
@@ -700,15 +702,12 @@ let dropdownItems = [];
 function toggleTheme() {
     isDark = !isDark;
     document.documentElement.classList.toggle('light', !isDark);
-    try {
-        const d = localStorage.getItem('dashboardBorsa');
-        if (d) { const p = JSON.parse(d); p.dark = isDark; localStorage.setItem('dashboardBorsa', JSON.stringify(p)); }
-    } catch(e) {}
+    appStorage.mergeJSON('dashboardBorsa', { dark: isDark }).catch(() => {});
 }
-function loadTheme() {
+async function loadTheme() {
     try {
-        const d = localStorage.getItem('dashboardBorsa');
-        if (d) { const p = JSON.parse(d); if (p.dark !== undefined) isDark = p.dark; }
+        const p = await appStorage.getJSON('dashboardBorsa', null);
+        if (p && p.dark !== undefined) isDark = p.dark;
     } catch(e) {}
     document.documentElement.classList.toggle('light', !isDark);
 }
@@ -716,15 +715,14 @@ function loadTheme() {
 // ==================== CUSTOM CATEGORIES ====================
 const CUSTOM_CATS_KEY = 'rankingCustomCats';
 
-function loadCustomCats() {
+async function loadCustomCats() {
     try {
-        const d = localStorage.getItem(CUSTOM_CATS_KEY);
-        if (d) customCats = JSON.parse(d);
+        customCats = await appStorage.getJSON(CUSTOM_CATS_KEY, {}) || {};
     } catch(e) { customCats = {}; }
 }
 
 function saveCustomCats() {
-    try { localStorage.setItem(CUSTOM_CATS_KEY, JSON.stringify(customCats)); } catch(e) {}
+    appStorage.setJSON(CUSTOM_CATS_KEY, customCats).catch(() => {});
 }
 
 function getCustomColor(key) {
@@ -1298,10 +1296,16 @@ function showShareToast(msg) {
     t.textContent = msg; t.style.opacity = '1';
     clearTimeout(t._tmr); t._tmr = setTimeout(() => { t.style.opacity = '0'; }, 3500);
 }
-function exportShareLink() {
+async function exportShareLink() {
     const share = { v: 1 };
-    try { const p = JSON.parse(localStorage.getItem('dashboardBorsaPresets') || 'null'); if (p && Object.keys(p).length) share.presets = p; } catch(e) {}
-    try { const c = JSON.parse(localStorage.getItem('rankingCustomCats') || 'null'); if (c && Object.keys(c).length) share.cats = c; } catch(e) {}
+    try {
+        const p = await appStorage.getJSON('dashboardBorsaPresets', null);
+        if (p && Object.keys(p).length) share.presets = p;
+    } catch(e) {}
+    try {
+        const c = await appStorage.getJSON('rankingCustomCats', null);
+        if (c && Object.keys(c).length) share.cats = c;
+    } catch(e) {}
     if (!share.presets && !share.cats) { alert('Nessuna categoria o preset personalizzato da condividere.'); return; }
     const url = location.origin + location.pathname + '?share=' + _encodeShare(share);
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1310,7 +1314,7 @@ function exportShareLink() {
             .catch(() => prompt('Copia questo link:', url));
     } else { prompt('Copia questo link:', url); }
 }
-function checkShareImport() {
+async function checkShareImport() {
     const encoded = new URLSearchParams(location.search).get('share');
     if (!encoded) return;
     history.replaceState(null, '', location.pathname);
@@ -1318,10 +1322,18 @@ function checkShareImport() {
         const share = _decodeShare(encoded);
         let n = 0;
         if (share.presets && typeof share.presets === 'object') {
-            try { const ex = JSON.parse(localStorage.getItem('dashboardBorsaPresets') || '{}'); localStorage.setItem('dashboardBorsaPresets', JSON.stringify({ ...ex, ...share.presets })); n += Object.keys(share.presets).length; } catch(e) {}
+            try {
+                const ex = await appStorage.getJSON('dashboardBorsaPresets', {});
+                await appStorage.setJSON('dashboardBorsaPresets', { ...ex, ...share.presets });
+                n += Object.keys(share.presets).length;
+            } catch(e) {}
         }
         if (share.cats && typeof share.cats === 'object') {
-            try { const ex = JSON.parse(localStorage.getItem('rankingCustomCats') || '{}'); localStorage.setItem('rankingCustomCats', JSON.stringify({ ...ex, ...share.cats })); n += Object.keys(share.cats).length; } catch(e) {}
+            try {
+                const ex = await appStorage.getJSON('rankingCustomCats', {});
+                await appStorage.setJSON('rankingCustomCats', { ...ex, ...share.cats });
+                n += Object.keys(share.cats).length;
+            } catch(e) {}
         }
         if (n > 0) setTimeout(() => showShareToast('✓ ' + n + (n === 1 ? ' elemento importato' : ' elementi importati') + '!'), 800);
     } catch(e) { console.warn('Share link non valido'); }
@@ -1444,11 +1456,14 @@ document.addEventListener('click', function(e) {
 });
 
 // ==================== INIT ====================
-loadTheme();
-checkShareImport();
-loadCustomCats();
-buildAllAssets();
-renderCustomCatButtons();
+(async function bootstrap() {
+    await appStorage.ready(['dashboardBorsa', 'dashboardBorsaPresets', 'rankingCustomCats']);
+    await loadTheme();
+    await checkShareImport();
+    await loadCustomCats();
+    buildAllAssets();
+    renderCustomCatButtons();
+})();
 </script>
 </body>
 </html>

@@ -410,9 +410,11 @@
 
     <div class="toast" id="toast"></div>
 
+    <script src="assets/js/borso-storage.js"></script>
     <script>
         const STORAGE_KEY = 'dashboardBorsa';
         const PRESETS_KEY = 'dashboardBorsaPresets';
+        const appStorage = window.BorsaStorage;
 
         const INTERVALS = [
             { value: '1', label: '1m' }, { value: '5', label: '5m' },
@@ -1052,13 +1054,12 @@
         // --- Storage ---
         let storageOk = false;
 
-        function testStorage() {
-            try {
-                localStorage.setItem('__test__', '1');
-                const v = localStorage.getItem('__test__');
-                localStorage.removeItem('__test__');
-                if (v === '1') { storageOk = true; return true; }
-            } catch(e) {}
+        async function testStorage() {
+            storageOk = await appStorage.hasPersistentStorage();
+            if (storageOk) {
+                console.log('Storage attivo:', await appStorage.getBackendName());
+                return true;
+            }
             storageOk = false;
             console.error('localStorage NON funziona!');
             return false;
@@ -1067,21 +1068,23 @@
         function saveState() {
             if (!storageOk) return;
             try {
-                const data = JSON.stringify({
+                const data = {
                     charts: currentCharts, preset: currentPreset,
                     cols: currentCols, dark: isDark
-                });
-                localStorage.setItem(STORAGE_KEY, data);
-                console.log('State salvato, charts:', currentCharts.length,
-                    'symbols:', currentCharts.map(c=>c.symbol).join(', '));
+                };
+                appStorage.setJSON(STORAGE_KEY, data)
+                    .then(() => {
+                        console.log('State salvato, charts:', currentCharts.length,
+                            'symbols:', currentCharts.map(c=>c.symbol).join(', '));
+                    })
+                    .catch(e => console.error('Errore saveState:', e));
             } catch(e) { console.error('Errore saveState:', e); }
         }
 
-        function loadState() {
+        async function loadState() {
             try {
-                const r = localStorage.getItem(STORAGE_KEY);
-                if (!r) { console.log('Nessuno state salvato trovato'); return null; }
-                const parsed = JSON.parse(r);
+                const parsed = await appStorage.getJSON(STORAGE_KEY, null);
+                if (!parsed) { console.log('Nessuno state salvato trovato'); return null; }
                 console.log('State caricato, charts:', parsed.charts ? parsed.charts.length : 0,
                     'symbols:', parsed.charts ? parsed.charts.map(c=>c.symbol).join(', ') : 'nessuno');
                 return parsed;
@@ -1091,24 +1094,21 @@
         function savePresets() {
             if (!storageOk) return;
             try {
-                localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
-                console.log('Presets salvati:', Object.keys(presets).join(', '));
+                appStorage.setJSON(PRESETS_KEY, presets)
+                    .then(() => console.log('Presets salvati:', Object.keys(presets).join(', ')))
+                    .catch(e => console.error('Errore savePresets:', e));
             } catch(e) { console.error('Errore savePresets:', e); }
         }
 
-        function loadPresets() {
+        async function loadPresets() {
             try {
-                const r = localStorage.getItem(PRESETS_KEY);
-                if (!r) return null;
-                return JSON.parse(r);
+                return await appStorage.getJSON(PRESETS_KEY, null);
             } catch(e) { return null; }
         }
 
         // Cleanup old keys from previous versions
         function cleanupOldKeys() {
-            try {
-                localStorage.removeItem('dashboardBorsaCustomPresets');
-            } catch(e) {}
+            appStorage.remove('dashboardBorsaCustomPresets').catch(() => {});
         }
 
         // --- Toast ---
@@ -1720,9 +1720,9 @@
 
 
         // ===================== INIT =====================
-        function init() {
+        async function init() {
             // 1. Test localStorage
-            testStorage();
+            await testStorage();
             cleanupOldKeys();
 
             if (!storageOk) {
@@ -1731,7 +1731,7 @@
             }
 
             // 2. Load presets (or seed with defaults)
-            const savedPresets = loadPresets();
+            const savedPresets = await loadPresets();
             if (savedPresets && Object.keys(savedPresets).length > 0) {
                 presets = savedPresets;
                 console.log('[INIT] Presets caricati:', Object.keys(presets).join(', '));
@@ -1742,7 +1742,7 @@
             }
 
             // 3. Load app state
-            const state = loadState();
+            const state = await loadState();
             if (state && state.charts && state.charts.length > 0) {
                 currentCharts = state.charts.map(c => cloneChart(c));
                 currentPreset = state.preset || getSortedPresetKeys()[0];
@@ -1819,10 +1819,16 @@
             t.textContent = msg; t.style.opacity = '1';
             clearTimeout(t._tmr); t._tmr = setTimeout(() => { t.style.opacity = '0'; }, 3500);
         }
-        function exportShareLink() {
+        async function exportShareLink() {
             const share = { v: 1 };
-            try { const p = JSON.parse(localStorage.getItem('dashboardBorsaPresets') || 'null'); if (p && Object.keys(p).length) share.presets = p; } catch(e) {}
-            try { const c = JSON.parse(localStorage.getItem('rankingCustomCats') || 'null'); if (c && Object.keys(c).length) share.cats = c; } catch(e) {}
+            try {
+                const p = await appStorage.getJSON(PRESETS_KEY, null);
+                if (p && Object.keys(p).length) share.presets = p;
+            } catch(e) {}
+            try {
+                const c = await appStorage.getJSON('rankingCustomCats', null);
+                if (c && Object.keys(c).length) share.cats = c;
+            } catch(e) {}
             if (!share.presets && !share.cats) { alert('Nessuna categoria o preset personalizzato da condividere.'); return; }
             const url = location.origin + location.pathname + '?share=' + _encodeShare(share);
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1831,7 +1837,7 @@
                     .catch(() => prompt('Copia questo link:', url));
             } else { prompt('Copia questo link:', url); }
         }
-        function checkShareImport() {
+        async function checkShareImport() {
             const encoded = new URLSearchParams(location.search).get('share');
             if (!encoded) return;
             history.replaceState(null, '', location.pathname);
@@ -1839,17 +1845,28 @@
                 const share = _decodeShare(encoded);
                 let n = 0;
                 if (share.presets && typeof share.presets === 'object') {
-                    try { const ex = JSON.parse(localStorage.getItem('dashboardBorsaPresets') || '{}'); localStorage.setItem('dashboardBorsaPresets', JSON.stringify({ ...ex, ...share.presets })); n += Object.keys(share.presets).length; } catch(e) {}
+                    try {
+                        const ex = await appStorage.getJSON(PRESETS_KEY, {});
+                        await appStorage.setJSON(PRESETS_KEY, { ...ex, ...share.presets });
+                        n += Object.keys(share.presets).length;
+                    } catch(e) {}
                 }
                 if (share.cats && typeof share.cats === 'object') {
-                    try { const ex = JSON.parse(localStorage.getItem('rankingCustomCats') || '{}'); localStorage.setItem('rankingCustomCats', JSON.stringify({ ...ex, ...share.cats })); n += Object.keys(share.cats).length; } catch(e) {}
+                    try {
+                        const ex = await appStorage.getJSON('rankingCustomCats', {});
+                        await appStorage.setJSON('rankingCustomCats', { ...ex, ...share.cats });
+                        n += Object.keys(share.cats).length;
+                    } catch(e) {}
                 }
                 if (n > 0) setTimeout(() => showShareToast('✓ ' + n + (n === 1 ? ' elemento importato' : ' elementi importati') + '!'), 800);
             } catch(e) { console.warn('Share link non valido'); }
         }
 
-        checkShareImport();
-        init();
+        (async function bootstrap() {
+            await appStorage.ready([STORAGE_KEY, PRESETS_KEY, 'rankingCustomCats']);
+            await checkShareImport();
+            await init();
+        })();
     </script>
 </body>
 </html>
