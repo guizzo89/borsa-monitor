@@ -163,9 +163,99 @@
         .toast.show{opacity:1}
         .toast.err{background:#c0392b}
 
+        /* ── Tabs ── */
+        .page-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
+        .page-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);
+            padding:8px 18px;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .15s;margin-bottom:-1px}
+        .page-tab:hover{color:var(--text-primary)}
+        .page-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+        .tab-panel{display:none}.tab-panel.active{display:block}
+
+        /* ── Basket cards grid ── */
+        .baskets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+        .basket-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;
+            padding:16px;display:flex;flex-direction:column;gap:12px}
+        .basket-card.has-buy{border-color:rgba(46,204,113,.5);box-shadow:0 0 0 1px rgba(46,204,113,.2)}
+        .basket-card.disabled{opacity:.55}
+        .bc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+        .bc-title{min-width:0}
+        .bc-label{font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
+        .bc-name{font-size:.95rem;font-weight:700;margin-top:2px}
+        .bc-meta{font-size:.72rem;color:var(--text-secondary);margin-top:3px}
+        .bc-actions{display:flex;gap:4px;flex-shrink:0;align-items:center}
+        .bc-status{font-size:.78rem;color:var(--text-secondary)}
+        .bc-status strong{color:var(--text-primary)}
+        .bc-status.has-buy strong{color:#2ecc71}
+
+        /* ── Picks table ── */
+        .picks-table{width:100%;border-collapse:collapse;font-size:.79rem}
+        .picks-table th{color:var(--text-secondary);font-size:.68rem;font-weight:700;
+            text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;text-align:left;
+            border-bottom:1px solid var(--border)}
+        .picks-table td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+        html.light .picks-table td{border-bottom-color:rgba(0,0,0,.05)}
+        .picks-table tr:last-child td{border-bottom:none}
+        .picks-table tr:hover td{background:rgba(255,255,255,.03)}
+        html.light .picks-table tr:hover td{background:rgba(0,0,0,.03)}
+        .pk-rank{font-weight:700;color:var(--text-secondary);width:22px}
+        .pk-rank.gold{color:#f1c40f}.pk-rank.silver{color:#b0bec5}.pk-rank.bronze{color:#cd7f32}
+        .pk-name{font-weight:500}
+        .pk-sym{font-family:monospace;font-size:.72rem;color:var(--text-secondary)}
+        .pk-score{font-weight:700;font-size:.85rem;min-width:30px;text-align:right}
+        .pk-score.s-buy{color:#2ecc71}.pk-score.s-sbu{color:#1e8449}.pk-score.s-neu{color:#f1c40f}
+        .pk-score.s-att{color:#e67e22}.pk-score.s-fat{color:#e74c3c}
+        .score-bar-mini{height:3px;background:var(--border);border-radius:2px;margin-top:3px}
+        .score-bar-mini-fill{height:100%;border-radius:2px}
+        .sbm-sbu,.sbm-buy{background:#2ecc71}.sbm-neu{background:#f1c40f}
+        .sbm-att{background:#e67e22}.sbm-fat{background:#e74c3c}
+
+        /* Signal badges */
+        .signal{display:inline-block;padding:2px 8px;border-radius:4px;
+            font-size:.68rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap}
+        .signal-strong-buy{background:rgba(39,174,96,.22);color:#1e8449;border:1px solid rgba(39,174,96,.55)}
+        .signal-buy{background:rgba(46,204,113,.15);color:#2ecc71;border:1px solid rgba(46,204,113,.4)}
+        .signal-neutral{background:rgba(241,196,15,.15);color:#f1c40f;border:1px solid rgba(241,196,15,.4)}
+        .signal-warn{background:rgba(230,126,34,.18);color:#d35400;border:1px solid rgba(230,126,34,.5)}
+        .signal-caution{background:rgba(231,76,60,.15);color:#e74c3c;border:1px solid rgba(231,76,60,.4)}
+        html.light .signal-strong-buy{color:#145a32}
+        html.light .signal-warn{color:#a04000}
+
+        /* Trend */
+        .trend-up{color:#2ecc71}.trend-up-weak{color:#a8e6a3}
+        .trend-neutral{color:var(--text-secondary)}.trend-down-weak{color:#e67e22}.trend-down{color:#e74c3c}
+
+        /* Warn badges */
+        .warn-badge{font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:3px;
+            white-space:nowrap;cursor:default;letter-spacing:.3px;text-transform:uppercase}
+        .wb-green{background:rgba(46,204,113,.15);color:#27ae60;border:1px solid rgba(46,204,113,.35)}
+        .wb-red{background:rgba(231,76,60,.15);color:#e74c3c;border:1px solid rgba(231,76,60,.35)}
+        .wb-yellow{background:rgba(241,196,15,.12);color:#b7950b;border:1px solid rgba(241,196,15,.4)}
+        .wb-orange{background:rgba(230,126,34,.15);color:#ca6f1e;border:1px solid rgba(230,126,34,.35)}
+        .wb-blue{background:rgba(52,152,219,.15);color:#2e86c1;border:1px solid rgba(52,152,219,.35)}
+        html.light .wb-yellow{color:#9a7d0a}
+
+        /* Progress bar per analisi */
+        .bc-progress{font-size:.75rem;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+        .bc-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);
+            border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* Modal basket */
+        .modal-basket{width:500px;max-width:95vw}
+        .form-group{margin-bottom:14px}
+        .form-group label{display:block;font-size:.76rem;color:var(--text-secondary);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+        .form-group select,.form-group input[type=number]{width:100%;padding:8px 11px;border-radius:6px;
+            border:1px solid var(--border);background:var(--btn-bg);color:var(--text-primary);
+            font-size:.88rem;outline:none}
+        .form-group select:focus,.form-group input[type=number]:focus{border-color:var(--accent)}
+        .form-row-inline{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .threshold-hint{font-size:.72rem;color:var(--text-secondary);margin-top:4px}
+
         @media(max-width:640px){
             .main-content{padding:14px 12px}
             .alerts-grid{grid-template-columns:1fr}
+            .baskets-grid{grid-template-columns:1fr}
+            .form-row-inline{grid-template-columns:1fr}
         }
     </style>
 </head>
@@ -195,22 +285,46 @@
         <button onclick="requestNotifPermission()">Abilita notifiche</button>
     </div>
 
-    <div class="top-bar">
-        <div class="summary-bar" id="summaryBar">
-            <div class="summary-stat">Alert: <strong id="statTotal">0</strong></div>
-            <div class="summary-stat triggered">Scattati: <strong id="statTriggered">0</strong></div>
-            <div class="check-status" id="checkStatus">—</div>
+    <!-- Tab switcher -->
+    <div class="page-tabs">
+        <button class="page-tab active" id="tabBtnSingoli" onclick="switchTab('singoli')">Singoli Titoli</button>
+        <button class="page-tab" id="tabBtnPanieri" onclick="switchTab('panieri')">Panieri AI</button>
+    </div>
+
+    <!-- ── Tab Singoli Titoli ── -->
+    <div class="tab-panel active" id="panelSingoli">
+        <div class="top-bar">
+            <div class="summary-bar" id="summaryBar">
+                <div class="summary-stat">Alert: <strong id="statTotal">0</strong></div>
+                <div class="summary-stat triggered">Scattati: <strong id="statTriggered">0</strong></div>
+                <div class="check-status" id="checkStatus">—</div>
+            </div>
+            <button class="btn btn-accent" onclick="openAddModal()">+ Aggiungi alert</button>
         </div>
-        <button class="btn btn-accent" onclick="openAddModal()">+ Aggiungi alert</button>
+        <div id="emptyState" class="empty-state" style="display:none">
+            <div class="icon">🔔</div>
+            <p>Nessun alert configurato.<br>Aggiungine uno per monitorare i tuoi titoli.</p>
+            <button class="btn btn-accent" onclick="openAddModal()">+ Aggiungi alert</button>
+        </div>
+        <div class="alerts-grid" id="alertsGrid"></div>
     </div>
 
-    <div id="emptyState" class="empty-state" style="display:none">
-        <div class="icon">🔔</div>
-        <p>Nessun alert configurato.<br>Aggiungine uno per monitorare i tuoi titoli.</p>
-        <button class="btn btn-accent" onclick="openAddModal()">+ Aggiungi alert</button>
+    <!-- ── Tab Panieri AI ── -->
+    <div class="tab-panel" id="panelPanieri">
+        <div class="top-bar">
+            <div class="summary-bar">
+                <div class="summary-stat">Panieri: <strong id="statBaskets">0</strong></div>
+                <div class="summary-stat has-buy"><span style="color:#2ecc71">Con segnale acquisto: <strong id="statBasketsHasBuy">0</strong></span></div>
+            </div>
+            <button class="btn btn-accent" onclick="openBasketModal()">+ Aggiungi paniere</button>
+        </div>
+        <div id="basketEmptyState" class="empty-state" style="display:none">
+            <div class="icon">📊</div>
+            <p>Nessun paniere configurato.<br>Aggiungi un paniere per ricevere raccomandazioni AI su NASDAQ, S&amp;P 500, Borsa Italiana e altri.</p>
+            <button class="btn btn-accent" onclick="openBasketModal()">+ Aggiungi paniere</button>
+        </div>
+        <div class="baskets-grid" id="basketsGrid"></div>
     </div>
-
-    <div class="alerts-grid" id="alertsGrid"></div>
 </div>
 
 <!-- Modal Add/Edit -->
@@ -247,9 +361,57 @@
     </div>
 </div>
 
+<!-- Modal Basket Alert -->
+<div class="modal-overlay" id="basketModalOverlay">
+    <div class="modal modal-basket">
+        <h2 id="basketModalTitle">Nuovo alert paniere</h2>
+
+        <div class="form-group">
+            <label>Paniere</label>
+            <select id="bmBasket"></select>
+        </div>
+
+        <div class="form-row-inline">
+            <div class="form-group">
+                <label>Score minimo alert</label>
+                <input type="number" id="bmMinScore" min="30" max="95" value="65" step="1">
+                <div class="threshold-hint">Ricevi notifica quando un titolo raggiunge questo score (0–100). Default: 65 = Acquisto</div>
+            </div>
+            <div class="form-group">
+                <label>Top titoli da mostrare</label>
+                <input type="number" id="bmTopN" min="3" max="10" value="5" step="1">
+            </div>
+        </div>
+
+        <div class="form-row-inline">
+            <div class="form-group">
+                <label>Max titoli da analizzare</label>
+                <input type="number" id="bmMaxItems" min="5" max="50" value="20" step="5">
+                <div class="threshold-hint">Limita l'analisi ai primi N titoli del paniere</div>
+            </div>
+            <div class="form-group">
+                <label>Ri-analisi automatica</label>
+                <select id="bmRefreshHours">
+                    <option value="6">Ogni 6 ore</option>
+                    <option value="12" selected>Ogni 12 ore</option>
+                    <option value="24">Ogni 24 ore</option>
+                    <option value="0">Solo manuale</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-err" id="basketModalErr"></div>
+        <div class="modal-actions">
+            <button class="btn" onclick="closeBasketModal()">Annulla</button>
+            <button class="btn btn-accent" onclick="saveBasketAlert()">Salva &amp; Analizza</button>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="assets/js/borso-storage.js"></script>
+<script src="assets/js/borsa-analysis.js"></script>
 <script>
 const STORAGE_KEY = 'borsaAlerts';
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -709,7 +871,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
 });
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') { closeModal(); closeBasketModal(); }
 });
 
 // borsasync:pulled → ricarica alert e ricontrolla
@@ -718,14 +880,359 @@ window.addEventListener('borsasync:pulled', async function() {
     renderAlerts();
 });
 
+// ── Tab switcher ───────────────────────────────────────────────────────────
+function switchTab(tab) {
+    const isSingoli = tab === 'singoli';
+    document.getElementById('tabBtnSingoli').classList.toggle('active', isSingoli);
+    document.getElementById('tabBtnPanieri').classList.toggle('active', !isSingoli);
+    document.getElementById('panelSingoli').classList.toggle('active', isSingoli);
+    document.getElementById('panelPanieri').classList.toggle('active', !isSingoli);
+    try { localStorage.setItem('alertsActiveTab', tab); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// BASKET ALERTS
+// ═══════════════════════════════════════════════════════════════════════
+const BASKETS_KEY = 'borsaBasketAlerts';
+let baskets = [];
+let basketTimers = {};
+let editingBasketId = null;
+
+async function loadBaskets() {
+    baskets = await appStorage.getJSON(BASKETS_KEY, []);
+    if (!Array.isArray(baskets)) baskets = [];
+}
+function saveBaskets() { appStorage.setJSON(BASKETS_KEY, baskets).catch(() => {}); }
+
+function genBasketId() { return 'b' + Math.random().toString(36).slice(2,9) + Date.now().toString(36); }
+
+// Restituisce tutti i panieri disponibili (built-in + custom)
+function getAllBaskets() {
+    const result = [];
+    for (const k in BORSA_ASSETS) {
+        result.push({ key: k, label: BORSA_ASSETS[k].label, items: BORSA_ASSETS[k].items });
+    }
+    try {
+        const cc = JSON.parse(localStorage.getItem(BORSA_CUSTOM_CATS_KEY) || '{}');
+        for (const k in cc) {
+            if (cc[k]?.label && Array.isArray(cc[k].items))
+                result.push({ key: k, label: cc[k].label + ' (custom)', items: cc[k].items });
+        }
+    } catch(e) {}
+    return result;
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────
+function openBasketModal(id) {
+    editingBasketId = id || null;
+    const isEdit = !!id;
+    document.getElementById('basketModalTitle').textContent = isEdit ? 'Modifica paniere alert' : 'Nuovo alert paniere';
+    document.getElementById('basketModalErr').textContent = '';
+
+    // Popola select panieri
+    const sel = document.getElementById('bmBasket');
+    sel.innerHTML = '';
+    getAllBaskets().forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.key;
+        opt.textContent = b.label + ' (' + b.items.length + ' titoli)';
+        sel.appendChild(opt);
+    });
+
+    if (isEdit) {
+        const b = baskets.find(x => x.id === id);
+        if (b) {
+            sel.value = b.basketKey;
+            document.getElementById('bmMinScore').value = b.minScore;
+            document.getElementById('bmTopN').value = b.topN;
+            document.getElementById('bmMaxItems').value = b.maxItems;
+            document.getElementById('bmRefreshHours').value = b.refreshHours;
+        }
+    } else {
+        document.getElementById('bmMinScore').value = 65;
+        document.getElementById('bmTopN').value = 5;
+        document.getElementById('bmMaxItems').value = 20;
+        document.getElementById('bmRefreshHours').value = 12;
+    }
+    document.getElementById('basketModalOverlay').classList.add('open');
+}
+function closeBasketModal() {
+    document.getElementById('basketModalOverlay').classList.remove('open');
+    editingBasketId = null;
+}
+document.getElementById('basketModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeBasketModal();
+});
+
+async function saveBasketAlert() {
+    const basketKey  = document.getElementById('bmBasket').value;
+    const minScore   = parseInt(document.getElementById('bmMinScore').value) || 65;
+    const topN       = Math.min(10, Math.max(3, parseInt(document.getElementById('bmTopN').value) || 5));
+    const maxItems   = Math.min(50, Math.max(5, parseInt(document.getElementById('bmMaxItems').value) || 20));
+    const refreshH   = parseInt(document.getElementById('bmRefreshHours').value);
+    const errEl      = document.getElementById('basketModalErr');
+    errEl.textContent = '';
+
+    const allB = getAllBaskets();
+    const found = allB.find(b => b.key === basketKey);
+    if (!found) { errEl.textContent = 'Paniere non trovato.'; return; }
+
+    if (editingBasketId) {
+        const b = baskets.find(x => x.id === editingBasketId);
+        if (b) {
+            b.basketKey = basketKey; b.basketLabel = found.label;
+            b.minScore = minScore; b.topN = topN; b.maxItems = maxItems; b.refreshHours = refreshH;
+            b.lastResults = []; b.lastAnalyzed = null;
+        }
+    } else {
+        baskets.push({
+            id: genBasketId(), basketKey, basketLabel: found.label,
+            minScore, topN, maxItems, refreshHours: refreshH,
+            enabled: true, lastAnalyzed: null, lastResults: [], notifiedSymbols: []
+        });
+    }
+
+    saveBaskets();
+    closeBasketModal();
+    renderBaskets();
+    const newB = editingBasketId
+        ? baskets.find(x => x.id === editingBasketId)
+        : baskets[baskets.length - 1];
+    if (newB) runBasketAnalysis(newB);
+}
+
+// ── Analisi ────────────────────────────────────────────────────────────
+async function runBasketAnalysis(basket) {
+    if (basket._analyzing) return;
+    basket._analyzing = true;
+
+    const allB  = getAllBaskets();
+    const found = allB.find(b => b.key === basket.basketKey);
+    if (!found) { basket._analyzing = false; return; }
+
+    const items = found.items.slice(0, basket.maxItems);
+    const total = items.length;
+    let done = 0;
+
+    // Aggiorna UI: loading state
+    basket._progress = { done: 0, total };
+    renderBasketCard(basket);
+
+    const results = await baAnalyzeBasket(items, () => {
+        done++;
+        basket._progress = { done, total };
+        renderBasketCard(basket);
+    });
+
+    // Ordina per score desc
+    results.sort((a, b) => b.score - a.score);
+
+    basket.lastResults  = results.slice(0, basket.topN);
+    basket.lastAnalyzed = new Date().toISOString();
+    basket._analyzing   = false;
+    basket._progress    = null;
+
+    // Notifiche per nuovi "Acquisto"
+    const buySymbols = results.filter(r => r.score >= basket.minScore).map(r => r.symbol);
+    const prevNotified = new Set(basket.notifiedSymbols || []);
+    const newBuys = buySymbols.filter(s => !prevNotified.has(s));
+    if (newBuys.length) {
+        const names = newBuys.slice(0, 3).map(s => results.find(r => r.symbol === s)?.name || s);
+        sendBrowserNotification(basket.basketLabel + ': ' + names.join(', ') +
+            (newBuys.length > 3 ? ' +altri' : '') + ' con score ≥ ' + basket.minScore);
+        showToast('📊 ' + basket.basketLabel + ': ' + newBuys.length + ' nuovo/i titolo/i con segnale acquisto!');
+    }
+    basket.notifiedSymbols = buySymbols;
+
+    saveBaskets();
+    renderBaskets();
+    scheduleBasketRefresh(basket);
+}
+
+function scheduleBasketRefresh(basket) {
+    if (basketTimers[basket.id]) clearTimeout(basketTimers[basket.id]);
+    if (!basket.enabled || !basket.refreshHours) return;
+    basketTimers[basket.id] = setTimeout(() => {
+        const b = baskets.find(x => x.id === basket.id);
+        if (b && b.enabled) runBasketAnalysis(b);
+    }, basket.refreshHours * 60 * 60 * 1000);
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+function renderBaskets() {
+    const grid  = document.getElementById('basketsGrid');
+    const empty = document.getElementById('basketEmptyState');
+    const statB = document.getElementById('statBaskets');
+    const statH = document.getElementById('statBasketsHasBuy');
+
+    const enabled = baskets.filter(b => b.enabled);
+    statB.textContent = enabled.length;
+    statH.textContent = enabled.filter(b => b.lastResults?.some(r => r.score >= b.minScore)).length;
+
+    if (!baskets.length) {
+        empty.style.display = 'block';
+        grid.innerHTML = '';
+        return;
+    }
+    empty.style.display = 'none';
+    grid.innerHTML = baskets.map(b => renderBasketCardHtml(b)).join('');
+
+    grid.querySelectorAll('[data-basket-analyze]').forEach(el =>
+        el.addEventListener('click', () => {
+            const b = baskets.find(x => x.id === el.dataset.basketAnalyze);
+            if (b) runBasketAnalysis(b);
+        }));
+    grid.querySelectorAll('[data-basket-edit]').forEach(el =>
+        el.addEventListener('click', () => openBasketModal(el.dataset.basketEdit)));
+    grid.querySelectorAll('[data-basket-delete]').forEach(el =>
+        el.addEventListener('click', () => deleteBasket(el.dataset.basketDelete)));
+    grid.querySelectorAll('[data-basket-toggle]').forEach(el =>
+        el.addEventListener('click', () => toggleBasket(el.dataset.basketToggle)));
+}
+
+function renderBasketCard(basket) {
+    const el = document.querySelector('[data-basket-id="' + basket.id + '"]');
+    if (el) el.outerHTML = renderBasketCardHtml(basket);
+    // Re-bind events
+    const newEl = document.querySelector('[data-basket-id="' + basket.id + '"]');
+    if (!newEl) return;
+    newEl.querySelector('[data-basket-analyze]')?.addEventListener('click', () => runBasketAnalysis(basket));
+    newEl.querySelector('[data-basket-edit]')?.addEventListener('click', () => openBasketModal(basket.id));
+    newEl.querySelector('[data-basket-delete]')?.addEventListener('click', () => deleteBasket(basket.id));
+    newEl.querySelector('[data-basket-toggle]')?.addEventListener('click', () => toggleBasket(basket.id));
+}
+
+function renderBasketCardHtml(b) {
+    const esc = s => escHtml(s);
+    const hasBuy = b.lastResults?.some(r => r.score >= b.minScore);
+    const isLoading = b._analyzing;
+    const progress = b._progress;
+
+    let statusHtml = '';
+    if (isLoading && progress) {
+        statusHtml = '<div class="bc-progress"><span class="bc-spinner"></span> Analisi in corso… ' +
+            progress.done + ' / ' + progress.total + ' titoli</div>';
+    } else if (b.lastAnalyzed) {
+        const buyCount = (b.lastResults || []).filter(r => r.score >= b.minScore).length;
+        statusHtml = '<div class="bc-status' + (hasBuy ? ' has-buy' : '') + '">' +
+            (hasBuy
+                ? '<strong>' + buyCount + ' titol' + (buyCount === 1 ? 'o' : 'i') + ' con segnale acquisto ≥' + b.minScore + '</strong>'
+                : 'Nessun titolo sopra score ' + b.minScore) +
+            ' &nbsp;<span style="color:var(--text-secondary);font-size:.72rem">· aggiornato ' +
+            new Date(b.lastAnalyzed).toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'}) + '</span></div>';
+    } else {
+        statusHtml = '<div class="bc-status">Analisi non ancora eseguita</div>';
+    }
+
+    let picksHtml = '';
+    if (!isLoading && b.lastResults && b.lastResults.length) {
+        const rows = b.lastResults.map((r, idx) => {
+            const rank = idx + 1;
+            const rankCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+            const sig = baGetSignal(r.score);
+            const barCls = sig.cls.replace('signal-', 'sbm-').replace('strong-buy','sbu').replace('caution','fat').replace('neutral','neu').replace('warn','att').replace('buy','buy');
+            const scoreCls = sig.cls.replace('signal-strong-buy','s-sbu').replace('signal-buy','s-buy').replace('signal-neutral','s-neu').replace('signal-warn','s-att').replace('signal-caution','s-fat');
+            const rsiTxt = r.rsi != null ? r.rsi.toFixed(0) : '—';
+            const trendHtml = r.trend ? '<span class="' + r.trend.cls + '" title="' + esc(r.trend.title) + '">' + r.trend.arrow + '</span>' : '—';
+            const warnHtml = r.warnings?.map(w => '<span class="warn-badge ' + w.cls + '" title="' + esc(w.title) + '">' + esc(w.text) + '</span>').join('') || '';
+            return '<tr>' +
+                '<td class="pk-rank ' + rankCls + '">' + rank + '</td>' +
+                '<td class="pk-name"><a href="https://finance.yahoo.com/chart/' + encodeURIComponent(r.symbol) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" title="Apri su Yahoo Finance">' + esc(r.name) + '</a>' +
+                (warnHtml ? '<div style="display:flex;gap:2px;margin-top:2px">' + warnHtml + '</div>' : '') + '</td>' +
+                '<td class="pk-sym">' + esc(r.symbol) + '</td>' +
+                '<td><span class="signal ' + sig.cls + '">' + esc(sig.short) + '</span></td>' +
+                '<td><span class="pk-score ' + scoreCls + '">' + r.score.toFixed(0) + '</span>' +
+                '<div class="score-bar-mini"><div class="score-bar-mini-fill ' + barCls + '" style="width:' + r.score.toFixed(0) + '%"></div></div></td>' +
+                '<td style="color:var(--text-secondary);font-size:.78rem">' + rsiTxt + '</td>' +
+                '<td>' + trendHtml + '</td>' +
+                '</tr>';
+        }).join('');
+        picksHtml = '<table class="picks-table">' +
+            '<thead><tr><th>#</th><th>Titolo</th><th>Sim.</th><th>Segnale</th><th>Score</th><th>RSI</th><th>Trend</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table>';
+    } else if (!isLoading) {
+        picksHtml = '<div style="font-size:.8rem;color:var(--text-secondary);padding:8px 0">Clicca "Analizza" per ottenere le raccomandazioni AI</div>';
+    }
+
+    const swOn = b.enabled ? 'on' : '';
+    const lastAnalyzed = b.lastAnalyzed
+        ? new Date(b.lastAnalyzed).toLocaleDateString('it-IT', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+        : 'mai';
+
+    return '<div class="basket-card' + (hasBuy ? ' has-buy' : '') + (!b.enabled ? ' disabled' : '') + '" data-basket-id="' + esc(b.id) + '">' +
+        '<div class="bc-header">' +
+            '<div class="bc-title">' +
+                '<div class="bc-label">Paniere AI</div>' +
+                '<div class="bc-name">' + esc(b.basketLabel) + '</div>' +
+                '<div class="bc-meta">Score soglia: ' + b.minScore + ' · Top ' + b.topN + ' · Max ' + b.maxItems + ' titoli' +
+                    (b.refreshHours ? ' · Auto ' + b.refreshHours + 'h' : ' · Solo manuale') + '</div>' +
+            '</div>' +
+            '<div class="bc-actions">' +
+                '<div class="toggle-wrap" data-basket-toggle="' + esc(b.id) + '" title="' + (b.enabled ? 'Disabilita' : 'Abilita') + '">' +
+                    '<div class="toggle-sw ' + swOn + '"></div>' +
+                '</div>' +
+                '<button class="btn btn-sm btn-green" data-basket-analyze="' + esc(b.id) + '"' + (isLoading ? ' disabled' : '') + '>Analizza</button>' +
+                '<button class="btn btn-icon btn-sm" data-basket-edit="' + esc(b.id) + '" title="Modifica">✏️</button>' +
+                '<button class="btn btn-icon btn-sm" data-basket-delete="' + esc(b.id) + '" title="Elimina">🗑️</button>' +
+            '</div>' +
+        '</div>' +
+        statusHtml +
+        picksHtml +
+        '<div style="font-size:.72rem;color:var(--text-secondary);padding-top:4px;border-top:1px solid var(--border)">Ultima analisi: ' + lastAnalyzed + '</div>' +
+    '</div>';
+}
+
+function toggleBasket(id) {
+    const b = baskets.find(x => x.id === id);
+    if (!b) return;
+    b.enabled = !b.enabled;
+    saveBaskets();
+    renderBaskets();
+    if (b.enabled && !b.lastAnalyzed) runBasketAnalysis(b);
+    else if (b.enabled && b.refreshHours) scheduleBasketRefresh(b);
+    else clearTimeout(basketTimers[id]);
+}
+function deleteBasket(id) {
+    if (!confirm('Eliminare questo alert paniere?')) return;
+    clearTimeout(basketTimers[id]);
+    delete basketTimers[id];
+    baskets = baskets.filter(b => b.id !== id);
+    saveBaskets();
+    renderBaskets();
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 loadTheme();
 (async function() {
-    await appStorage.ready([STORAGE_KEY, 'dashboardBorsa']);
+    await appStorage.ready([STORAGE_KEY, BASKETS_KEY, 'dashboardBorsa']);
     await loadAlerts();
+    await loadBaskets();
     updateNotifBanner();
     renderAlerts();
+    renderBaskets();
     if (alerts.some(a => a.enabled)) startCheckLoop();
+
+    // Ripristina tab attivo
+    try {
+        const savedTab = localStorage.getItem('alertsActiveTab');
+        if (savedTab === 'panieri') switchTab('panieri');
+    } catch(e) {}
+
+    // Schedula refresh automatico per basket che lo richiedono
+    for (const b of baskets) {
+        if (b.enabled && b.refreshHours && b.lastAnalyzed) {
+            const elapsed = (Date.now() - new Date(b.lastAnalyzed).getTime()) / 3600000;
+            if (elapsed >= b.refreshHours) {
+                runBasketAnalysis(b); // già scaduto, analizza subito
+            } else {
+                const remaining = (b.refreshHours - elapsed) * 3600000;
+                basketTimers[b.id] = setTimeout(() => {
+                    const fresh = baskets.find(x => x.id === b.id);
+                    if (fresh && fresh.enabled) runBasketAnalysis(fresh);
+                }, remaining);
+            }
+        }
+    }
 })();
 </script>
 
