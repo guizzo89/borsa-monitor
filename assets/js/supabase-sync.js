@@ -11,7 +11,8 @@
         'dashboardBorsa',
         'dashboardBorsaPresets',
         'rankingCustomCats',
-        'portfolioBorsa'
+        'portfolioBorsa',
+        'borsaAlerts'
     ];
 
     var _client = null;

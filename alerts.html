@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alert — Borsa</title>
+    <style>
+        :root {
+            --bg-primary:#1a1a2e;--bg-secondary:#16213e;--bg-card:#0f3460;
+            --text-primary:#e0e0e0;--text-secondary:#a0a0a0;
+            --accent:#e94560;--accent-hover:#ff6b81;
+            --border:#2a2a4a;--btn-bg:#2a2a4a;--btn-hover:#3a3a5a;
+            --header-bg:#0f0f23;--green:#1b7a3d;--green-hover:#22994d;
+        }
+        html.light {
+            --bg-primary:#f0f2f5;--bg-secondary:#ffffff;--bg-card:#ffffff;
+            --text-primary:#1a1a2e;--text-secondary:#666666;
+            --accent:#e94560;--accent-hover:#c73650;
+            --border:#d0d0d0;--btn-bg:#e0e0e0;--btn-hover:#d0d0d0;
+            --header-bg:#ffffff;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+            background:var(--bg-primary);color:var(--text-primary);min-height:100vh;display:flex;flex-direction:column}
+        header{background:var(--header-bg);border-bottom:1px solid var(--border);
+            padding:8px 24px;display:flex;align-items:center;justify-content:space-between;
+            flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100}
+        .header-left{display:flex;align-items:center;gap:12px}
+        h1{font-size:1.3rem;font-weight:700;white-space:nowrap}
+        h1 span{color:var(--accent)}
+        .header-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .btn{background:var(--btn-bg);color:var(--text-primary);border:1px solid var(--border);
+            padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.82rem;font-weight:500;
+            transition:all .15s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+        .btn:hover{background:var(--btn-hover);border-color:var(--accent)}
+        .btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+        .btn-accent:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+        .btn-green{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
+        .btn-green:hover{background:var(--green-hover)}
+        .btn-sm{padding:4px 10px;font-size:.76rem}
+        .btn-icon{padding:5px 9px;font-size:1rem}
+        .theme-icons{display:flex;align-items:center;gap:4px;font-size:.85rem}
+        .theme-toggle{position:relative;width:48px;height:26px;background:var(--btn-bg);
+            border-radius:13px;cursor:pointer;border:1px solid var(--border)}
+        .theme-toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;
+            background:var(--accent);border-radius:50%;transition:transform .3s}
+        html.light .theme-toggle::after{transform:translateX(22px)}
+
+        .main-content{flex:1;padding:20px 24px;max-width:1100px;margin:0 auto;width:100%}
+
+        /* Notif banner */
+        .notif-banner{background:rgba(233,69,96,.1);border:1px solid rgba(233,69,96,.35);
+            border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:.82rem;
+            display:flex;justify-content:space-between;align-items:center;gap:12px}
+        .notif-banner button{background:var(--accent);color:#fff;border:none;
+            padding:5px 14px;border-radius:5px;cursor:pointer;font-size:.78rem;white-space:nowrap}
+
+        /* Summary bar */
+        .summary-bar{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+        .summary-stat{font-size:.82rem;color:var(--text-secondary)}
+        .summary-stat strong{color:var(--text-primary);font-size:.95rem}
+        .summary-stat.triggered strong{color:#e74c3c}
+        .check-status{font-size:.78rem;color:var(--text-secondary);margin-left:auto}
+
+        /* Top bar */
+        .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px;flex-wrap:wrap}
+        .top-bar h2{font-size:1rem;font-weight:600}
+
+        /* Empty state */
+        .empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary)}
+        .empty-state .icon{font-size:3rem;margin-bottom:12px}
+        .empty-state p{margin-bottom:20px;font-size:.9rem}
+
+        /* Alert cards grid */
+        .alerts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+
+        /* Alert card */
+        .alert-card{background:var(--bg-secondary);border:1px solid var(--border);
+            border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px}
+        .alert-card.triggered{border-color:#e74c3c;box-shadow:0 0 0 1px rgba(231,76,60,.3)}
+        .alert-card.disabled{opacity:.55}
+
+        .card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+        .card-title{min-width:0}
+        .card-symbol{font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
+        .card-name{font-size:.9rem;font-weight:600;margin-top:2px;
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .card-actions{display:flex;gap:4px;flex-shrink:0}
+
+        .card-price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+        .price-value{font-size:1.35rem;font-weight:700}
+        .price-change{font-size:.82rem;font-weight:600;padding:2px 6px;border-radius:4px}
+        .price-change.pos{background:rgba(46,204,113,.15);color:#2ecc71}
+        .price-change.neg{background:rgba(231,76,60,.15);color:#e74c3c}
+        .price-change.neu{background:rgba(160,160,160,.15);color:var(--text-secondary)}
+        .price-loading{font-size:.82rem;color:var(--text-secondary)}
+
+        .card-conditions{display:flex;flex-direction:column;gap:6px}
+        .condition-row{display:flex;align-items:center;gap:8px;font-size:.8rem;
+            background:var(--bg-card);border-radius:6px;padding:7px 10px}
+        .cond-icon{font-size:.9rem;flex-shrink:0}
+        .cond-text{flex:1;color:var(--text-secondary)}
+        .cond-text strong{color:var(--text-primary)}
+        .cond-badge{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:10px;
+            text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+        .cond-badge.ok{background:rgba(46,204,113,.15);color:#2ecc71}
+        .cond-badge.triggered{background:rgba(231,76,60,.2);color:#e74c3c}
+        .cond-badge.unknown{background:rgba(160,160,160,.15);color:var(--text-secondary)}
+
+        .card-footer{display:flex;justify-content:space-between;align-items:center;
+            font-size:.72rem;color:var(--text-secondary);padding-top:4px;border-top:1px solid var(--border)}
+        .card-footer .err{color:#e74c3c}
+
+        /* Toggle switch */
+        .toggle-wrap{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+        .toggle-sw{position:relative;width:34px;height:19px;background:var(--border);
+            border-radius:10px;transition:background .2s;flex-shrink:0}
+        .toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;
+            background:#fff;border-radius:50%;transition:transform .2s}
+        .toggle-sw.on{background:var(--green)}
+        .toggle-sw.on::after{transform:translateX(15px)}
+
+        /* Modal */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+            z-index:500;align-items:center;justify-content:center}
+        .modal-overlay.open{display:flex}
+        .modal{background:var(--bg-secondary);border:1px solid var(--border);
+            border-radius:12px;padding:24px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto}
+        .modal h2{font-size:1.05rem;font-weight:700;margin-bottom:18px}
+        .form-row{margin-bottom:12px}
+        .form-row label{display:block;font-size:.78rem;color:var(--text-secondary);margin-bottom:5px;font-weight:600}
+        .form-row input,.form-row select{width:100%;padding:8px 11px;border-radius:6px;
+            border:1px solid var(--border);background:var(--btn-bg);color:var(--text-primary);
+            font-size:.88rem;outline:none;box-sizing:border-box}
+        .form-row input:focus,.form-row select:focus{border-color:var(--accent)}
+        .form-row .hint{font-size:.72rem;color:var(--text-secondary);margin-top:4px}
+        .search-row{display:flex;gap:8px}
+        .search-row input{flex:1}
+        .search-result{font-size:.8rem;padding:8px 10px;background:var(--bg-card);
+            border-radius:6px;margin-top:6px;display:none}
+        .search-result.show{display:block}
+        .search-result.err{color:#e74c3c}
+
+        .conditions-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+        .cond-edit-row{display:flex;gap:6px;align-items:center;background:var(--bg-card);
+            border-radius:6px;padding:8px 10px}
+        .cond-edit-row select{flex:1.4;min-width:0}
+        .cond-edit-row input[type="number"]{flex:0.8;min-width:0}
+        .cond-edit-row button{background:none;border:none;color:var(--accent);
+            cursor:pointer;font-size:1rem;padding:2px 5px;flex-shrink:0}
+        .add-cond-btn{font-size:.78rem;color:var(--accent);background:none;border:1px dashed var(--accent);
+            border-radius:5px;padding:5px 12px;cursor:pointer;width:100%}
+        .add-cond-btn:hover{background:rgba(233,69,96,.1)}
+
+        .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+        .modal-err{color:#e74c3c;font-size:.78rem;min-height:16px;margin-bottom:4px}
+
+        /* Toast */
+        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+            background:#1b7a3d;color:#fff;padding:10px 24px;border-radius:8px;
+            font-size:.88rem;font-weight:500;z-index:600;opacity:0;
+            transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center}
+        .toast.show{opacity:1}
+        .toast.err{background:#c0392b}
+
+        @media(max-width:640px){
+            .main-content{padding:14px 12px}
+            .alerts-grid{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <h1>Alert <span>Borsa</span></h1>
+    </div>
+    <div class="header-controls">
+        <a href="index.html" class="btn">Dashboard</a>
+        <a href="portafoglio.html" class="btn">Portafoglio</a>
+        <a href="mercato.html" class="btn">Mercato</a>
+        <a href="news.html" class="btn">News</a>
+        <a href="calcolo.html" class="btn">Calcolatore</a>
+        <span data-borsa-auth></span>
+        <div class="theme-icons">
+            <span>&#9790;</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+            <span>&#9788;</span>
+        </div>
+    </div>
+</header>
+
+<div class="main-content">
+    <div id="notifBanner" class="notif-banner" style="display:none">
+        <span>Abilita le notifiche browser per ricevere alert anche quando sei su un'altra tab.</span>
+        <button onclick="requestNotifPermission()">Abilita notifiche</button>
+    </div>
+
+    <div class="top-bar">
+        <div class="summary-bar" id="summaryBar">
+            <div class="summary-stat">Alert: <strong id="statTotal">0</strong></div>
+            <div class="summary-stat triggered">Scattati: <strong id="statTriggered">0</strong></div>
+            <div class="check-status" id="checkStatus">—</div>
+        </div>
+        <button class="btn btn-accent" onclick="openAddModal()">+ Aggiungi alert</button>
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display:none">
+        <div class="icon">🔔</div>
+        <p>Nessun alert configurato.<br>Aggiungine uno per monitorare i tuoi titoli.</p>
+        <button class="btn btn-accent" onclick="openAddModal()">+ Aggiungi alert</button>
+    </div>
+
+    <div class="alerts-grid" id="alertsGrid"></div>
+</div>
+
+<!-- Modal Add/Edit -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h2 id="modalTitle">Nuovo alert</h2>
+
+        <div class="form-row">
+            <label>Simbolo Yahoo Finance</label>
+            <div class="search-row">
+                <input type="text" id="modalSymbol" placeholder="es. AAPL, ENI.MI, BTC-USD" autocomplete="off" />
+                <button class="btn btn-sm" onclick="lookupSymbol()">Cerca</button>
+            </div>
+            <div class="hint">Usa il formato Yahoo Finance: titoli US → AAPL · Italia → ENI.MI · Crypto → BTC-USD</div>
+            <div class="search-result" id="searchResult"></div>
+        </div>
+
+        <div class="form-row">
+            <label>Nome (opzionale)</label>
+            <input type="text" id="modalName" placeholder="es. Apple Inc." />
+        </div>
+
+        <div class="form-row">
+            <label>Condizioni — scatta se almeno una è vera</label>
+            <div class="conditions-list" id="conditionsList"></div>
+            <button class="add-cond-btn" onclick="addConditionRow()">+ Aggiungi condizione</button>
+        </div>
+
+        <div class="modal-err" id="modalErr"></div>
+        <div class="modal-actions">
+            <button class="btn" onclick="closeModal()">Annulla</button>
+            <button class="btn btn-accent" onclick="saveAlert()">Salva</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/js/borso-storage.js"></script>
+<script>
+const STORAGE_KEY = 'borsaAlerts';
+const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+const appStorage = window.BorsaStorage;
+
+let alerts = [];
+let quotes = {};       // symbol → {price, change, low52, high52, currency, name}
+let checkTimer = null;
+let isChecking = false;
+let isDark = true;
+let editingId = null;
+
+// ── Tema ────────────────────────────────────────────────────────────────
+function toggleTheme() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('light', !isDark);
+    try {
+        const d = localStorage.getItem('dashboardBorsa');
+        const p = d ? JSON.parse(d) : {};
+        p.dark = isDark;
+        localStorage.setItem('dashboardBorsa', JSON.stringify(p));
+    } catch(e) {}
+}
+function loadTheme() {
+    try {
+        const d = localStorage.getItem('dashboardBorsa');
+        if (d) { const p = JSON.parse(d); if (p.dark !== undefined) isDark = p.dark; }
+    } catch(e) {}
+    document.documentElement.classList.toggle('light', !isDark);
+}
+
+// ── Storage ──────────────────────────────────────────────────────────────
+async function loadAlerts() {
+    alerts = await appStorage.getJSON(STORAGE_KEY, []);
+    if (!Array.isArray(alerts)) alerts = [];
+}
+function saveAlerts() {
+    appStorage.setJSON(STORAGE_KEY, alerts).catch(() => {});
+}
+
+// ── Yahoo Finance fetch ──────────────────────────────────────────────────
+async function fetchWithTimeout(url, ms) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try {
+        const res = await fetch(url, { signal: ctrl.signal });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+    } finally { clearTimeout(t); }
+}
+
+async function fetchQuote(symbol) {
+    const base = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d&includePrePost=false`;
+    const proxies = [
+        base,
+        `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d&includePrePost=false`,
+        `https://corsproxy.io/?${encodeURIComponent(base)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(base)}`
+    ];
+
+    for (const url of proxies) {
+        try {
+            const data = await fetchWithTimeout(url, 5000);
+            const result = data?.chart?.result?.[0];
+            if (!result) continue;
+
+            const meta = result.meta;
+            const closes = result.indicators?.quote?.[0]?.close || [];
+            const lows   = result.indicators?.quote?.[0]?.low   || [];
+            const highs  = result.indicators?.quote?.[0]?.high  || [];
+
+            const validCloses = closes.filter(v => v != null);
+            const validLows   = lows.filter(v => v != null);
+            const validHighs  = highs.filter(v => v != null);
+
+            const price   = meta.regularMarketPrice ?? (validCloses[validCloses.length - 1] ?? null);
+            const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? null;
+            const changePct = (price != null && prevClose != null && prevClose !== 0)
+                ? ((price - prevClose) / prevClose * 100)
+                : null;
+            const low52  = validLows.length  ? Math.min(...validLows)  : null;
+            const high52 = validHighs.length ? Math.max(...validHighs) : null;
+
+            return {
+                price,
+                changePct,
+                low52,
+                high52,
+                currency: meta.currency || '',
+                name: meta.shortName || meta.longName || symbol
+            };
+        } catch(e) { /* try next */ }
+    }
+    return null;
+}
+
+// ── Condizioni ────────────────────────────────────────────────────────────
+function evaluateCondition(cond, quote) {
+    if (!quote || quote.price == null) return null; // unknown
+    const { type, value } = cond;
+    if (type === 'price_lte')     return quote.price <= value;
+    if (type === 'day_drop_gte')  return quote.changePct != null && quote.changePct <= -value;
+    if (type === 'near_52w_low')  return quote.low52 != null && quote.low52 > 0 &&
+        ((quote.price - quote.low52) / quote.low52 * 100) <= value;
+    return null;
+}
+
+function condLabel(cond, quote) {
+    const fmtVal = v => v != null ? Number(v).toLocaleString('it-IT', {maximumFractionDigits:2}) : '?';
+    const curr = quote?.currency ? currencySymbol(quote.currency) : '';
+    if (cond.type === 'price_lte')
+        return `Prezzo ≤ ${curr}${fmtVal(cond.value)}`;
+    if (cond.type === 'day_drop_gte')
+        return `Calo giornaliero ≥ ${fmtVal(cond.value)}%`;
+    if (cond.type === 'near_52w_low')
+        return `Entro ${fmtVal(cond.value)}% dal minimo 52 settimane`;
+    return cond.type;
+}
+
+function condDetail(cond, quote) {
+    if (!quote || quote.price == null) return '';
+    if (cond.type === 'near_52w_low' && quote.low52) {
+        const pct = ((quote.price - quote.low52) / quote.low52 * 100).toFixed(1);
+        return `(min: ${currencySymbol(quote.currency)}${quote.low52.toFixed(2)}, attuale +${pct}%)`;
+    }
+    if (cond.type === 'day_drop_gte' && quote.changePct != null) {
+        return `(oggi: ${quote.changePct.toFixed(2)}%)`;
+    }
+    return '';
+}
+
+function currencySymbol(c) {
+    return { USD:'$', EUR:'€', GBP:'£', JPY:'¥', CHF:'Fr' }[c] || (c ? c+' ' : '');
+}
+
+// ── Check loop ───────────────────────────────────────────────────────────
+async function checkAllAlerts() {
+    if (isChecking) return;
+    isChecking = true;
+    setCheckStatus('Controllo in corso…');
+
+    const enabled = alerts.filter(a => a.enabled);
+    const symbols = [...new Set(enabled.map(a => a.symbol))];
+
+    for (const sym of symbols) {
+        const q = await fetchQuote(sym);
+        quotes[sym] = q;
+    }
+
+    let notified = 0;
+    for (const alert of enabled) {
+        const q = quotes[alert.symbol] || null;
+        alert.lastChecked = new Date().toISOString();
+        if (q) {
+            alert.lastPrice = q.price;
+            alert.lastChangePct = q.changePct;
+            alert.currency = q.currency;
+            if (!alert.name || alert.name === alert.symbol) alert.name = q.name;
+        }
+
+        for (const cond of alert.conditions) {
+            const triggered = evaluateCondition(cond, q);
+            const wasTriggered = cond.triggered;
+            cond.triggered = triggered === true;
+
+            if (cond.triggered && !wasTriggered) {
+                // Nuovo trigger
+                const msg = `${alert.name} (${alert.symbol}): ${condLabel(cond, q)}`;
+                sendBrowserNotification(msg);
+                notified++;
+            }
+        }
+    }
+
+    saveAlerts();
+    renderAlerts();
+    setCheckStatus(`Ultimo check: ${new Date().toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'})}`);
+    isChecking = false;
+    if (notified > 0) showToast(`🔔 ${notified} condizion${notified === 1 ? 'e scattata' : 'i scattate'}!`);
+}
+
+function setCheckStatus(msg) {
+    const el = document.getElementById('checkStatus');
+    if (el) el.textContent = msg;
+}
+
+function startCheckLoop() {
+    checkAllAlerts();
+    clearInterval(checkTimer);
+    checkTimer = setInterval(checkAllAlerts, CHECK_INTERVAL_MS);
+}
+
+// ── Notifiche browser ────────────────────────────────────────────────────
+function updateNotifBanner() {
+    const banner = document.getElementById('notifBanner');
+    if (!banner) return;
+    if (!('Notification' in window)) { banner.style.display = 'none'; return; }
+    banner.style.display = Notification.permission === 'granted' ? 'none' : 'flex';
+}
+
+async function requestNotifPermission() {
+    if (!('Notification' in window)) return;
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') updateNotifBanner();
+}
+
+function sendBrowserNotification(msg) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try { new Notification('🔔 Alert Borsa', { body: msg, icon: '' }); } catch(e) {}
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderAlerts() {
+    const grid = document.getElementById('alertsGrid');
+    const empty = document.getElementById('emptyState');
+    const statTotal = document.getElementById('statTotal');
+    const statTriggered = document.getElementById('statTriggered');
+
+    statTotal.textContent = alerts.filter(a => a.enabled).length;
+    const triggeredCount = alerts.filter(a => a.enabled && a.conditions.some(c => c.triggered)).length;
+    statTriggered.textContent = triggeredCount;
+
+    if (!alerts.length) {
+        empty.style.display = 'block';
+        grid.innerHTML = '';
+        return;
+    }
+    empty.style.display = 'none';
+
+    grid.innerHTML = alerts.map(a => renderCard(a)).join('');
+
+    grid.querySelectorAll('[data-toggle]').forEach(el => {
+        el.addEventListener('click', () => toggleAlert(el.dataset.toggle));
+    });
+    grid.querySelectorAll('[data-edit]').forEach(el => {
+        el.addEventListener('click', () => openEditModal(el.dataset.edit));
+    });
+    grid.querySelectorAll('[data-delete]').forEach(el => {
+        el.addEventListener('click', () => deleteAlert(el.dataset.delete));
+    });
+}
+
+function renderCard(a) {
+    const q = quotes[a.symbol] || null;
+    const isTriggered = a.enabled && a.conditions.some(c => c.triggered);
+    const curr = currencySymbol(a.currency || (q?.currency || ''));
+
+    let priceHtml = '<span class="price-loading">In attesa...</span>';
+    if (a.lastPrice != null) {
+        const chg = a.lastChangePct;
+        const chgClass = chg == null ? 'neu' : (chg >= 0 ? 'pos' : 'neg');
+        const chgStr = chg != null ? `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%` : '—';
+        priceHtml = `<span class="price-value">${curr}${a.lastPrice.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+                     <span class="price-change ${chgClass}">${chgStr} oggi</span>`;
+    } else if (!a.enabled) {
+        priceHtml = '<span class="price-loading">Disabilitato</span>';
+    }
+
+    const condsHtml = a.conditions.map(c => {
+        const res = evaluateCondition(c, q);
+        const icon  = res === true ? '🔴' : (res === false ? '✅' : '⏳');
+        const badge = res === true ? 'triggered' : (res === false ? 'ok' : 'unknown');
+        const badgeLabel = res === true ? 'SCATTATO' : (res === false ? 'OK' : '—');
+        const detail = condDetail(c, q);
+        return `<div class="condition-row">
+            <span class="cond-icon">${icon}</span>
+            <span class="cond-text"><strong>${escHtml(condLabel(c, q))}</strong>${detail ? ' <span style="font-size:.72rem;color:var(--text-secondary)">' + escHtml(detail) + '</span>' : ''}</span>
+            <span class="cond-badge ${badge}">${badgeLabel}</span>
+        </div>`;
+    }).join('');
+
+    const lastCheck = a.lastChecked
+        ? new Date(a.lastChecked).toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'})
+        : 'mai';
+
+    const swOn = a.enabled ? 'on' : '';
+
+    return `<div class="alert-card ${isTriggered ? 'triggered' : ''} ${!a.enabled ? 'disabled' : ''}">
+        <div class="card-header">
+            <div class="card-title">
+                <div class="card-symbol">${escHtml(a.symbol)}</div>
+                <div class="card-name">${escHtml(a.name || a.symbol)}</div>
+            </div>
+            <div class="card-actions">
+                <div class="toggle-wrap" data-toggle="${escHtml(a.id)}" title="${a.enabled ? 'Disabilita' : 'Abilita'}">
+                    <div class="toggle-sw ${swOn}"></div>
+                </div>
+                <button class="btn btn-icon btn-sm" data-edit="${escHtml(a.id)}" title="Modifica">✏️</button>
+                <button class="btn btn-icon btn-sm" data-delete="${escHtml(a.id)}" title="Elimina">🗑️</button>
+            </div>
+        </div>
+        <div class="card-price">${priceHtml}</div>
+        <div class="card-conditions">${condsHtml || '<div style="font-size:.8rem;color:var(--text-secondary)">Nessuna condizione</div>'}</div>
+        <div class="card-footer"><span>Check: ${lastCheck}</span></div>
+    </div>`;
+}
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── CRUD ──────────────────────────────────────────────────────────────────
+function toggleAlert(id) {
+    const a = alerts.find(x => x.id === id);
+    if (!a) return;
+    a.enabled = !a.enabled;
+    if (!a.enabled) a.conditions.forEach(c => { c.triggered = false; });
+    saveAlerts();
+    renderAlerts();
+    if (a.enabled) checkAllAlerts();
+}
+
+function deleteAlert(id) {
+    if (!confirm('Eliminare questo alert?')) return;
+    alerts = alerts.filter(a => a.id !== id);
+    delete quotes[/* keep */id]; // actually keep quotes cache
+    saveAlerts();
+    renderAlerts();
+}
+
+function genId() {
+    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+function openAddModal() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = 'Nuovo alert';
+    document.getElementById('modalSymbol').value = '';
+    document.getElementById('modalName').value = '';
+    document.getElementById('searchResult').className = 'search-result';
+    document.getElementById('searchResult').textContent = '';
+    document.getElementById('conditionsList').innerHTML = '';
+    document.getElementById('modalErr').textContent = '';
+    addConditionRow();
+    document.getElementById('modalOverlay').classList.add('open');
+    document.getElementById('modalSymbol').focus();
+}
+
+function openEditModal(id) {
+    const a = alerts.find(x => x.id === id);
+    if (!a) return;
+    editingId = id;
+    document.getElementById('modalTitle').textContent = 'Modifica alert';
+    document.getElementById('modalSymbol').value = a.symbol;
+    document.getElementById('modalName').value = a.name || '';
+    document.getElementById('searchResult').className = 'search-result';
+    document.getElementById('searchResult').textContent = '';
+    document.getElementById('conditionsList').innerHTML = '';
+    document.getElementById('modalErr').textContent = '';
+
+    if (quotes[a.symbol]) {
+        showSearchResult(a.symbol, quotes[a.symbol]);
+    }
+
+    a.conditions.forEach(c => addConditionRow(c));
+    document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    editingId = null;
+}
+
+function addConditionRow(existing) {
+    const list = document.getElementById('conditionsList');
+    const row = document.createElement('div');
+    row.className = 'cond-edit-row';
+
+    const type = existing?.type || 'price_lte';
+    const value = existing?.value ?? '';
+
+    row.innerHTML = `
+        <select class="cond-type">
+            <option value="price_lte" ${type==='price_lte'?'selected':''}>Prezzo ≤</option>
+            <option value="day_drop_gte" ${type==='day_drop_gte'?'selected':''}>Calo giornaliero ≥ %</option>
+            <option value="near_52w_low" ${type==='near_52w_low'?'selected':''}>Entro % dal minimo 52s</option>
+        </select>
+        <input type="number" class="cond-value" value="${value}" min="0" step="0.01" placeholder="valore" />
+        <button onclick="this.closest('.cond-edit-row').remove()" title="Rimuovi">✕</button>
+    `;
+    list.appendChild(row);
+}
+
+function showSearchResult(symbol, q) {
+    const el = document.getElementById('searchResult');
+    if (!q) {
+        el.textContent = `Simbolo "${symbol}" non trovato. Verifica il formato.`;
+        el.className = 'search-result show err';
+        return;
+    }
+    const curr = currencySymbol(q.currency);
+    const low  = q.low52  ? `Min 52s: ${curr}${q.low52.toFixed(2)}` : '';
+    const high = q.high52 ? `Max 52s: ${curr}${q.high52.toFixed(2)}` : '';
+    el.innerHTML = `<strong>${escHtml(q.name)}</strong> · ${curr}${q.price?.toFixed(2) ?? '?'} · ${[low,high].filter(Boolean).join(' · ')}`;
+    el.className = 'search-result show';
+    if (!document.getElementById('modalName').value) {
+        document.getElementById('modalName').value = q.name || '';
+    }
+}
+
+async function lookupSymbol() {
+    const sym = document.getElementById('modalSymbol').value.trim().toUpperCase();
+    if (!sym) return;
+    const el = document.getElementById('searchResult');
+    el.textContent = 'Ricerca in corso…';
+    el.className = 'search-result show';
+    const q = await fetchQuote(sym);
+    quotes[sym] = q;
+    showSearchResult(sym, q);
+}
+
+async function saveAlert() {
+    const sym = document.getElementById('modalSymbol').value.trim().toUpperCase();
+    const name = document.getElementById('modalName').value.trim() || sym;
+    const errEl = document.getElementById('modalErr');
+    errEl.textContent = '';
+
+    if (!sym) { errEl.textContent = 'Inserisci un simbolo.'; return; }
+
+    const rows = document.querySelectorAll('#conditionsList .cond-edit-row');
+    const conditions = [];
+    for (const row of rows) {
+        const type  = row.querySelector('.cond-type').value;
+        const value = parseFloat(row.querySelector('.cond-value').value);
+        if (isNaN(value) || value < 0) { errEl.textContent = 'Inserisci un valore valido per ogni condizione.'; return; }
+        conditions.push({ type, value, triggered: false });
+    }
+    if (!conditions.length) { errEl.textContent = 'Aggiungi almeno una condizione.'; return; }
+
+    if (editingId) {
+        const a = alerts.find(x => x.id === editingId);
+        if (a) { a.symbol = sym; a.name = name; a.conditions = conditions; }
+    } else {
+        alerts.push({ id: genId(), symbol: sym, name, conditions, enabled: true,
+            lastChecked: null, lastPrice: null, lastChangePct: null, currency: '' });
+    }
+
+    saveAlerts();
+    closeModal();
+    renderAlerts();
+    checkAllAlerts();
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, isErr) {
+    const t = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    t.textContent = msg;
+    t.className = 'toast show' + (isErr ? ' err' : '');
+    toastTimer = setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ── Event listeners ────────────────────────────────────────────────────────
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+
+// borsasync:pulled → ricarica alert e ricontrolla
+window.addEventListener('borsasync:pulled', async function() {
+    await loadAlerts();
+    renderAlerts();
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadTheme();
+(async function() {
+    await appStorage.ready([STORAGE_KEY, 'dashboardBorsa']);
+    await loadAlerts();
+    updateNotifBanner();
+    renderAlerts();
+    if (alerts.some(a => a.enabled)) startCheckLoop();
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/borsa-config.js"></script>
+<script src="assets/js/supabase-sync.js"></script>
+<script src="assets/js/borsa-auth-ui.js"></script>
+</body>
+</html>
