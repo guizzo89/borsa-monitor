@@ -333,6 +333,7 @@
         <a href="analisi.html" class="btn">Analisi</a>
         <a href="portafoglio.html" class="btn">Portafoglio</a>
         <a href="calcolo.html" class="btn">Calcolatore</a>
+        <span data-borsa-auth></span>
         <button class="btn" onclick="exportShareLink()" title="Copia link per sincronizzare le impostazioni su un altro dispositivo">Condividi</button>
         <div class="theme-icons">
             <span>&#9790;</span>
@@ -1465,5 +1466,9 @@ document.addEventListener('click', function(e) {
     renderCustomCatButtons();
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/borsa-config.js"></script>
+<script src="assets/js/supabase-sync.js"></script>
+<script src="assets/js/borsa-auth-ui.js"></script>
 </body>
 </html>
