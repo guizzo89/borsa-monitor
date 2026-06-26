@@ -58,8 +58,19 @@
     function patchStorage() {
         if (_origSetRaw) return;
         _origSetRaw = global.BorsaStorage.setRaw;
+        var origSetJSON = global.BorsaStorage.setJSON;
+
+        // setRaw patch (for direct callers)
         global.BorsaStorage.setRaw = function (key, value) {
             var result = _origSetRaw.call(global.BorsaStorage, key, value);
+            if (SYNC_KEYS.indexOf(key) !== -1) schedulePush(key);
+            return result;
+        };
+
+        // setJSON patch — setJSON calls the internal closure setRaw, NOT api.setRaw,
+        // so we must intercept here too to catch all saves made via setJSON.
+        global.BorsaStorage.setJSON = function (key, value) {
+            var result = origSetJSON.call(global.BorsaStorage, key, value);
             if (SYNC_KEYS.indexOf(key) !== -1) schedulePush(key);
             return result;
         };
