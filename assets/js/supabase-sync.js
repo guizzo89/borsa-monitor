@@ -4,7 +4,8 @@
     var cfg = global.BorsaConfig || {};
     var SUPABASE_URL = cfg.supabaseUrl || '';
     var SUPABASE_ANON_KEY = cfg.supabaseAnonKey || '';
-    var SESSION_FLAG = 'borsasync_ready';
+    var PULL_TS_KEY = 'borsasync_ts';
+    var PULL_INTERVAL = 60 * 1000; // 1 minuto
 
     var SYNC_KEYS = [
         'dashboardBorsa',
@@ -46,9 +47,7 @@
         for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
             var v = await global.BorsaStorage.getRaw(k);
-            if (v !== null) {
-                rows.push({ user_id: _user.id, key: k, value: v });
-            }
+            if (v !== null) rows.push({ user_id: _user.id, key: k, value: v });
         }
         if (!rows.length) return;
         var res = await _client.from('user_settings').upsert(rows, { onConflict: 'user_id,key' });
@@ -60,15 +59,14 @@
         _origSetRaw = global.BorsaStorage.setRaw;
         var origSetJSON = global.BorsaStorage.setJSON;
 
-        // setRaw patch (for direct callers)
         global.BorsaStorage.setRaw = function (key, value) {
             var result = _origSetRaw.call(global.BorsaStorage, key, value);
             if (SYNC_KEYS.indexOf(key) !== -1) schedulePush(key);
             return result;
         };
 
-        // setJSON patch — setJSON calls the internal closure setRaw, NOT api.setRaw,
-        // so we must intercept here too to catch all saves made via setJSON.
+        // setJSON chiama la closure interna di setRaw, non api.setRaw,
+        // quindi va patchato separatamente.
         global.BorsaStorage.setJSON = function (key, value) {
             var result = origSetJSON.call(global.BorsaStorage, key, value);
             if (SYNC_KEYS.indexOf(key) !== -1) schedulePush(key);
@@ -76,6 +74,7 @@
         };
     }
 
+    // Ritorna 'changed' | 'unchanged' | false
     async function pullAll() {
         if (!_user || !_client) return false;
         try {
@@ -91,14 +90,20 @@
             }
 
             var rows = res.data || [];
+            var changed = false;
+
             for (var i = 0; i < rows.length; i++) {
                 var row = rows[i];
-                if (row.value !== null && _origSetRaw) {
+                if (row.value === null) continue;
+                var localVal = await global.BorsaStorage.getRaw(row.key);
+                if (localVal !== row.value) {
                     await _origSetRaw.call(global.BorsaStorage, row.key, row.value);
+                    changed = true;
                 }
             }
+
             global.dispatchEvent(new CustomEvent('borsasync:pulled'));
-            return true;
+            return changed ? 'changed' : 'unchanged';
         } catch (e) {
             console.warn('[BorsaSync] pull exception:', e);
             return false;
@@ -112,18 +117,26 @@
         await flushPendingPush();
     }
 
+    // Esegue pull se è passato abbastanza tempo dall'ultimo.
+    // Ricarica la pagina solo se i dati sono cambiati.
+    async function _trySync() {
+        if (!_user) return;
+        var lastPull = parseInt(localStorage.getItem(PULL_TS_KEY) || '0');
+        if (Date.now() - lastPull < PULL_INTERVAL) return;
+
+        var result = await pullAll();
+        if (result !== false) {
+            localStorage.setItem(PULL_TS_KEY, String(Date.now()));
+            if (result === 'changed') {
+                window.location.reload();
+            }
+        }
+    }
+
     async function _handleSessionReady(user) {
         notifyAuth(user);
         if (!user) return;
-
-        var alreadyPulled = sessionStorage.getItem(SESSION_FLAG) === '1';
-        if (alreadyPulled) return;
-
-        var ok = await pullAll();
-        if (ok) {
-            sessionStorage.setItem(SESSION_FLAG, '1');
-            window.location.reload();
-        }
+        await _trySync();
     }
 
     async function init() {
@@ -141,12 +154,19 @@
         _client.auth.onAuthStateChange(function (event, session) {
             var user = session ? session.user : null;
             if (event === 'SIGNED_OUT') {
-                sessionStorage.removeItem(SESSION_FLAG);
+                localStorage.removeItem(PULL_TS_KEY);
                 notifyAuth(null);
                 return;
             }
             if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 _handleSessionReady(user);
+            }
+        });
+
+        // Auto-sync quando la tab torna visibile
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') {
+                _trySync();
             }
         });
 
@@ -168,6 +188,7 @@
     async function logout() {
         clearTimeout(_pushTimer);
         _pendingKeys.clear();
+        localStorage.removeItem(PULL_TS_KEY);
         if (_client) await _client.auth.signOut();
     }
 
